@@ -10,7 +10,7 @@ import (
 // ignore
 func TestPrefixKeysSameLength(t *testing.T) {
 	allKeys := getAllKeys()
-	prefixKeys := allKeys[0:27]
+	prefixKeys := allKeys[0:25]
 	length := len(HashString("All keys should be same length when hashed"))
 
 	for _, key := range prefixKeys {
@@ -31,7 +31,7 @@ func getAllKeys() [][]byte {
 	i := 0
 	inc := func(i *int) *int { *i += 1; return i }
 
-	keys := make([][]byte, 47)
+	keys := make([][]byte, 49)
 
 	keys[i] = EthAddressByValidatorKey
 	keys[*inc(&i)] = ValidatorByEthAddressKey
@@ -40,7 +40,7 @@ func getAllKeys() [][]byte {
 	keys[*inc(&i)] = LEGACYOracleClaimKey
 	keys[*inc(&i)] = OracleAttestationKey
 	keys[*inc(&i)] = OutgoingTXPoolKey
-	keys[*inc(&i)] = OutgoingTXBatchKey
+	keys[*inc(&i)] = OutgoingTxBatchKey
 	keys[*inc(&i)] = BatchConfirmKey
 	keys[*inc(&i)] = LastEventNonceByValidatorKey
 	keys[*inc(&i)] = LastObservedEventNonceKey
@@ -50,7 +50,7 @@ func getAllKeys() [][]byte {
 	keys[*inc(&i)] = KeyOrchestratorAddress
 	keys[*inc(&i)] = KeyOutgoingLogicCall
 	keys[*inc(&i)] = KeyOutgoingLogicConfirm
-	keys[*inc(&i)] = LastObservedEthereumBlockHeightKey
+	keys[*inc(&i)] = LastObservedEvmBlockHeightKey
 	keys[*inc(&i)] = DenomToERC20Key
 	keys[*inc(&i)] = ERC20ToDenomKey
 	keys[*inc(&i)] = LastSlashedValsetNonce
@@ -59,8 +59,10 @@ func getAllKeys() [][]byte {
 	keys[*inc(&i)] = LastSlashedLogicCallBlock
 	keys[*inc(&i)] = LastUnBondingBlockHeight
 	keys[*inc(&i)] = LastObservedValsetKey
-	keys[*inc(&i)] = PastEthSignatureCheckpointKey
+	keys[*inc(&i)] = PastEvmSignatureCheckpointKey
 
+	// ChainPrefix
+	dummyPrefix := "xyzchain"
 	// sdk.AccAddress, sdk.ValAddress
 	dummyAddr := []byte("gravity1ahx7f8wyertuus9r20284ej0asrs085ceqtfnm")
 	// EthAddress
@@ -78,23 +80,25 @@ func getAllKeys() [][]byte {
 	keys[*inc(&i)] = GetOrchestratorAddressKey(dummyAddr)
 	keys[*inc(&i)] = GetEthAddressByValidatorKey(dummyAddr)
 	keys[*inc(&i)] = GetValidatorByEthAddressKey(dummyEthAddr)
-	keys[*inc(&i)] = GetValsetKey(dummyNonce)
-	keys[*inc(&i)] = GetValsetConfirmNoncePrefix(dummyNonce)
-	keys[*inc(&i)] = GetValsetConfirmKey(dummyNonce, dummyAddr)
-	keys[*inc(&i)] = GetAttestationKey(dummyNonce, dummyBytes)
-	keys[*inc(&i)] = GetOutgoingTxPoolContractPrefix(dummyEthAddr)
-	keys[*inc(&i)] = GetOutgoingTxPoolKey(dummyErc, dummyNonce)
-	keys[*inc(&i)] = GetOutgoingTxBatchContractPrefix(dummyEthAddr)
-	keys[*inc(&i)] = GetOutgoingTxBatchKey(dummyEthAddr, dummyNonce)
-	keys[*inc(&i)] = GetBatchConfirmNonceContractPrefix(dummyEthAddr, dummyNonce)
-	keys[*inc(&i)] = GetBatchConfirmKey(dummyEthAddr, dummyNonce, dummyAddr)
-	keys[*inc(&i)] = GetLastEventNonceByValidatorKey(dummyAddr)
-	keys[*inc(&i)] = GetDenomToERC20Key(dummyDenom)
-	keys[*inc(&i)] = GetERC20ToDenomKey(dummyEthAddr)
-	keys[*inc(&i)] = GetOutgoingLogicCallKey(dummyBytes, dummyNonce)
-	keys[*inc(&i)] = GetLogicConfirmNonceInvalidationIdPrefix(dummyBytes, dummyNonce)
-	keys[*inc(&i)] = GetLogicConfirmKey(dummyBytes, dummyNonce, dummyAddr)
-	keys[*inc(&i)] = GetPastEthSignatureCheckpointKey(dummyBytes)
+	keys[*inc(&i)] = GetValsetKey(dummyPrefix, dummyNonce)
+	keys[*inc(&i)] = GetValsetConfirmNoncePrefix(dummyPrefix, dummyNonce)
+	keys[*inc(&i)] = GetValsetConfirmKey(dummyPrefix, dummyNonce, dummyAddr)
+	keys[*inc(&i)] = GetAttestationKey(dummyPrefix, dummyNonce, dummyBytes)
+	keys[*inc(&i)] = GetOutgoingTxPoolContractPrefix(dummyPrefix, dummyEthAddr)
+	keys[*inc(&i)] = GetOutgoingTxPoolKey(dummyPrefix, dummyErc, dummyNonce)
+	keys[*inc(&i)] = GetOutgoingTxBatchContractPrefix(dummyPrefix, dummyEthAddr)
+	keys[*inc(&i)] = GetOutgoingTxBatchKey(dummyPrefix, dummyEthAddr, dummyNonce)
+	keys[*inc(&i)] = GetBatchConfirmNonceContractPrefix(dummyPrefix, dummyEthAddr, dummyNonce)
+	keys[*inc(&i)] = GetBatchConfirmKey(dummyPrefix, dummyEthAddr, dummyNonce, dummyAddr)
+	keys[*inc(&i)] = GetLastEventNonceByValidatorKey(dummyPrefix, dummyAddr)
+	keys[*inc(&i)] = GetDenomToERC20Key(dummyPrefix, dummyDenom)
+	keys[*inc(&i)] = GetERC20ToDenomKey(dummyPrefix, dummyEthAddr)
+	keys[*inc(&i)] = GetOutgoingLogicCallKey(dummyPrefix, dummyBytes, dummyNonce)
+	keys[*inc(&i)] = GetLogicConfirmNonceInvalidationIdPrefix(dummyPrefix, dummyBytes, dummyNonce)
+	keys[*inc(&i)] = GetLogicConfirmKey(dummyPrefix, dummyBytes, dummyNonce, dummyAddr)
+	keys[*inc(&i)] = GetPastEvmSignatureCheckpointKey(dummyPrefix, dummyBytes)
+	keys[*inc(&i)] = GetPendingIbcAutoForwardKey(dummyPrefix, dummyNonce)
+	keys[*inc(&i)] = GetEvmChainKey(dummyPrefix)
 
 	return keys
 }

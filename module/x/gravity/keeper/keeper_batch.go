@@ -13,22 +13,23 @@ import (
 /////////////////////////////
 
 // GetBatchConfirm returns a batch confirmation given its nonce, the token contract, and a validator address
-func (k Keeper) GetBatchConfirm(ctx sdk.Context, nonce uint64, tokenContract types.EthAddress, validator sdk.AccAddress) *types.MsgConfirmBatch {
+func (k Keeper) GetBatchConfirm(ctx sdk.Context, evmChainPrefix string, nonce uint64, tokenContract types.EthAddress, validator sdk.AccAddress) *types.MsgConfirmBatch {
 	store := ctx.KVStore(k.storeKey)
 	if err := sdk.VerifyAddressFormat(validator); err != nil {
 		ctx.Logger().Error("invalid validator address")
 		return nil
 	}
-	entity := store.Get(types.GetBatchConfirmKey(tokenContract, nonce, validator))
+	entity := store.Get(types.GetBatchConfirmKey(evmChainPrefix, tokenContract, nonce, validator))
 	if entity == nil {
 		return nil
 	}
 	confirm := types.MsgConfirmBatch{
-		Nonce:         nonce,
-		TokenContract: tokenContract.GetAddress().Hex(),
-		EthSigner:     "",
-		Orchestrator:  "",
-		Signature:     "",
+		Nonce:          nonce,
+		TokenContract:  tokenContract.GetAddress().Hex(),
+		EthSigner:      "",
+		Orchestrator:   "",
+		Signature:      "",
+		EvmChainPrefix: evmChainPrefix,
 	}
 	k.cdc.MustUnmarshal(entity, &confirm)
 	return &confirm
@@ -45,18 +46,18 @@ func (k Keeper) SetBatchConfirm(ctx sdk.Context, batch *types.MsgConfirmBatch) [
 	if err != nil {
 		panic(sdkerrors.Wrap(err, "invalid TokenContract"))
 	}
-	key := types.GetBatchConfirmKey(*contract, batch.Nonce, acc)
+	key := types.GetBatchConfirmKey(batch.EvmChainPrefix, *contract, batch.Nonce, acc)
 	store.Set(key, k.cdc.MustMarshal(batch))
 	return key
 }
 
 // DeleteBatchConfirms deletes confirmations for an outgoing transaction batch
-func (k Keeper) DeleteBatchConfirms(ctx sdk.Context, batch types.InternalOutgoingTxBatch) {
+func (k Keeper) DeleteBatchConfirms(ctx sdk.Context, evmChainPrefix string, batch types.InternalOutgoingTxBatch) {
 	store := ctx.KVStore(k.storeKey)
-	for _, confirm := range k.GetBatchConfirmByNonceAndTokenContract(ctx, batch.BatchNonce, batch.TokenContract) {
+	for _, confirm := range k.GetBatchConfirmByNonceAndTokenContract(ctx, evmChainPrefix, batch.BatchNonce, batch.TokenContract) {
 		orchestrator, err := sdk.AccAddressFromBech32(confirm.Orchestrator)
 		if err == nil {
-			confirmKey := types.GetBatchConfirmKey(batch.TokenContract, batch.BatchNonce, orchestrator)
+			confirmKey := types.GetBatchConfirmKey(evmChainPrefix, batch.TokenContract, batch.BatchNonce, orchestrator)
 			if store.Has(confirmKey) {
 				store.Delete(confirmKey)
 			}
@@ -67,20 +68,21 @@ func (k Keeper) DeleteBatchConfirms(ctx sdk.Context, batch types.InternalOutgoin
 // IterateBatchConfirmByNonceAndTokenContract iterates through all batch confirmations
 // MARK finish-batches: this is where the key is iterated in the old (presumed working) code
 // TODO: specify which nonce this is
-func (k Keeper) IterateBatchConfirmByNonceAndTokenContract(ctx sdk.Context, nonce uint64, tokenContract types.EthAddress, cb func([]byte, types.MsgConfirmBatch) bool) {
+func (k Keeper) IterateBatchConfirmByNonceAndTokenContract(ctx sdk.Context, evmChainPrefix string, nonce uint64, tokenContract types.EthAddress, cb func([]byte, types.MsgConfirmBatch) bool) {
 	store := ctx.KVStore(k.storeKey)
-	prefix := types.GetBatchConfirmNonceContractPrefix(tokenContract, nonce)
+	prefix := types.GetBatchConfirmNonceContractPrefix(evmChainPrefix, tokenContract, nonce)
 	iter := store.Iterator(prefixRange([]byte(prefix)))
 
 	defer iter.Close()
 
 	for ; iter.Valid(); iter.Next() {
 		confirm := types.MsgConfirmBatch{
-			Nonce:         nonce,
-			TokenContract: tokenContract.GetAddress().Hex(),
-			EthSigner:     "",
-			Orchestrator:  "",
-			Signature:     "",
+			Nonce:          nonce,
+			TokenContract:  tokenContract.GetAddress().Hex(),
+			EthSigner:      "",
+			Orchestrator:   "",
+			Signature:      "",
+			EvmChainPrefix: evmChainPrefix,
 		}
 		k.cdc.MustUnmarshal(iter.Value(), &confirm)
 		// cb returns true to stop early
@@ -91,8 +93,8 @@ func (k Keeper) IterateBatchConfirmByNonceAndTokenContract(ctx sdk.Context, nonc
 }
 
 // GetBatchConfirmByNonceAndTokenContract returns the batch confirms
-func (k Keeper) GetBatchConfirmByNonceAndTokenContract(ctx sdk.Context, nonce uint64, tokenContract types.EthAddress) (out []types.MsgConfirmBatch) {
-	k.IterateBatchConfirmByNonceAndTokenContract(ctx, nonce, tokenContract, func(_ []byte, msg types.MsgConfirmBatch) bool {
+func (k Keeper) GetBatchConfirmByNonceAndTokenContract(ctx sdk.Context, evmChainPrefix string, nonce uint64, tokenContract types.EthAddress) (out []types.MsgConfirmBatch) {
+	k.IterateBatchConfirmByNonceAndTokenContract(ctx, evmChainPrefix, nonce, tokenContract, func(_ []byte, msg types.MsgConfirmBatch) bool {
 		out = append(out, msg)
 		return false
 	})
@@ -100,9 +102,10 @@ func (k Keeper) GetBatchConfirmByNonceAndTokenContract(ctx sdk.Context, nonce ui
 }
 
 // IterateBatchConfirms iterates through all batch confirmations
-func (k Keeper) IterateBatchConfirms(ctx sdk.Context, cb func([]byte, types.MsgConfirmBatch) (stop bool)) {
+func (k Keeper) IterateBatchConfirms(ctx sdk.Context, evmChainPrefix string, cb func([]byte, types.MsgConfirmBatch) (stop bool)) {
 	store := ctx.KVStore(k.storeKey)
-	prefixStore := prefix.NewStore(store, types.BatchConfirmKey)
+	prefixStore := prefix.NewStore(store, types.AppendChainPrefix(types.BatchConfirmKey, evmChainPrefix))
+
 	iter := prefixStore.Iterator(nil, nil)
 
 	defer iter.Close()

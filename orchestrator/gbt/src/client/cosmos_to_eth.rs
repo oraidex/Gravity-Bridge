@@ -20,7 +20,7 @@ pub async fn cosmos_to_eth_cmd(args: CosmosToEthOpts, address_prefix: String) {
     let cosmos_grpc = args.cosmos_grpc;
     let eth_dest = args.eth_destination;
     let bridge_fee = args.bridge_fee;
-
+    let evm_chain_prefix = args.evm_chain_prefix;
     let cosmos_address = cosmos_key.to_address(&address_prefix).unwrap();
 
     info!("Sending from Cosmos address {}", cosmos_address);
@@ -32,6 +32,7 @@ pub async fn cosmos_to_eth_cmd(args: CosmosToEthOpts, address_prefix: String) {
     cosmos_to_eth(
         &contact,
         grpc,
+        &evm_chain_prefix,
         cosmos_key,
         cosmos_address,
         gravity_coin,
@@ -46,6 +47,7 @@ pub async fn cosmos_to_eth_cmd(args: CosmosToEthOpts, address_prefix: String) {
 pub async fn cosmos_to_eth(
     contact: &Contact,
     grpc: QueryClient<Channel>,
+    evm_chain_prefix: &str,
     sender_key: impl PrivateKey,
     sender_address: CosmosAddress,
     to_bridge: Coin,
@@ -54,7 +56,7 @@ pub async fn cosmos_to_eth(
     receiver_address: EthAddress,
 ) {
     let mut grpc = grpc;
-    let res = get_denom_to_erc20(&mut grpc, to_bridge.denom.clone()).await;
+    let res = get_denom_to_erc20(&mut grpc, evm_chain_prefix, to_bridge.denom.clone()).await;
     let is_cosmos_originated = match res {
         Ok(v) => v.cosmos_originated,
         Err(e) => {
@@ -65,6 +67,7 @@ pub async fn cosmos_to_eth(
 
     let res = grpc
         .denom_to_erc20(QueryDenomToErc20Request {
+            evm_chain_prefix: evm_chain_prefix.to_string(),
             denom: to_bridge.denom.clone(),
         })
         .await;
@@ -114,10 +117,12 @@ pub async fn cosmos_to_eth(
         amount.denom, to_bridge.denom
     );
     let res = send_to_eth(
+        evm_chain_prefix,
         sender_key,
         receiver_address,
         amount.clone(),
         bridge_fee.clone(),
+        None,
         cosmos_fee.clone(),
         contact,
     )

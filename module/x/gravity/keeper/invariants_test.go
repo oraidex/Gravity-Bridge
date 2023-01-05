@@ -22,13 +22,14 @@ func TestModuleBalanceUnbatchedTxs(t *testing.T) {
 		mySender, _         = sdk.AccAddressFromBech32("gravity1ahx7f8wyertuus9r20284ej0asrs085ceqtfnm")
 		myReceiver          = "0xd041c41EA1bf0F006ADBb6d2c9ef9D425dE5eaD7"
 		myTokenContractAddr = "0x429881672B9AE42b8EbA0E26cD9C73711b891Ca5"
+		evmChain            = input.GravityKeeper.GetEvmChainData(ctx, EthChainPrefix)
 	)
 	receiver, err := types.NewEthAddress(myReceiver)
 	require.NoError(t, err)
 	// mint some voucher first
 	allVouchersToken, err := types.NewInternalERC20Token(sdk.NewInt(99999), myTokenContractAddr)
 	require.NoError(t, err)
-	allVouchers := sdk.Coins{allVouchersToken.GravityCoin()}
+	allVouchers := sdk.Coins{allVouchersToken.GravityCoin(evmChain.EvmChainPrefix)}
 	err = input.BankKeeper.MintCoins(ctx, types.ModuleName, allVouchers)
 	require.NoError(t, err)
 	// set senders balance
@@ -44,12 +45,12 @@ func TestModuleBalanceUnbatchedTxs(t *testing.T) {
 	for i, v := range []uint64{2, 3, 2, 1} {
 		amountToken, err := types.NewInternalERC20Token(sdk.NewInt(int64(i+100)), myTokenContractAddr)
 		require.NoError(t, err)
-		amount := amountToken.GravityCoin()
+		amount := amountToken.GravityCoin(evmChain.EvmChainPrefix)
 		feeToken, err := types.NewInternalERC20Token(sdk.NewIntFromUint64(v), myTokenContractAddr)
 		require.NoError(t, err)
-		fee := feeToken.GravityCoin()
+		fee := feeToken.GravityCoin(evmChain.EvmChainPrefix)
 
-		r, err := input.GravityKeeper.AddToOutgoingPool(ctx, mySender, *receiver, amount, fee)
+		r, err := input.GravityKeeper.AddToOutgoingPool(ctx, evmChain.EvmChainPrefix, mySender, *receiver, amount, fee)
 		require.NotZero(t, r)
 		require.NoError(t, err)
 		// Should create:
@@ -61,13 +62,13 @@ func TestModuleBalanceUnbatchedTxs(t *testing.T) {
 	checkInvariant(t, ctx, input.GravityKeeper, true)
 
 	// Remove one of the transactions
-	err = input.GravityKeeper.RemoveFromOutgoingPoolAndRefund(ctx, 1, mySender)
+	err = input.GravityKeeper.RemoveFromOutgoingPoolAndRefund(ctx, evmChain.EvmChainPrefix, 1, mySender)
 	require.NoError(t, err)
 	checkInvariant(t, ctx, input.GravityKeeper, true)
 
 	// Ensure an error is returned for a mismatched balance
 	oneVoucher, _ := types.NewInternalERC20Token(sdk.NewInt(1), myTokenContractAddr)
-	checkImbalancedModule(t, ctx, input.GravityKeeper, input.BankKeeper, mySender, sdk.NewCoins(oneVoucher.GravityCoin()))
+	checkImbalancedModule(t, ctx, input.GravityKeeper, input.BankKeeper, mySender, sdk.NewCoins(oneVoucher.GravityCoin(evmChain.EvmChainPrefix)))
 }
 
 // Tests that the gravity module's balance is accounted for with batches of txs, including unbatched txs and tx cancellation
@@ -83,6 +84,7 @@ func TestModuleBalanceBatchedTxs(t *testing.T) {
 		myReceiver, _           = types.NewEthAddress("0xd041c41EA1bf0F006ADBb6d2c9ef9D425dE5eaD7")
 		myTokenContractAddr1, _ = types.NewEthAddress("0x429881672B9AE42b8EbA0E26cD9C73711b891Ca5")
 		myTokenContractAddr2, _ = types.NewEthAddress("0xF815240800ddf3E0be80e0d848B13ecaa504BF37")
+		evmChain                = input.GravityKeeper.GetEvmChainData(ctx, EthChainPrefix)
 	)
 	tokens := make([]*types.InternalERC20Token, 2)
 	tokens[0], _ = types.NewInternalERC20Token(sdk.NewInt(150000000000000), myTokenContractAddr1.GetAddress().Hex())
@@ -90,12 +92,12 @@ func TestModuleBalanceBatchedTxs(t *testing.T) {
 	voucher1, _ := types.NewInternalERC20Token(sdk.NewInt(1), myTokenContractAddr1.GetAddress().Hex())
 	voucher2, _ := types.NewInternalERC20Token(sdk.NewInt(1), myTokenContractAddr2.GetAddress().Hex())
 	voucherCoins := []sdk.Coins{
-		sdk.NewCoins(voucher1.GravityCoin()),
-		sdk.NewCoins(voucher2.GravityCoin()),
+		sdk.NewCoins(voucher1.GravityCoin(evmChain.EvmChainPrefix)),
+		sdk.NewCoins(voucher2.GravityCoin(evmChain.EvmChainPrefix)),
 	}
 	allVouchers := []sdk.Coins{
-		sdk.NewCoins(tokens[0].GravityCoin()),
-		sdk.NewCoins(tokens[1].GravityCoin()),
+		sdk.NewCoins(tokens[0].GravityCoin(evmChain.EvmChainPrefix)),
+		sdk.NewCoins(tokens[1].GravityCoin(evmChain.EvmChainPrefix)),
 	}
 
 	// mint some voucher first
@@ -105,7 +107,7 @@ func TestModuleBalanceBatchedTxs(t *testing.T) {
 		input.AccountKeeper.NewAccountWithAddress(ctx, mySender)
 		require.NoError(t, input.BankKeeper.SendCoinsFromModuleToAccount(ctx, types.ModuleName, mySender, v))
 	}
-	input.GravityKeeper.SetLastObservedEthereumBlockHeight(ctx, 1234567)
+	input.GravityKeeper.SetLastObservedEvmChainBlockHeight(ctx, evmChain.EvmChainPrefix, 1234567)
 
 	////////////////// EXECUTE //////////////////
 	// Check the invariant without any transactions
@@ -116,12 +118,12 @@ func TestModuleBalanceBatchedTxs(t *testing.T) {
 		for i, v := range []uint64{2, 3, 2, 1, 2, 4, 5, 1} {
 			amountToken, err := types.NewInternalERC20Token(sdk.NewInt(int64(i+100)), tok.Contract.GetAddress().Hex())
 			require.NoError(t, err)
-			amount := amountToken.GravityCoin()
+			amount := amountToken.GravityCoin(evmChain.EvmChainPrefix)
 			feeToken, err := types.NewInternalERC20Token(sdk.NewIntFromUint64(v), tok.Contract.GetAddress().Hex())
 			require.NoError(t, err)
-			fee := feeToken.GravityCoin()
+			fee := feeToken.GravityCoin(evmChain.EvmChainPrefix)
 
-			r, err := input.GravityKeeper.AddToOutgoingPool(ctx, mySender, *myReceiver, amount, fee)
+			r, err := input.GravityKeeper.AddToOutgoingPool(ctx, evmChain.EvmChainPrefix, mySender, *myReceiver, amount, fee)
 			require.NoError(t, err)
 			ctx.Logger().Info(fmt.Sprintf("Created transaction %v with amount %v and fee %v", r, amount, fee))
 			// Should create:
@@ -140,10 +142,10 @@ func TestModuleBalanceBatchedTxs(t *testing.T) {
 		// when
 		ctx = ctx.WithBlockTime(now)
 		// tx batch size is 3, so that some of them stay behind
-		batch, err := input.GravityKeeper.BuildOutgoingTXBatch(ctx, tok.Contract, 3)
+		batch, err := input.GravityKeeper.BuildOutgoingTxBatch(ctx, evmChain.EvmChainPrefix, tok.Contract, 3)
 		require.NoError(t, err)
 		// then check the batch persists
-		gotBatch := input.GravityKeeper.GetOutgoingTXBatch(ctx, batch.TokenContract, batch.BatchNonce)
+		gotBatch := input.GravityKeeper.GetOutgoingTxBatch(ctx, evmChain.EvmChainPrefix, batch.TokenContract, batch.BatchNonce)
 		require.NotNil(t, gotBatch)
 		batches[i] = gotBatch
 		// The module should be balanced with the new unobserved batch + leftover unbatched txs
@@ -151,8 +153,8 @@ func TestModuleBalanceBatchedTxs(t *testing.T) {
 		checkImbalancedModule(t, ctx, input.GravityKeeper, input.BankKeeper, mySender, voucherCoins[i])
 	}
 	// Remove a tx from the pool for each contract (both of these have fee = 1 and won't be batched
-	input.GravityKeeper.RemoveFromOutgoingPoolAndRefund(ctx, 4, mySender)
-	input.GravityKeeper.RemoveFromOutgoingPoolAndRefund(ctx, 8, mySender)
+	input.GravityKeeper.RemoveFromOutgoingPoolAndRefund(ctx, evmChain.EvmChainPrefix, 4, mySender)
+	input.GravityKeeper.RemoveFromOutgoingPoolAndRefund(ctx, evmChain.EvmChainPrefix, 8, mySender)
 
 	// Here we execute the most recently created batch to test the module's balance is correct after deletion of the first batch
 	// All of the batch's transactions need to end up back in the unbatched tx pool and should be counted there for us
@@ -163,7 +165,7 @@ func TestModuleBalanceBatchedTxs(t *testing.T) {
 
 	// Simulate one batch being relayed and observed
 	fakeBlock := batches[1].CosmosBlockCreated // A fake ethereum block used for the test only
-	msg := types.MsgBatchSendToEthClaim{EthBlockHeight: fakeBlock, BatchNonce: batches[1].BatchNonce}
+	msg := types.MsgBatchSendToEthClaim{EthBlockHeight: fakeBlock, BatchNonce: batches[1].BatchNonce, EvmChainPrefix: evmChain.EvmChainPrefix}
 	input.GravityKeeper.OutgoingTxBatchExecuted(ctx, batches[1].TokenContract, msg)
 	// The module should be balanced with the batch now being observed + one leftover unbatched tx still in the pool
 	checkInvariant(t, ctx, input.GravityKeeper, true)

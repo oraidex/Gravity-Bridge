@@ -22,10 +22,12 @@ pub async fn deploy_erc20_representation(
     let ethereum_rpc = args.ethereum_rpc;
     let ethereum_key = args.ethereum_key;
     let denom = args.cosmos_denom;
+    let evm_chain_prefix = args.evm_chain_prefix;
 
     let connections =
         create_rpc_connections(address_prefix, Some(grpc_url), Some(ethereum_rpc), TIMEOUT).await;
     let web3 = connections.web3.unwrap();
+
     let contact = connections.contact.unwrap();
 
     let mut grpc = connections.grpc.unwrap();
@@ -47,6 +49,7 @@ pub async fn deploy_erc20_representation(
 
     let res = grpc
         .denom_to_erc20(QueryDenomToErc20Request {
+            evm_chain_prefix: evm_chain_prefix.to_string(),
             denom: denom.clone(),
         })
         .await;
@@ -95,6 +98,7 @@ pub async fn deploy_erc20_representation(
             loop {
                 let res = grpc
                     .denom_to_erc20(QueryDenomToErc20Request {
+                        evm_chain_prefix: evm_chain_prefix.to_string(),
                         denom: denom.clone(),
                     })
                     .await;
@@ -119,6 +123,7 @@ pub async fn deploy_erc20_representation(
                             nonce: 0,
                             height: 0,
                             use_v1_key: false,
+                            evm_chain_prefix: evm_chain_prefix.to_string(),
                         })
                         .await;
                     match attestations {
@@ -191,6 +196,7 @@ mod tests {
                 nonce: 0,
                 height: 0,
                 use_v1_key: false,
+                evm_chain_prefix: "bsc".to_string(),
             })
             .await
             .unwrap();

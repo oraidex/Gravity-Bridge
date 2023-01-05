@@ -2,6 +2,8 @@ package keeper
 
 import (
 	"context"
+	"strings"
+
 	v1 "github.com/Gravity-Bridge/Gravity-Bridge/module/x/gravity/migrations/v1"
 	codectypes "github.com/cosmos/cosmos-sdk/codec/types"
 	storetypes "github.com/cosmos/cosmos-sdk/store/types"
@@ -9,7 +11,6 @@ import (
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 	bankkeeper "github.com/cosmos/cosmos-sdk/x/bank/keeper"
 	paramstypes "github.com/cosmos/cosmos-sdk/x/params/types"
-	"strings"
 
 	"github.com/Gravity-Bridge/Gravity-Bridge/module/x/gravity/types"
 )
@@ -38,7 +39,7 @@ func (k Keeper) Params(c context.Context, req *types.QueryParamsRequest) (*types
 func (k Keeper) CurrentValset(
 	c context.Context,
 	req *types.QueryCurrentValsetRequest) (*types.QueryCurrentValsetResponse, error) {
-	vs, err := k.GetCurrentValset(sdk.UnwrapSDKContext(c))
+	vs, err := k.GetCurrentValset(sdk.UnwrapSDKContext(c), req.EvmChainPrefix)
 	if err != nil {
 		return &types.QueryCurrentValsetResponse{}, err
 	}
@@ -49,7 +50,7 @@ func (k Keeper) CurrentValset(
 func (k Keeper) ValsetRequest(
 	c context.Context,
 	req *types.QueryValsetRequestRequest) (*types.QueryValsetRequestResponse, error) {
-	return &types.QueryValsetRequestResponse{Valset: k.GetValset(sdk.UnwrapSDKContext(c), req.Nonce)}, nil
+	return &types.QueryValsetRequestResponse{Valset: k.GetValset(sdk.UnwrapSDKContext(c), req.EvmChainPrefix, req.Nonce)}, nil
 }
 
 // ValsetConfirm queries the ValsetConfirm of the gravity module
@@ -60,14 +61,14 @@ func (k Keeper) ValsetConfirm(
 	if err != nil {
 		return nil, sdkerrors.Wrap(sdkerrors.ErrInvalidRequest, "address invalid")
 	}
-	return &types.QueryValsetConfirmResponse{Confirm: k.GetValsetConfirm(sdk.UnwrapSDKContext(c), req.Nonce, addr)}, nil
+	return &types.QueryValsetConfirmResponse{Confirm: k.GetValsetConfirm(sdk.UnwrapSDKContext(c), req.EvmChainPrefix, req.Nonce, addr)}, nil
 }
 
 // ValsetConfirmsByNonce queries the ValsetConfirmsByNonce of the gravity module
 func (k Keeper) ValsetConfirmsByNonce(
 	c context.Context,
 	req *types.QueryValsetConfirmsByNonceRequest) (*types.QueryValsetConfirmsByNonceResponse, error) {
-	confirms := k.GetValsetConfirms(sdk.UnwrapSDKContext(c), req.Nonce)
+	confirms := k.GetValsetConfirms(sdk.UnwrapSDKContext(c), req.EvmChainPrefix, req.Nonce)
 
 	return &types.QueryValsetConfirmsByNonceResponse{Confirms: confirms}, nil
 }
@@ -78,7 +79,7 @@ const maxValsetRequestsReturned = 5
 func (k Keeper) LastValsetRequests(
 	c context.Context,
 	req *types.QueryLastValsetRequestsRequest) (*types.QueryLastValsetRequestsResponse, error) {
-	valReq := k.GetValsets(sdk.UnwrapSDKContext(c))
+	valReq := k.GetValsets(sdk.UnwrapSDKContext(c), req.EvmChainPrefix)
 	valReqLen := len(valReq)
 	retLen := 0
 	if valReqLen < maxValsetRequestsReturned {
@@ -99,9 +100,9 @@ func (k Keeper) LastPendingValsetRequestByAddr(
 	}
 
 	var pendingValsetReq []types.Valset
-	k.IterateValsets(sdk.UnwrapSDKContext(c), func(_ []byte, val *types.Valset) bool {
+	k.IterateValsets(sdk.UnwrapSDKContext(c), req.EvmChainPrefix, func(_ []byte, val *types.Valset) bool {
 		// foundConfirm is true if the operatorAddr has signed the valset we are currently looking at
-		foundConfirm := k.GetValsetConfirm(sdk.UnwrapSDKContext(c), val.Nonce, addr) != nil
+		foundConfirm := k.GetValsetConfirm(sdk.UnwrapSDKContext(c), req.EvmChainPrefix, val.Nonce, addr) != nil
 		// if this valset has NOT been signed by operatorAddr, store it in pendingValsetReq
 		// and exit the loop
 		if !foundConfirm {
@@ -122,7 +123,7 @@ func (k Keeper) LastPendingValsetRequestByAddr(
 func (k Keeper) BatchFees(
 	c context.Context,
 	req *types.QueryBatchFeeRequest) (*types.QueryBatchFeeResponse, error) {
-	return &types.QueryBatchFeeResponse{BatchFees: k.GetAllBatchFees(sdk.UnwrapSDKContext(c), OutgoingTxBatchSize)}, nil
+	return &types.QueryBatchFeeResponse{BatchFees: k.GetAllBatchFees(sdk.UnwrapSDKContext(c), req.EvmChainPrefix, OutgoingTxBatchSize)}, nil
 }
 
 // LastPendingBatchRequestByAddr queries the LastPendingBatchRequestByAddr of
@@ -139,8 +140,8 @@ func (k Keeper) LastPendingBatchRequestByAddr(
 	var pendingBatchReq types.InternalOutgoingTxBatches
 
 	found := false
-	k.IterateOutgoingTxBatches(sdk.UnwrapSDKContext(c), func(_ []byte, batch types.InternalOutgoingTxBatch) bool {
-		foundConfirm := k.GetBatchConfirm(sdk.UnwrapSDKContext(c), batch.BatchNonce, batch.TokenContract, addr) != nil
+	k.IterateOutgoingTxBatches(sdk.UnwrapSDKContext(c), req.EvmChainPrefix, func(_ []byte, batch types.InternalOutgoingTxBatch) bool {
+		foundConfirm := k.GetBatchConfirm(sdk.UnwrapSDKContext(c), req.EvmChainPrefix, batch.BatchNonce, batch.TokenContract, addr) != nil
 		if !foundConfirm {
 			pendingBatchReq = append(pendingBatchReq, batch)
 			found = true
@@ -169,8 +170,8 @@ func (k Keeper) LastPendingLogicCallByAddr(
 
 	var pendingLogicReq []types.OutgoingLogicCall
 	found := false
-	k.IterateOutgoingLogicCalls(sdk.UnwrapSDKContext(c), func(_ []byte, logic types.OutgoingLogicCall) bool {
-		foundConfirm := k.GetLogicCallConfirm(sdk.UnwrapSDKContext(c),
+	k.IterateOutgoingLogicCalls(sdk.UnwrapSDKContext(c), req.EvmChainPrefix, func(_ []byte, logic types.OutgoingLogicCall) bool {
+		foundConfirm := k.GetLogicCallConfirm(sdk.UnwrapSDKContext(c), req.EvmChainPrefix,
 			logic.InvalidationId, logic.InvalidationNonce, addr) != nil
 		if !foundConfirm {
 			pendingLogicReq = append(pendingLogicReq, logic)
@@ -194,7 +195,7 @@ func (k Keeper) OutgoingTxBatches(
 	c context.Context,
 	req *types.QueryOutgoingTxBatchesRequest) (*types.QueryOutgoingTxBatchesResponse, error) {
 	var batches []types.OutgoingTxBatch
-	k.IterateOutgoingTxBatches(sdk.UnwrapSDKContext(c), func(_ []byte, batch types.InternalOutgoingTxBatch) bool {
+	k.IterateOutgoingTxBatches(sdk.UnwrapSDKContext(c), req.EvmChainPrefix, func(_ []byte, batch types.InternalOutgoingTxBatch) bool {
 		batches = append(batches, batch.ToExternal())
 		return len(batches) == MaxResults
 	})
@@ -206,7 +207,7 @@ func (k Keeper) OutgoingLogicCalls(
 	c context.Context,
 	req *types.QueryOutgoingLogicCallsRequest) (*types.QueryOutgoingLogicCallsResponse, error) {
 	var calls []types.OutgoingLogicCall
-	k.IterateOutgoingLogicCalls(sdk.UnwrapSDKContext(c), func(_ []byte, call types.OutgoingLogicCall) bool {
+	k.IterateOutgoingLogicCalls(sdk.UnwrapSDKContext(c), req.EvmChainPrefix, func(_ []byte, call types.OutgoingLogicCall) bool {
 		calls = append(calls, call)
 		return len(calls) == MaxResults
 	})
@@ -223,7 +224,7 @@ func (k Keeper) BatchRequestByNonce(
 		return nil, sdkerrors.Wrap(sdkerrors.ErrUnknownRequest, err.Error())
 	}
 
-	foundBatch := k.GetOutgoingTXBatch(sdk.UnwrapSDKContext(c), *addr, req.Nonce)
+	foundBatch := k.GetOutgoingTxBatch(sdk.UnwrapSDKContext(c), req.EvmChainPrefix, *addr, req.Nonce)
 	if foundBatch == nil {
 		return nil, sdkerrors.Wrap(sdkerrors.ErrUnknownRequest, "cannot find tx batch")
 	}
@@ -235,12 +236,13 @@ func (k Keeper) BatchRequestByNonce(
 func (k Keeper) BatchConfirms(
 	c context.Context,
 	req *types.QueryBatchConfirmsRequest) (*types.QueryBatchConfirmsResponse, error) {
+
 	var confirms []types.MsgConfirmBatch
 	contract, err := types.NewEthAddress(req.ContractAddress)
 	if err != nil {
 		return nil, sdkerrors.Wrap(err, "invalid contract address in request")
 	}
-	k.IterateBatchConfirmByNonceAndTokenContract(sdk.UnwrapSDKContext(c),
+	k.IterateBatchConfirmByNonceAndTokenContract(sdk.UnwrapSDKContext(c), req.EvmChainPrefix,
 		req.Nonce, *contract, func(_ []byte, c types.MsgConfirmBatch) bool {
 			confirms = append(confirms, c)
 			return false
@@ -252,7 +254,7 @@ func (k Keeper) BatchConfirms(
 func (k Keeper) LogicConfirms(
 	c context.Context,
 	req *types.QueryLogicConfirmsRequest) (*types.QueryLogicConfirmsResponse, error) {
-	confirms := k.GetLogicConfirmsByInvalidationIdAndNonce(sdk.UnwrapSDKContext(c), req.InvalidationId, req.InvalidationNonce)
+	confirms := k.GetLogicConfirmsByInvalidationIDAndNonce(sdk.UnwrapSDKContext(c), req.EvmChainPrefix, req.InvalidationId, req.InvalidationNonce)
 
 	return &types.QueryLogicConfirmsResponse{Confirms: confirms}, nil
 }
@@ -275,7 +277,7 @@ func (k Keeper) LastEventNonceByAddr(
 	if err := sdk.VerifyAddressFormat(validator.GetOperator()); err != nil {
 		return nil, sdkerrors.Wrap(err, "invalid validator address")
 	}
-	lastEventNonce := k.GetLastEventNonceByValidator(ctx, validator.GetOperator())
+	lastEventNonce := k.GetLastEventNonceByValidator(ctx, req.EvmChainPrefix, validator.GetOperator())
 	ret.EventNonce = lastEventNonce
 	return &ret, nil
 }
@@ -285,7 +287,7 @@ func (k Keeper) DenomToERC20(
 	c context.Context,
 	req *types.QueryDenomToERC20Request) (*types.QueryDenomToERC20Response, error) {
 	ctx := sdk.UnwrapSDKContext(c)
-	cosmosOriginated, erc20, err := k.DenomToERC20Lookup(ctx, req.Denom)
+	cosmosOriginated, erc20, err := k.DenomToERC20Lookup(ctx, req.EvmChainPrefix, req.Denom)
 	var ret types.QueryDenomToERC20Response
 	ret.Erc20 = erc20.GetAddress().Hex()
 	ret.CosmosOriginated = cosmosOriginated
@@ -302,7 +304,7 @@ func (k Keeper) ERC20ToDenom(
 	if err != nil {
 		return nil, sdkerrors.Wrapf(err, "invalid Erc20 in request: %s", req.Erc20)
 	}
-	cosmosOriginated, name := k.ERC20ToDenomLookup(ctx, *ethAddr)
+	cosmosOriginated, name := k.ERC20ToDenomLookup(ctx, req.EvmChainPrefix, *ethAddr)
 	var ret types.QueryERC20ToDenomResponse
 	ret.Denom = name
 	ret.CosmosOriginated = cosmosOriginated
@@ -318,14 +320,12 @@ func (k Keeper) GetLastObservedEthBlock(
 	ctx := sdk.UnwrapSDKContext(c)
 
 	// Use the old locator pre-Mercury, when the keys changed to hashed strings
-	var locator func(ctx sdk.Context) types.LastObservedEthereumBlockHeight
+	var ethHeight types.LastObservedEthereumBlockHeight
 	if req.UseV1Key {
-		locator = k.GetOldLastObservedEthereumBlockHeight
+		ethHeight = k.GetOldLastObservedEthereumBlockHeight(ctx)
 	} else {
-		locator = k.GetLastObservedEthereumBlockHeight
+		ethHeight = k.GetLastObservedEvmChainBlockHeight(ctx, req.EvmChainPrefix)
 	}
-
-	ethHeight := locator(ctx)
 
 	return &types.QueryLastObservedEthBlockResponse{Block: ethHeight.EthereumBlockHeight}, nil
 }
@@ -356,13 +356,12 @@ func (k Keeper) GetLastObservedEthNonce(
 	ctx := sdk.UnwrapSDKContext(c)
 
 	// Use the old locator pre-Mercury, when the keys changed to hashed strings
-	var locator func(ctx sdk.Context) uint64
+	var nonce uint64
 	if req.UseV1Key {
-		locator = k.GetOldLastObservedEventNonce
+		nonce = k.GetOldLastObservedEventNonce(ctx)
 	} else {
-		locator = k.GetLastObservedEventNonce
+		nonce = k.GetLastObservedEventNonce(ctx, req.EvmChainPrefix)
 	}
-	nonce := locator(ctx)
 
 	return &types.QueryLastObservedEthNonceResponse{Nonce: nonce}, nil
 }
@@ -385,7 +384,7 @@ func (k Keeper) GetAttestations(
 	ctx := sdk.UnwrapSDKContext(c)
 
 	// Use the old iterator pre-Mercury, when the keys changed to hashed strings
-	var iterator func(ctx sdk.Context, reverse bool, cb func([]byte, types.Attestation) bool)
+	var iterator func(ctx sdk.Context, evmChainPrefix string, reverse bool, cb func([]byte, types.Attestation) bool)
 	if req.UseV1Key {
 		iterator = k.IterateOldAttestations
 	} else {
@@ -406,7 +405,7 @@ func (k Keeper) GetAttestations(
 	reverse := strings.EqualFold(req.OrderBy, "desc")
 	filter := req.Height > 0 || req.Nonce > 0 || req.ClaimType != ""
 
-	iterator(ctx, reverse, func(_ []byte, att types.Attestation) (abort bool) {
+	iterator(ctx, req.EvmChainPrefix, reverse, func(_ []byte, att types.Attestation) (abort bool) {
 		claim, err := k.UnpackAttestationClaim(&att)
 		if err != nil {
 			iterErr = sdkerrors.Wrap(sdkerrors.ErrUnpackAny, "failed to unmarshal Ethereum claim")
@@ -451,7 +450,8 @@ func (k Keeper) GetAttestations(
 }
 
 // This is the pre-Mercury Attestation iterator, which used an old prefix
-func (k Keeper) IterateOldAttestations(ctx sdk.Context, reverse bool, cb func([]byte, types.Attestation) bool) {
+// _evmChainPrefix is just for migration
+func (k Keeper) IterateOldAttestations(ctx sdk.Context, _evmChainPrefix string, reverse bool, cb func([]byte, types.Attestation) bool) {
 	store := ctx.KVStore(k.storeKey)
 	prefix := v1.OracleAttestationKey
 
@@ -555,8 +555,8 @@ func (k Keeper) GetPendingSendToEth(
 	c context.Context,
 	req *types.QueryPendingSendToEth) (*types.QueryPendingSendToEthResponse, error) {
 	ctx := sdk.UnwrapSDKContext(c)
-	batches := k.GetOutgoingTxBatches(ctx)
-	unbatchedTxs := k.GetUnbatchedTransactions(ctx)
+	batches := k.GetOutgoingTxBatches(ctx, req.EvmChainPrefix)
+	unbatchedTxs := k.GetUnbatchedTransactions(ctx, req.EvmChainPrefix)
 	senderAddress := req.GetSenderAddress()
 	res := types.QueryPendingSendToEthResponse{
 		TransfersInBatches: []types.OutgoingTransferTx{},
@@ -583,6 +583,15 @@ func (k Keeper) GetPendingIbcAutoForwards(
 	req *types.QueryPendingIbcAutoForwards,
 ) (*types.QueryPendingIbcAutoForwardsResponse, error) {
 	ctx := sdk.UnwrapSDKContext(c)
-	pendingForwards := k.PendingIbcAutoForwards(ctx, req.Limit)
+	pendingForwards := k.PendingIbcAutoForwards(ctx, req.EvmChainPrefix, req.Limit)
 	return &types.QueryPendingIbcAutoForwardsResponse{PendingIbcAutoForwards: pendingForwards}, nil
+}
+
+func (k Keeper) GetListEvmChains(
+	c context.Context,
+	req *types.QueryListEvmChains,
+) (*types.QueryListEvmChainsResponse, error) {
+	ctx := sdk.UnwrapSDKContext(c)
+	evmChains := k.GetEvmChainsWithLimit(ctx, req.Limit)
+	return &types.QueryListEvmChainsResponse{EvmChains: evmChains}, nil
 }

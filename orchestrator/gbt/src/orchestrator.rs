@@ -5,6 +5,8 @@ use crate::utils::print_relaying_explanation;
 use clarity::constants::ZERO_ADDRESS;
 use cosmos_gravity::query::get_gravity_params;
 use deep_space::{CosmosPrivateKey, PrivateKey};
+use futures::future::join_all;
+use gravity_proto::gravity::QueryListEvmChains;
 use gravity_utils::connection_prep::{
     check_delegate_addresses, check_for_eth, wait_for_cosmos_node_ready,
 };
@@ -38,7 +40,7 @@ pub async fn orchestrator(
         if config_exists(home_dir) {
             let keys = load_keys(home_dir);
             if let Some(stored_key) = keys.orchestrator_phrase {
-                k = Some(CosmosPrivateKey::from_phrase(&stored_key, "").unwrap())
+                k = Some(CosmosPrivateKey::from_phrase(&stored_key, &args.passphrase).unwrap())
             }
         }
         if k.is_none() {
@@ -156,16 +158,39 @@ pub async fn orchestrator(
         metrics_server(&config.metrics);
     };
 
-    orchestrator_main_loop(
-        cosmos_key,
-        ethereum_key,
-        connections.web3.unwrap(),
-        connections.contact.unwrap(),
-        connections.grpc.unwrap(),
-        contract_address,
-        params.gravity_id,
-        fee,
-        config,
-    )
-    .await;
+    let mut grpc_client = connections.grpc.unwrap();
+
+    let list_evm_chains = grpc_client
+        .get_list_evm_chains(QueryListEvmChains { limit: 0 })
+        .await;
+
+    if let Err(status) = list_evm_chains {
+        warn!(
+            "Received an error when querying for evm chains: {}",
+            status.message()
+        );
+        return;
+    }
+
+    let web3 = connections.web3.unwrap();
+    let contact = connections.contact.unwrap();
+    let list_evm_chains = list_evm_chains.unwrap().into_inner().evm_chains;
+    let mut futures = vec![];
+    for evm_chain in &list_evm_chains {
+        futures.push(orchestrator_main_loop(
+            cosmos_key,
+            ethereum_key,
+            web3.clone(),
+            contact.clone(),
+            grpc_client.clone(),
+            &evm_chain.evm_chain_prefix,
+            contract_address,
+            params.gravity_id.clone(),
+            fee.clone(),
+            config.clone(),
+        ));
+    }
+
+    // join all process for all evm chains
+    join_all(futures).await;
 }

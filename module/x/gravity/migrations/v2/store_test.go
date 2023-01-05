@@ -58,7 +58,7 @@ func oldGetOutgoingTxPoolKey(fee types.InternalERC20Token, id uint64) string {
 }
 
 func oldGetOutgoingTxBatchKey(tokenContract string, nonce uint64) string {
-	return v1.OutgoingTXBatchKey + tokenContract + v1.ConvertByteArrToString(v2.UInt64Bytes(nonce))
+	return v1.OutgoingTxBatchKey + tokenContract + v1.ConvertByteArrToString(v2.UInt64Bytes(nonce))
 }
 
 func TestMigrateCosmosOriginatedDenomToERC20(t *testing.T) {
@@ -70,8 +70,12 @@ func TestMigrateCosmosOriginatedDenomToERC20(t *testing.T) {
 	err := v2.MigrateStore(input.Context, input.GravityStoreKey, input.Marshaler)
 	assert.NoError(t, err)
 
-	addr, found := input.GravityKeeper.GetCosmosOriginatedERC20(input.Context, denom)
-	assert.True(t, found)
+	bz := input.Context.KVStore(input.GravityStoreKey).Get(v2.GetDenomToERC20Key(denom))
+	assert.NotNil(t, bz)
+	addr, err := types.NewEthAddressFromBytes(bz)
+	assert.Nil(t, err)
+	assert.NotNil(t, addr)
+
 	// Triple check that the migration worked
 	assert.Equal(t, tokenContract, strings.ToLower(addr.GetAddress().Hex()))
 	assert.Equal(t, gethcommon.HexToAddress(tokenContract), addr.GetAddress())
@@ -90,12 +94,15 @@ func TestMigrateCosmosOriginatedERC20ToDenom(t *testing.T) {
 	tokenAddr, err := types.NewEthAddress(tokenContract)
 	assert.NoError(t, err)
 
-	storedDenom, found := input.GravityKeeper.GetCosmosOriginatedDenom(input.Context, *tokenAddr)
-	assert.True(t, found)
+	bz := input.Context.KVStore(input.GravityStoreKey).Get(v2.GetERC20ToDenomKey(*tokenAddr))
+	assert.NotNil(t, bz)
+
+	storedDenom := string(bz)
 	assert.Equal(t, denom, storedDenom)
 
 	var erc20ToDenoms = []types.ERC20ToDenom{}
-	input.GravityKeeper.IterateERC20ToDenom(input.Context, func(key []byte, erc20ToDenom *types.ERC20ToDenom) bool {
+	// empty evm chain prefix, because v2 use the single erc20 token for single network
+	input.GravityKeeper.IterateERC20ToDenom(input.Context, "", func(key []byte, erc20ToDenom *types.ERC20ToDenom) bool {
 		erc20ToDenoms = append(erc20ToDenoms, *erc20ToDenom)
 		return false
 	})
@@ -118,7 +125,7 @@ func TestMigrateEthAddressByValidator(t *testing.T) {
 	err = v2.MigrateStore(input.Context, input.GravityStoreKey, input.Marshaler)
 	assert.NoError(t, err)
 
-	valEthAddr, found := input.GravityKeeper.GetEthAddressByValidator(input.Context, validator)
+	valEthAddr, found := v2.GetEthAddressByValidator(input.Context, validator, input.Context.KVStore(input.GravityStoreKey))
 	assert.True(t, found)
 	assert.Equal(t, ethAddr, strings.ToLower(valEthAddr.GetAddress().Hex()))
 	assert.Equal(t, gethcommon.HexToAddress(ethAddr), valEthAddr.GetAddress())
@@ -145,7 +152,7 @@ func TestMigrateValidatorByEthAddressKey(t *testing.T) {
 	addr, err := types.NewEthAddress(ethAddr)
 	assert.NoError(t, err)
 
-	key := types.GetValidatorByEthAddressKey(*addr)
+	key := v2.GetValidatorByEthAddressKey(*addr)
 	res := input.Context.KVStore(input.GravityStoreKey).Get([]byte(key))
 	assert.Equal(t, validator.Bytes(), res)
 
@@ -159,6 +166,8 @@ func TestMigrateBatchConfirms(t *testing.T) {
 	input := keeper.CreateTestEnv(t)
 	defer func() { input.Context.Logger().Info("Asserting invariants at test end"); input.AssertInvariants() }()
 
+	evmChain := input.GravityKeeper.GetEvmChainData(input.Context, keeper.EthChainPrefix)
+
 	orch, err := sdk.AccAddressFromBech32("gravity1jpz0ahls2chajf78nkqczdwwuqcu97w6r48jzw")
 	assert.NoError(t, err)
 	ethAddr := "0x2a24af0501a534fca004ee1bd667b783f205a546"
@@ -167,11 +176,12 @@ func TestMigrateBatchConfirms(t *testing.T) {
 	signer := gethcommon.BytesToAddress(bytes.Repeat([]byte{0x1}, 20)).String()
 
 	confirm := &types.MsgConfirmBatch{
-		Nonce:         123,
-		TokenContract: ethAddr,
-		EthSigner:     signer,
-		Orchestrator:  orch.String(),
-		Signature:     "d34db33f",
+		Nonce:          123,
+		TokenContract:  ethAddr,
+		EthSigner:      signer,
+		Orchestrator:   orch.String(),
+		Signature:      "d34db33f",
+		EvmChainPrefix: evmChain.EvmChainPrefix,
 	}
 	confirmBytes := input.Marshaler.MustMarshal(confirm)
 	input.Context.KVStore(input.GravityStoreKey).
@@ -183,7 +193,7 @@ func TestMigrateBatchConfirms(t *testing.T) {
 	addr, err := types.NewEthAddress(ethAddr)
 	assert.NoError(t, err)
 
-	newKey := types.GetBatchConfirmKey(*addr, 123, orch)
+	newKey := v2.GetBatchConfirmKey(*addr, 123, orch)
 	entity := input.Context.KVStore(input.GravityStoreKey).Get(newKey)
 	assert.Equal(t, entity, confirmBytes)
 }
@@ -214,7 +224,7 @@ func TestMigrateOutgoingTxs(t *testing.T) {
 	err = v2.MigrateStore(input.Context, input.GravityStoreKey, input.Marshaler)
 	assert.NoError(t, err)
 
-	key := types.GetOutgoingTxPoolKey(*internalTx, outtx.Id)
+	key := v2.GetOutgoingTxPoolKey(*internalTx, outtx.Id)
 	res := input.Context.KVStore(input.GravityStoreKey).Get([]byte(key))
 	assert.Equal(t, inputBytes, res)
 }
@@ -243,7 +253,7 @@ func TestMigrateOutgoingTxBatches(t *testing.T) {
 	err = v2.MigrateStore(input.Context, input.GravityStoreKey, input.Marshaler)
 	assert.NoError(t, err)
 
-	key := types.GetOutgoingTxBatchKey(*addr, batch.BatchNonce)
+	key := v2.GetOutgoingTxBatchKey(*addr, batch.BatchNonce)
 	res := input.Context.KVStore(input.GravityStoreKey).Get([]byte(key))
 	assert.Equal(t, inputBytes, res)
 }
@@ -544,18 +554,20 @@ func TestMigrateStoreKeysFromValues(t *testing.T) {
 	}
 
 	dummyValsetConfirm := types.MsgValsetConfirm{
-		Nonce:        1,
-		Orchestrator: accAddr.String(),
-		EthAddress:   ethAddr.GetAddress().String(),
-		Signature:    "dummySignature",
+		Nonce:          1,
+		Orchestrator:   accAddr.String(),
+		EthAddress:     ethAddr.GetAddress().String(),
+		Signature:      "dummySignature",
+		EvmChainPrefix: keeper.EthChainPrefix,
 	}
 
 	dummyBatchConfirm := types.MsgConfirmBatch{
-		Nonce:         1,
-		TokenContract: tokenContract.GetAddress().String(),
-		EthSigner:     ethAddr.GetAddress().String(),
-		Orchestrator:  accAddr.String(),
-		Signature:     "dummySignature",
+		Nonce:          1,
+		TokenContract:  tokenContract.GetAddress().String(),
+		EthSigner:      ethAddr.GetAddress().String(),
+		Orchestrator:   accAddr.String(),
+		Signature:      "dummySignature",
+		EvmChainPrefix: keeper.EthChainPrefix,
 	}
 
 	// additional data for creating InternalOutgoingTransferTx
@@ -584,6 +596,7 @@ func TestMigrateStoreKeysFromValues(t *testing.T) {
 		EthereumSender: "0x00000000000000000002",
 		CosmosReceiver: "0x00000000000000000003",
 		Orchestrator:   "0x00000000000000000004",
+		EvmChainPrefix: keeper.EthChainPrefix,
 	}
 	any, _ := codectypes.NewAnyWithValue(&msg)
 
@@ -627,6 +640,7 @@ func TestMigrateStoreKeysFromValues(t *testing.T) {
 		EthSigner:         "dummySignature",
 		Orchestrator:      valAddr.String(),
 		Signature:         "dummySignature",
+		EvmChainPrefix:    keeper.EthChainPrefix,
 	}
 	decInvalidationId, err := hex.DecodeString(confirm.InvalidationId)
 	require.NoError(t, err)
@@ -641,13 +655,13 @@ func TestMigrateStoreKeysFromValues(t *testing.T) {
 		value        []byte
 	}{
 		{
-			"OutgoingTXBatchKey",
+			"OutgoingTxBatchKey",
 			v1.GetOutgoingTxBatchKey(*ethAddr, dummyOutgoingTxBatch.BatchNonce),
 			v2.GetOutgoingTxBatchKey(*ethAddr, dummyOutgoingTxBatch.BatchNonce),
 			marshaler.MustMarshal(&dummyOutgoingTxBatch),
 		},
 		{
-			"OutgoingTXBatchKey - Bytes Corner case",
+			"OutgoingTxBatchKey - Bytes Corner case",
 			v1.GetOutgoingTxBatchKey(*ethAddr, dummyCornerCaseBatch.BatchNonce),
 			v2.GetOutgoingTxBatchKey(*ethAddr, dummyCornerCaseBatch.BatchNonce),
 			marshaler.MustMarshal(&dummyCornerCaseBatch),
@@ -735,10 +749,11 @@ func TestMigrateInvalidStore(t *testing.T) {
 		CosmosBlockCreated: 123,
 	}
 	dummyValsetConfirm := types.MsgValsetConfirm{
-		Nonce:        1,
-		Orchestrator: invalidAccAddress,
-		EthAddress:   ethAddr.GetAddress().String(),
-		Signature:    "dummySignature",
+		Nonce:          1,
+		Orchestrator:   invalidAccAddress,
+		EthAddress:     ethAddr.GetAddress().String(),
+		Signature:      "dummySignature",
+		EvmChainPrefix: keeper.EthChainPrefix,
 	}
 
 	// creating test cases
@@ -748,8 +763,8 @@ func TestMigrateInvalidStore(t *testing.T) {
 		value        []byte
 	}{
 		{
-			"OutgoingTXBatchKey - Invalid Ethereum address",
-			v1.OutgoingTXBatchKey + invalidEthAddress + v1.ConvertByteArrToString(v2.UInt64Bytes(dummyOutgoingTxBatch.BatchNonce)),
+			"OutgoingTxBatchKey - Invalid Ethereum address",
+			v1.OutgoingTxBatchKey + invalidEthAddress + v1.ConvertByteArrToString(v2.UInt64Bytes(dummyOutgoingTxBatch.BatchNonce)),
 			marshaler.MustMarshal(&dummyOutgoingTxBatch),
 		},
 		{

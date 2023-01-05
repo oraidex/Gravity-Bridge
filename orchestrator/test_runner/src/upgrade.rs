@@ -1,11 +1,6 @@
 use crate::ibc_metadata::submit_and_pass_ibc_metadata_proposal;
-use crate::{happy_path_test, happy_path_test_v2, utils::*};
+use crate::{happy_path_test, happy_path_test_v2, utils::*, EVM_CHAIN_PREFIX};
 use clarity::Address as EthAddress;
-use cosmos_gravity::send::{
-    MSG_BATCH_SEND_TO_ETH_TYPE_URL, MSG_ERC20_DEPLOYED_CLAIM_TYPE_URL,
-    MSG_LOGIC_CALL_EXECUTED_CLAIM_TYPE_URL, MSG_SEND_TO_COSMOS_CLAIM_TYPE_URL,
-    MSG_VALSET_UPDATED_CLAIM_TYPE_URL,
-};
 use deep_space::client::ChainStatus;
 use deep_space::utils::decode_any;
 use deep_space::{Contact, CosmosPrivateKey};
@@ -15,6 +10,11 @@ use gravity_proto::gravity::{
     ClaimType, EthereumClaim, MsgBatchSendToEthClaim, MsgErc20DeployedClaim,
     MsgLogicCallExecutedClaim, MsgSendToCosmosClaim, MsgValsetUpdatedClaim,
     QueryAttestationsRequest,
+};
+use gravity_utils::types::{
+    MSG_BATCH_SEND_TO_ETH_TYPE_URL, MSG_ERC20_DEPLOYED_CLAIM_TYPE_URL,
+    MSG_LOGIC_CALL_EXECUTED_CLAIM_TYPE_URL, MSG_SEND_TO_COSMOS_CLAIM_TYPE_URL,
+    MSG_VALSET_UPDATED_CLAIM_TYPE_URL,
 };
 use std::time::Duration;
 use tokio::time::sleep as delay_for;
@@ -72,26 +72,7 @@ pub async fn upgrade_part_1(
     )
     .await;
 
-    let curr_height = contact.get_chain_status().await.unwrap();
-    let curr_height = if let ChainStatus::Moving { block_height } = curr_height {
-        block_height
-    } else {
-        panic!("Chain is not moving!");
-    };
-    let upgrade_height = (curr_height + 40) as i64;
-    let upgrade_prop_params = UpgradeProposalParams {
-        upgrade_height,
-        plan_name: "pleiades".to_string(),
-        plan_info: "Pleiades upgrade info here".to_string(),
-        proposal_title: "Pleiades upgrade proposal title here".to_string(),
-        proposal_desc: "Pleiades upgrade proposal description here".to_string(),
-    };
-    info!(
-        "Starting upgrade vote with params name: {}, height: {}",
-        upgrade_prop_params.plan_name.clone(),
-        upgrade_height
-    );
-    execute_upgrade_proposal(contact, &keys, None, upgrade_prop_params).await;
+    let upgrade_height = run_upgrade(contact, keys, "pleiades2".to_string(), false).await;
 
     // Check that the expected attestations exist
     check_attestations(grpc_client.clone(), MINIMUM_ATTESTATIONS).await;
@@ -169,6 +150,54 @@ pub async fn upgrade_part_2(
     .await;
 }
 
+pub async fn run_upgrade(
+    contact: &Contact,
+    keys: Vec<ValidatorKeys>,
+    plan_name: String,
+    wait_for_upgrade: bool,
+) -> i64 {
+    let curr_height = contact.get_chain_status().await.unwrap();
+    let curr_height = if let ChainStatus::Moving { block_height } = curr_height {
+        block_height
+    } else {
+        panic!("Chain is not moving!");
+    };
+    let upgrade_height = (curr_height + 40) as i64;
+    let upgrade_prop_params = UpgradeProposalParams {
+        upgrade_height,
+        plan_name,
+        plan_info: "upgrade info here".to_string(),
+        proposal_title: "proposal title here".to_string(),
+        proposal_desc: "proposal description here".to_string(),
+    };
+    info!(
+        "Starting upgrade vote with params name: {}, height: {}",
+        upgrade_prop_params.plan_name.clone(),
+        upgrade_height
+    );
+    execute_upgrade_proposal(contact, &keys, None, upgrade_prop_params).await;
+
+    if wait_for_upgrade {
+        info!(
+            "Ready to run the new binary, waiting for chain panic at upgrade height of {}!",
+            upgrade_height
+        );
+        // Wait for the block before the upgrade height, we won't get a response from the chain
+        let res = wait_for_block(contact, (upgrade_height - 1) as u64).await;
+        if res.is_err() {
+            panic!("Unable to wait for upgrade! {}", res.err().unwrap());
+        }
+
+        delay_for(Duration::from_secs(10)).await; // wait for the new block to halt the chain
+        let status = contact.get_chain_status().await;
+        info!(
+            "Done waiting, chain should be halted, status response: {:?}",
+            status
+        );
+    }
+    upgrade_height
+}
+
 /// Runs many integration tests, but only the ones which DO NOT corrupt state
 /// TODO: Add more tests here and determine they are 1. Reliable and 2. Executable twice on the same chain
 pub async fn run_all_recoverable_tests(
@@ -243,6 +272,7 @@ async fn check_attestations(grpc_client: QueryClient<Channel>, expected_attestat
             nonce: 0,
             height: 0,
             use_v1_key: false,
+            evm_chain_prefix: EVM_CHAIN_PREFIX.to_string(),
         })
         .await
         .expect("Failed to get attestations pre-upgrade")

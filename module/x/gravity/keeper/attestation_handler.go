@@ -57,9 +57,12 @@ func (a AttestationHandler) Handle(ctx sdk.Context, att types.Attestation, claim
 // In the event of a native receiver, bank module handles the transfer, otherwise an IBC transfer is initiated
 // Note: Previously SendToCosmos was referred to as a bridge "Deposit", as tokens are deposited into the gravity contract
 func (a AttestationHandler) handleSendToCosmos(ctx sdk.Context, claim types.MsgSendToCosmosClaim) error {
+
 	invalidAddress := false
 	// Validate the receiver as a valid bech32 address
-	receiverAddress, addressErr := types.IBCAddressFromBech32(claim.CosmosReceiver)
+	_, cosmosReceiver := claim.GetSourceChannelAndReceiver()
+
+	receiverAddress, addressErr := types.IBCAddressFromBech32(cosmosReceiver)
 
 	if addressErr != nil {
 		invalidAddress = true
@@ -68,12 +71,12 @@ func (a AttestationHandler) handleSendToCosmos(ctx sdk.Context, claim types.MsgS
 			"address", receiverAddress,
 			"cause", addressErr.Error(),
 			"claim type", claim.GetType(),
-			"id", types.GetAttestationKey(claim.GetEventNonce(), hash),
+			"id", types.GetAttestationKey(claim.EvmChainPrefix, claim.GetEventNonce(), hash),
 			"nonce", fmt.Sprint(claim.GetEventNonce()),
 		)
 	}
 	tokenAddress, errTokenAddress := types.NewEthAddress(claim.TokenContract)
-	ethereumSender, errEthereumSender := types.NewEthAddress(claim.EthereumSender)
+	evmChainSender, errEvmChainSender := types.NewEthAddress(claim.EthereumSender)
 	// nil address is not possible unless the validators get together and submit
 	// a bogus event, this would create lost tokens stuck in the bridge
 	// and not accessible to anyone
@@ -82,45 +85,45 @@ func (a AttestationHandler) handleSendToCosmos(ctx sdk.Context, claim types.MsgS
 		a.keeper.logger(ctx).Error("Invalid token contract",
 			"cause", errTokenAddress.Error(),
 			"claim type", claim.GetType(),
-			"id", types.GetAttestationKey(claim.GetEventNonce(), hash),
+			"id", types.GetAttestationKey(claim.EvmChainPrefix, claim.GetEventNonce(), hash),
 			"nonce", fmt.Sprint(claim.GetEventNonce()),
 		)
 		return sdkerrors.Wrap(errTokenAddress, "invalid token contract on claim")
 	}
 	// likewise nil sender would have to be caused by a bogus event
-	if errEthereumSender != nil {
+	if errEvmChainSender != nil {
 		hash, _ := claim.ClaimHash()
-		a.keeper.logger(ctx).Error("Invalid ethereum sender",
-			"cause", errEthereumSender.Error(),
+		a.keeper.logger(ctx).Error("Invalid evm chain sender",
+			"cause", errEvmChainSender.Error(),
 			"claim type", claim.GetType(),
-			"id", types.GetAttestationKey(claim.GetEventNonce(), hash),
+			"id", types.GetAttestationKey(claim.EvmChainPrefix, claim.GetEventNonce(), hash),
 			"nonce", fmt.Sprint(claim.GetEventNonce()),
 		)
-		return sdkerrors.Wrap(errTokenAddress, "invalid ethereum sender on claim")
+		return sdkerrors.Wrap(errTokenAddress, "invalid evn chain sender on claim")
 	}
 
 	// Block blacklisted asset transfers
 	// (these funds are unrecoverable for the blacklisted sender, they will instead be sent to community pool)
-	if a.keeper.IsOnBlacklist(ctx, *ethereumSender) {
+	if a.keeper.IsOnBlacklist(ctx, *evmChainSender) {
 		hash, _ := claim.ClaimHash()
 		a.keeper.logger(ctx).Error("Invalid SendToCosmos: receiver is blacklisted",
 			"address", receiverAddress,
 			"claim type", claim.GetType(),
-			"id", types.GetAttestationKey(claim.GetEventNonce(), hash),
+			"id", types.GetAttestationKey(claim.EvmChainPrefix, claim.GetEventNonce(), hash),
 			"nonce", fmt.Sprint(claim.GetEventNonce()),
 		)
 		invalidAddress = true
 	}
 
 	// Check if coin is Cosmos-originated asset and get denom
-	isCosmosOriginated, denom := a.keeper.ERC20ToDenomLookup(ctx, *tokenAddress)
+	isCosmosOriginated, denom := a.keeper.ERC20ToDenomLookup(ctx, claim.EvmChainPrefix, *tokenAddress)
 	coin := sdk.NewCoin(denom, claim.Amount)
 	coins := sdk.Coins{coin}
 
 	moduleAddr := a.keeper.accountKeeper.GetModuleAddress(types.ModuleName)
-	if !isCosmosOriginated { // We need to mint eth-originated coins (aka vouchers)
+	if !isCosmosOriginated { // We need to mint evm-originated coins (aka vouchers)
 		if err := a.mintEthereumOriginatedVouchers(ctx, moduleAddr, claim, coin); err != nil {
-			// TODO: Evaluate closely, if we can't mint an ethereum voucher, what should we do?
+			// TODO: Evaluate closely, if we can't mint an evm voucher, what should we do?
 			return err
 		}
 	}
@@ -143,7 +146,7 @@ func (a AttestationHandler) handleSendToCosmos(ctx sdk.Context, claim types.MsgS
 	}
 
 	// for whatever reason above, blacklisted, invalid string, etc this deposit is not valid
-	// we can't send the tokens back on the Ethereum side, and if we don't put them somewhere on
+	// we can't send the tokens back on the evm chain side, and if we don't put them somewhere on
 	// the cosmos side they will be lost an inaccessible even though they are locked in the bridge.
 	// so we deposit the tokens into the community pool for later use via governance vote
 	if invalidAddress {
@@ -152,7 +155,7 @@ func (a AttestationHandler) handleSendToCosmos(ctx sdk.Context, claim types.MsgS
 			a.keeper.logger(ctx).Error("Failed community pool send",
 				"cause", err.Error(),
 				"claim type", claim.GetType(),
-				"id", types.GetAttestationKey(claim.GetEventNonce(), hash),
+				"id", types.GetAttestationKey(claim.EvmChainPrefix, claim.GetEventNonce(), hash),
 				"nonce", fmt.Sprint(claim.GetEventNonce()),
 			)
 			return sdkerrors.Wrap(err, "failed to send to Community pool")
@@ -184,7 +187,7 @@ func (a AttestationHandler) handleSendToCosmos(ctx sdk.Context, claim types.MsgS
 	return nil
 }
 
-// Upon acceptance of sufficient validator BatchSendToEth claims: burn ethereum originated vouchers, invalidate pending
+// Upon acceptance of sufficient validator BatchSendToEth claims: burn evm originated vouchers, invalidate pending
 // batches with lower claim.BatchNonce, and clean up state
 // Note: Previously SendToEth was referred to as a bridge "Withdrawal", as tokens are withdrawn from the gravity contract
 func (a AttestationHandler) handleBatchSendToEth(ctx sdk.Context, claim types.MsgBatchSendToEthClaim) error {
@@ -203,7 +206,7 @@ func (a AttestationHandler) handleBatchSendToEth(ctx sdk.Context, claim types.Ms
 	return err
 }
 
-// Upon acceptance of sufficient ERC20 Deployed claims, register claim.TokenContract as the canonical ethereum
+// Upon acceptance of sufficient ERC20 Deployed claims, register claim.TokenContract as the canonical evm
 // representation of the metadata governance previously voted for
 func (a AttestationHandler) handleErc20Deployed(ctx sdk.Context, claim types.MsgERC20DeployedClaim) error {
 	tokenAddress, err := types.NewEthAddress(claim.TokenContract)
@@ -211,7 +214,7 @@ func (a AttestationHandler) handleErc20Deployed(ctx sdk.Context, claim types.Msg
 		return sdkerrors.Wrap(err, "invalid token contract on claim")
 	}
 	// Disallow re-registration when a token already has a canonical representation
-	existingERC20, exists := a.keeper.GetCosmosOriginatedERC20(ctx, claim.CosmosDenom)
+	existingERC20, exists := a.keeper.GetCosmosOriginatedERC20(ctx, claim.EvmChainPrefix, claim.CosmosDenom)
 	if exists {
 		return sdkerrors.Wrap(
 			types.ErrInvalid,
@@ -246,7 +249,7 @@ func (a AttestationHandler) handleErc20Deployed(ctx sdk.Context, claim types.Msg
 	// to find the DenomUnit which matches up to the main token "display" value. Then we take the
 	// "exponent" from this DenomUnit.
 	// If the correct DenomUnit is not found, it will default to 0. This will result in there being no decimal places
-	// in the token's ERC20 on Ethereum. So, for example, if this happened with Atom, 1 Atom would appear on Ethereum
+	// in the token's ERC20 on evm chain. So, for example, if this happened with Atom, 1 Atom would appear on evm chain
 	// as 1 million Atoms, having 6 extra places before the decimal point.
 	// This will only happen with a Denom Metadata which is for all intents and purposes invalid, but I am not sure
 	// this is checked for at any other point.
@@ -265,7 +268,7 @@ func (a AttestationHandler) handleErc20Deployed(ctx sdk.Context, claim types.Msg
 	}
 
 	// Add to denom-erc20 mapping
-	a.keeper.setCosmosOriginatedDenomToERC20(ctx, claim.CosmosDenom, *tokenAddress)
+	a.keeper.setCosmosOriginatedDenomToERC20(ctx, claim.EvmChainPrefix, claim.CosmosDenom, *tokenAddress)
 
 	err = ctx.EventManager().EmitTypedEvent(
 		&types.EventERC20DeployedClaim{
@@ -294,7 +297,7 @@ func (a AttestationHandler) handleValsetUpdated(ctx sdk.Context, claim types.Msg
 	// check the contents of the validator set against the store, if they differ we know that the bridge has been
 	// highjacked
 	if claim.ValsetNonce != 0 { // Handle regular valsets
-		trustedValset := a.keeper.GetValset(ctx, claim.ValsetNonce)
+		trustedValset := a.keeper.GetValset(ctx, claim.EvmChainPrefix, claim.ValsetNonce)
 		if trustedValset == nil {
 			ctx.Logger().Error("Received attestation for a valset which does not exist in store", "nonce", claim.ValsetNonce, "claim", claim)
 			return sdkerrors.Wrapf(types.ErrInvalidValset, "attested valset (%v) does not exist in store", claim.ValsetNonce)
@@ -306,10 +309,10 @@ func (a AttestationHandler) handleValsetUpdated(ctx sdk.Context, claim types.Msg
 			panic(fmt.Sprintf("Potential bridge highjacking: observed valset (%+v) does not match stored valset (%+v)! %s", observedValset, trustedValset, err.Error()))
 		}
 
-		a.keeper.SetLastObservedValset(ctx, observedValset)
+		a.keeper.SetLastObservedValset(ctx, claim.EvmChainPrefix, observedValset)
 	} else { // The 0th valset is not stored on chain init, but we need to set it as the last one
 		// Do not update Height, it's the first valset
-		a.keeper.SetLastObservedValset(ctx, claimSet)
+		a.keeper.SetLastObservedValset(ctx, claim.EvmChainPrefix, claimSet)
 	}
 
 	// if the reward is greater than zero and the reward token
@@ -318,10 +321,10 @@ func (a AttestationHandler) handleValsetUpdated(ctx sdk.Context, claim types.Msg
 	// token, or burn non cosmos native tokens
 	if claim.RewardAmount.GT(sdk.ZeroInt()) && claim.RewardToken != types.ZeroAddressString {
 		// Check if coin is Cosmos-originated asset and get denom
-		isCosmosOriginated, denom := a.keeper.ERC20ToDenomLookup(ctx, *rewardAddress)
+		isCosmosOriginated, denom := a.keeper.ERC20ToDenomLookup(ctx, claim.EvmChainPrefix, *rewardAddress)
 		if isCosmosOriginated {
 			// If it is cosmos originated, mint some coins to account
-			// for coins that now exist on Ethereum and may eventually come
+			// for coins that now exist on evm chain and may eventually come
 			// back to Cosmos.
 			//
 			// Note the flow is
@@ -351,7 +354,7 @@ func (a AttestationHandler) handleValsetUpdated(ctx sdk.Context, claim types.Msg
 			// coins := sdk.Coins{sdk.NewCoin(denom, claim.RewardAmount)}
 			// a.bankKeeper.BurnCoins(ctx, types.ModuleName, coins)
 
-			// if you want to issue Ethereum originated tokens remove this panic and uncomment
+			// if you want to issue evm originated tokens remove this panic and uncomment
 			// the above code but note that you will have to constantly replenish the tokens in the
 			// module or your chain will eventually halt.
 			panic("Can not use Ethereum originated token as reward!")
@@ -389,13 +392,13 @@ func (a AttestationHandler) assertSentAmount(ctx sdk.Context, moduleAddr sdk.Acc
 	}
 }
 
-// mintEthereumOriginatedVouchers creates new "gravity0x..." vouchers for ethereum tokens and asserts both that the
+// mintEthereumOriginatedVouchers creates new "EvmChainPrefix0x..." vouchers for evm tokens and asserts both that the
 // supply of that voucher does not exceed Uint256 max value, and the minted balance is correct
 func (a AttestationHandler) mintEthereumOriginatedVouchers(
 	ctx sdk.Context, moduleAddr sdk.AccAddress, claim types.MsgSendToCosmosClaim, coin sdk.Coin,
 ) error {
 	preMintBalance := a.keeper.bankKeeper.GetBalance(ctx, moduleAddr, coin.Denom)
-	// Ensure that users are not bridging an impossible amount, only 2^256 - 1 tokens can exist on ethereum
+	// Ensure that users are not bridging an impossible amount, only 2^256 - 1 tokens can exist on evm chain
 	prevSupply := a.keeper.bankKeeper.GetSupply(ctx, coin.Denom)
 	newSupply := new(big.Int).Add(prevSupply.Amount.BigInt(), claim.Amount.BigInt())
 	if newSupply.BitLen() > 256 { // new supply overflows uint256
@@ -415,7 +418,7 @@ func (a AttestationHandler) mintEthereumOriginatedVouchers(
 		a.keeper.logger(ctx).Error("Failed minting",
 			"cause", err.Error(),
 			"claim type", claim.GetType(),
-			"id", types.GetAttestationKey(claim.GetEventNonce(), hash),
+			"id", types.GetAttestationKey(claim.EvmChainPrefix, claim.GetEventNonce(), hash),
 			"nonce", fmt.Sprint(claim.GetEventNonce()),
 		)
 		return sdkerrors.Wrapf(err, "mint vouchers coins: %s", coins)
@@ -446,8 +449,8 @@ func (a AttestationHandler) sendCoinToCosmosAccount(
 		hash, _ := claim.ClaimHash()
 		a.keeper.logger(ctx).Error("Invalid bech32 CosmosReceiver",
 			"cause", err.Error(), "address", receiver,
-			"claimType", claim.GetType(),
-			"id", types.GetAttestationKey(claim.GetEventNonce(), hash),
+			"claim type", claim.GetType(),
+			"id", types.GetAttestationKey(claim.EvmChainPrefix, claim.GetEventNonce(), hash),
 			"nonce", fmt.Sprint(claim.GetEventNonce()),
 		)
 		return false, err
@@ -463,26 +466,32 @@ func (a AttestationHandler) sendCoinToCosmosAccount(
 	if accountPrefix == nativePrefix { // Send to a native gravity account
 		return false, a.sendCoinToLocalAddress(ctx, claim, receiver, coin)
 	} else { // Try to send tokens to IBC chain, fall back to native send on errors
-		hrpIbcRecord, err := a.keeper.bech32IbcKeeper.GetHrpIbcRecord(ctx, accountPrefix)
-		if err != nil {
-			hash, _ := claim.ClaimHash()
-			a.keeper.logger(ctx).Error("Unregistered foreign prefix",
-				"cause", err.Error(), "address", receiver,
-				"claim type", claim.GetType(),
-				"id", types.GetAttestationKey(claim.GetEventNonce(), hash),
-				"nonce", fmt.Sprint(claim.GetEventNonce()),
-			)
+		// get source channel from account prefix or from HrpIbcRecord
+		sourceChannel, cosmosReceiver := claim.GetSourceChannelAndReceiver()
+		// if sourceChannel is empty
+		if len(sourceChannel) == 0 {
+			hrpIbcRecord, err := a.keeper.bech32IbcKeeper.GetHrpIbcRecord(ctx, accountPrefix)
+			if err != nil {
+				hash, _ := claim.ClaimHash()
+				a.keeper.logger(ctx).Error("Unregistered foreign prefix",
+					"cause", err.Error(), "address", receiver,
+					"claim type", claim.GetType(),
+					"id", types.GetAttestationKey(claim.EvmChainPrefix, claim.GetEventNonce(), hash),
+					"nonce", fmt.Sprint(claim.GetEventNonce()),
+				)
 
-			// Fall back to sending tokens to native account
-			return false, sdkerrors.Wrap(
-				a.sendCoinToLocalAddress(ctx, claim, receiver, coin),
-				"Unregistered foreign prefix, send via x/bank",
-			)
+				// Fall back to sending tokens to native account
+				return false, sdkerrors.Wrap(
+					a.sendCoinToLocalAddress(ctx, claim, receiver, coin),
+					"Unregistered foreign prefix, send via x/bank",
+				)
+			}
+			sourceChannel = hrpIbcRecord.SourceChannel
 		}
 
 		// Add the SendToCosmos to the Pending IBC Auto-Forward Queue, which when processed will send the funds to a
 		// local address before sending via IBC
-		err = a.addToIbcAutoForwardQueue(ctx, receiver, accountPrefix, coin, hrpIbcRecord.SourceChannel, claim)
+		err = a.addToIbcAutoForwardQueue(ctx, receiver, cosmosReceiver, coin, sourceChannel, claim)
 
 		if err != nil {
 			a.keeper.logger(ctx).Error(
@@ -507,18 +516,18 @@ func (a AttestationHandler) sendCoinToLocalAddress(
 
 	err = a.keeper.bankKeeper.SendCoinsFromModuleToAccount(ctx, types.ModuleName, receiver, sdk.NewCoins(coin))
 	if err != nil {
-		// someone attempted to send tokens to a blacklisted user from Ethereum, log and send to Community pool
+		// someone attempted to send tokens to a blacklisted user from evm chain, log and send to Community pool
 		hash, _ := claim.ClaimHash()
 		a.keeper.logger(ctx).Error("Blacklisted deposit",
 			"cause", err.Error(),
 			"claim type", claim.GetType(),
-			"id", types.GetAttestationKey(claim.GetEventNonce(), hash),
+			"id", types.GetAttestationKey(claim.EvmChainPrefix, claim.GetEventNonce(), hash),
 			"nonce", fmt.Sprint(claim.GetEventNonce()),
 		)
 	} else { // no error
 		a.keeper.logger(ctx).Info("SendToCosmos to local gravity receiver", "ethSender", claim.EthereumSender,
 			"receiver", receiver, "denom", coin.Denom, "amount", coin.Amount.String(), "nonce", claim.EventNonce,
-			"ethContract", claim.TokenContract, "ethBlockHeight", claim.EthBlockHeight,
+			"ethContract", claim.TokenContract, "BlockHeight", claim.EthBlockHeight,
 			"cosmosBlockHeight", ctx.BlockHeight(),
 		)
 		if err := ctx.EventManager().EmitTypedEvent(&types.EventSendToCosmosLocal{
@@ -540,26 +549,22 @@ func (a AttestationHandler) sendCoinToLocalAddress(
 func (a AttestationHandler) addToIbcAutoForwardQueue(
 	ctx sdk.Context,
 	receiver sdk.AccAddress,
-	accountPrefix string,
+	cosmosReceiver string,
 	coin sdk.Coin,
 	channel string,
 	claim types.MsgSendToCosmosClaim,
 ) error {
-	if strings.TrimSpace(accountPrefix) == "" {
-		panic("invalid call to addToIbcAutoForwardQueue: provided accountPrefix is empty!")
-	}
-	acctPrefix, err := types.GetPrefixFromBech32(claim.CosmosReceiver)
-	if err != nil || acctPrefix != accountPrefix {
-		panic(fmt.Sprintf("invalid call to addToIbcAutoForwardQueue: invalid or inaccurate accountPrefix %s for receiver %s!", accountPrefix, claim.CosmosReceiver))
+	if strings.TrimSpace(cosmosReceiver) == "" {
+		panic(fmt.Sprintf("invalid call to addToIbcAutoForwardQueue: invalid or inaccurate receiver %s!", claim.CosmosReceiver))
 	}
 
 	forward := types.PendingIbcAutoForward{
-		ForeignReceiver: claim.CosmosReceiver,
+		ForeignReceiver: cosmosReceiver,
 		Token:           &coin,
 		IbcChannel:      channel,
 		EventNonce:      claim.EventNonce,
 	}
 
 	// forward will be validated when adding to queue, error only returned if unable to send funds to local user
-	return a.keeper.addPendingIbcAutoForward(ctx, forward, claim.TokenContract)
+	return a.keeper.addPendingIbcAutoForward(ctx, forward, claim.EvmChainPrefix, claim.TokenContract)
 }

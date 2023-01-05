@@ -36,6 +36,11 @@ func RegisterProposalTypes() {
 		govtypes.RegisterProposalType(types.ProposalTypeAirdrop)
 		govtypes.RegisterProposalTypeCodec(&types.AirdropProposal{}, airdrop)
 	}
+	addEvmChain := "gravity/AddEvmChain"
+	if !govtypes.IsValidProposalType(strings.TrimPrefix(addEvmChain, prefix)) {
+		govtypes.RegisterProposalType(types.ProposalTypeAddEvmChain)
+		govtypes.RegisterProposalTypeCodec(&types.AddEvmChainProposal{}, addEvmChain)
+	}
 }
 
 func NewGravityProposalHandler(k Keeper) govtypes.Handler {
@@ -47,6 +52,8 @@ func NewGravityProposalHandler(k Keeper) govtypes.Handler {
 			return k.HandleAirdropProposal(ctx, c)
 		case *types.IBCMetadataProposal:
 			return k.HandleIBCMetadataProposal(ctx, c)
+		case *types.AddEvmChainProposal:
+			return k.HandleAddEvmChainProposal(ctx, c)
 
 		default:
 			return sdkerrors.Wrapf(sdkerrors.ErrUnknownRequest, "unrecognized Gravity proposal content type: %T", c)
@@ -60,22 +67,61 @@ func NewGravityProposalHandler(k Keeper) govtypes.Handler {
 // history, we roll back oracle history and reset the parameters
 func (k Keeper) HandleUnhaltBridgeProposal(ctx sdk.Context, p *types.UnhaltBridgeProposal) error {
 	ctx.Logger().Info("Gov vote passed: Resetting oracle history", "nonce", p.TargetNonce)
-	pruneAttestationsAfterNonce(ctx, k, p.TargetNonce)
+	pruneAttestationsAfterNonce(ctx, p.EvmChainPrefix, k, p.TargetNonce)
+	return nil
+}
+
+// In the event we need to add new evm chains, we can create a new proposal
+func (k Keeper) HandleAddEvmChainProposal(ctx sdk.Context, p *types.AddEvmChainProposal) error {
+
+	isEvmChainExist := k.GetEvmChainData(ctx, p.EvmChainPrefix)
+	if isEvmChainExist != nil {
+		return sdkerrors.Wrap(types.ErrInvalid, "The proposed EVM Chain already exists on-chain. Cannot re-add it!")
+	}
+
+	ctx.Logger().Info("Gov vote passed: Adding new EVM chain", "evm chain prefix", p.EvmChainPrefix)
+	evmChain := types.EvmChainData{
+		EvmChain:           types.EvmChain{EvmChainPrefix: p.EvmChainPrefix, EvmChainName: p.EvmChainName},
+		GravityNonces:      types.GravityNonces{},
+		Valsets:            []types.Valset{},
+		ValsetConfirms:     []types.MsgValsetConfirm{},
+		Batches:            []types.OutgoingTxBatch{},
+		BatchConfirms:      []types.MsgConfirmBatch{},
+		LogicCalls:         []types.OutgoingLogicCall{},
+		LogicCallConfirms:  []types.MsgConfirmLogicCall{},
+		Attestations:       []types.Attestation{},
+		DelegateKeys:       []types.MsgSetOrchestratorAddress{},
+		Erc20ToDenoms:      []types.ERC20ToDenom{},
+		UnbatchedTransfers: []types.OutgoingTransferTx{},
+	}
+	k.SetEvmChainData(ctx, evmChain.EvmChain)
+
+	chainPrefix := p.EvmChainPrefix
+	k.SetLatestValsetNonce(ctx, chainPrefix, evmChain.GravityNonces.LatestValsetNonce)
+	k.setLastObservedEventNonce(ctx, chainPrefix, evmChain.GravityNonces.LastObservedNonce)
+	k.SetLastSlashedValsetNonce(ctx, chainPrefix, evmChain.GravityNonces.LastSlashedValsetNonce)
+	k.SetLastSlashedBatchBlock(ctx, chainPrefix, evmChain.GravityNonces.LastSlashedBatchBlock)
+	k.SetLastSlashedLogicCallBlock(ctx, chainPrefix, evmChain.GravityNonces.LastSlashedLogicCallBlock)
+	k.setID(ctx, evmChain.GravityNonces.LastTxPoolId, types.AppendChainPrefix(types.KeyLastTXPoolID, chainPrefix))
+	k.setID(ctx, evmChain.GravityNonces.LastBatchId, types.AppendChainPrefix(types.KeyLastOutgoingBatchID, chainPrefix))
+	k.SetEvmChainData(ctx, evmChain.EvmChain)
+
+	initBridgeDataFromGenesis(ctx, k, evmChain)
 	return nil
 }
 
 // Iterate over all attestations currently being voted on in order of nonce
 // and prune those that are older than nonceCutoff
-func pruneAttestationsAfterNonce(ctx sdk.Context, k Keeper, nonceCutoff uint64) {
+func pruneAttestationsAfterNonce(ctx sdk.Context, evmChainPrefix string, k Keeper, nonceCutoff uint64) {
 	// Decide on the most recent nonce we can actually roll back to
-	lastObserved := k.GetLastObservedEventNonce(ctx)
+	lastObserved := k.GetLastObservedEventNonce(ctx, evmChainPrefix)
 	if nonceCutoff < lastObserved || nonceCutoff == 0 {
 		ctx.Logger().Error("Attempted to reset to a nonce before the last \"observed\" event, which is not allowed", "lastObserved", lastObserved, "nonce", nonceCutoff)
 		return
 	}
 
 	// Get relevant event nonces
-	attmap, keys := k.GetAttestationMapping(ctx)
+	attmap, keys := k.GetAttestationMapping(ctx, evmChainPrefix)
 
 	// Discover all affected validators whose LastEventNonce must be reset to nonceCutoff
 
@@ -109,10 +155,10 @@ func pruneAttestationsAfterNonce(ctx sdk.Context, k Keeper, nonceCutoff uint64) 
 		if err != nil {
 			panic(sdkerrors.Wrap(err, "invalid validator address affected by bridge reset"))
 		}
-		valLastNonce := k.GetLastEventNonceByValidator(ctx, val)
+		valLastNonce := k.GetLastEventNonceByValidator(ctx, evmChainPrefix, val)
 		if valLastNonce > nonceCutoff {
 			ctx.Logger().Info("Resetting validator's last event nonce due to bridge unhalt", "validator", vote, "lastEventNonce", valLastNonce, "resetNonce", nonceCutoff)
-			k.SetLastEventNonceByValidator(ctx, val, nonceCutoff)
+			k.SetLastEventNonceByValidator(ctx, evmChainPrefix, val, nonceCutoff)
 		}
 	}
 }
@@ -238,11 +284,10 @@ func (k Keeper) HandleIBCMetadataProposal(ctx sdk.Context, p *types.IBCMetadataP
 	// if metadata already exists then changing it is only a good idea if we have not already deployed an ERC20
 	// for this denom if we have we can't change it
 	_, metadataExists := k.bankKeeper.GetDenomMetaData(ctx, p.IbcDenom)
-	_, erc20RepresentationExists := k.GetCosmosOriginatedERC20(ctx, p.IbcDenom)
+	_, erc20RepresentationExists := k.GetCosmosOriginatedERC20(ctx, p.EvmChainPrefix, p.IbcDenom)
 	if metadataExists && erc20RepresentationExists {
 		ctx.Logger().Info("invalid trying to set metadata when ERC20 has already been deployed")
 		return sdkerrors.Wrap(types.ErrInvalid, "Metadata can only be changed before ERC20 is created")
-
 	}
 
 	// write out metadata, this will update existing metadata if no erc20 has been deployed

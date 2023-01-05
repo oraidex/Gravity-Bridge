@@ -2,6 +2,7 @@ package keeper
 
 import (
 	"bytes"
+	"sync"
 	"testing"
 	"time"
 
@@ -52,6 +53,10 @@ import (
 	upgradeclient "github.com/cosmos/cosmos-sdk/x/upgrade/client"
 	upgradekeeper "github.com/cosmos/cosmos-sdk/x/upgrade/keeper"
 	upgradetypes "github.com/cosmos/cosmos-sdk/x/upgrade/types"
+	ibctransferkeeper "github.com/cosmos/ibc-go/v3/modules/apps/transfer/keeper"
+	ibctransfertypes "github.com/cosmos/ibc-go/v3/modules/apps/transfer/types"
+	ibchost "github.com/cosmos/ibc-go/v3/modules/core/24-host"
+	ibckeeper "github.com/cosmos/ibc-go/v3/modules/core/keeper"
 	gethcommon "github.com/ethereum/go-ethereum/common"
 	"github.com/stretchr/testify/require"
 	"github.com/tendermint/tendermint/libs/log"
@@ -59,16 +64,18 @@ import (
 	tmversion "github.com/tendermint/tendermint/proto/tendermint/version"
 	dbm "github.com/tendermint/tm-db"
 
-	ibctransferkeeper "github.com/cosmos/ibc-go/v3/modules/apps/transfer/keeper"
-	ibctransfertypes "github.com/cosmos/ibc-go/v3/modules/apps/transfer/types"
-	ibchost "github.com/cosmos/ibc-go/v3/modules/core/24-host"
-	ibckeeper "github.com/cosmos/ibc-go/v3/modules/core/keeper"
-
 	bech32ibckeeper "github.com/osmosis-labs/bech32-ibc/x/bech32ibc/keeper"
 	bech32ibctypes "github.com/osmosis-labs/bech32-ibc/x/bech32ibc/types"
 
 	gravityparams "github.com/Gravity-Bridge/Gravity-Bridge/module/app/params"
 	"github.com/Gravity-Bridge/Gravity-Bridge/module/x/gravity/types"
+)
+
+const (
+	// some popular networks
+	EthChainPrefix     = "ethereum"
+	PolygonChainPrefix = "polygon"
+	BscChainPrefix     = "bsc"
 )
 
 var (
@@ -91,6 +98,8 @@ var (
 		evidence.AppModuleBasic{},
 		vesting.AppModuleBasic{},
 	)
+
+	initConfig sync.Once
 )
 
 var (
@@ -201,7 +210,6 @@ var (
 
 	// InitCoins holds the number of coins to initialize an account with
 	InitCoins = sdk.NewCoins(sdk.NewCoin(TestingStakeParams.BondDenom, InitTokens))
-
 	// StakingAmount holds the staking power to start a validator with
 	StakingAmount = sdk.TokensFromConsensusPower(10, sdk.DefaultPowerReduction)
 
@@ -237,6 +245,11 @@ var (
 		ValsetReward:                 sdk.Coin{Denom: "", Amount: sdk.ZeroInt()},
 		BridgeActive:                 true,
 	}
+
+	EvmChains = []types.EvmChain{
+		{EvmChainPrefix: EthChainPrefix, EvmChainName: "Ethereum Mainnet"},
+		{EvmChainPrefix: BscChainPrefix, EvmChainName: "BSC Mainnet"},
+	}
 )
 
 // TestInput stores the various keepers required to test gravity
@@ -249,6 +262,7 @@ type TestInput struct {
 	BankKeeper        bankkeeper.BaseKeeper
 	GovKeeper         govkeeper.Keeper
 	IbcTransferKeeper ibctransferkeeper.Keeper
+	IBCKeeper         *ibckeeper.Keeper
 	Context           sdk.Context
 	Marshaler         codec.Codec
 	LegacyAmino       *codec.LegacyAmino
@@ -300,7 +314,7 @@ func SetupFiveValChain(t *testing.T) (TestInput, sdk.Context) {
 		if err != nil {
 			panic("found invalid address in EthAddrs")
 		}
-		input.GravityKeeper.SetEthAddressForValidator(input.Context, addr, *ethAddr)
+		input.GravityKeeper.SetEvmAddressForValidator(input.Context, addr, *ethAddr)
 
 		input.GravityKeeper.SetOrchestratorValidator(input.Context, addr, OrchAddrs[i])
 	}
@@ -359,7 +373,7 @@ func SetupTestChain(t *testing.T, weights []uint64, setDelegateAddresses bool) (
 			if err != nil {
 				panic("found invalid address in EthAddrs")
 			}
-			input.GravityKeeper.SetEthAddressForValidator(input.Context, valAddr, *ethAddr)
+			input.GravityKeeper.SetEvmAddressForValidator(input.Context, valAddr, *ethAddr)
 			input.GravityKeeper.SetOrchestratorValidator(input.Context, valAddr, accAddr)
 
 			// increase block height by 100 blocks
@@ -369,7 +383,7 @@ func SetupTestChain(t *testing.T, weights []uint64, setDelegateAddresses bool) (
 			staking.EndBlocker(input.Context, input.StakingKeeper)
 
 			// set a request every time.
-			input.GravityKeeper.SetValsetRequest(input.Context)
+			input.GravityKeeper.SetValsetRequest(input.Context, EthChainPrefix)
 		}
 
 	}
@@ -383,8 +397,22 @@ func SetupTestChain(t *testing.T, weights []uint64, setDelegateAddresses bool) (
 	return input, input.Context
 }
 
+func SetupTestConfig() {
+	initConfig.Do(func() {
+		// Set config for testing only one
+		config := sdk.GetConfig()
+		config.SetBech32PrefixForAccount("gravity", "gravitypub")
+		config.SetBech32PrefixForValidator("gravityvaloper", "gravityvaloperpub")
+		config.SetBech32PrefixForConsensusNode("gravityvalcons", "gravityvalconspub")
+		config.Seal()
+	})
+}
+
 // CreateTestEnv creates the keeper testing environment for gravity
 func CreateTestEnv(t *testing.T) TestInput {
+
+	SetupTestConfig()
+
 	t.Helper()
 
 	// Initialize store keys
@@ -603,6 +631,7 @@ func CreateTestEnv(t *testing.T) TestInput {
 		ibcKeeper.ChannelKeeper, marshaler, keyBech32Ibc,
 		ibcTransferKeeper,
 	)
+
 	// Set the native prefix to the "gravity" value we like in module/config/config.go
 	err = bech32IbcKeeper.SetNativeHrp(ctx, sdk.GetConfig().GetBech32AccountAddrPrefix())
 	if err != nil {
@@ -610,7 +639,7 @@ func CreateTestEnv(t *testing.T) TestInput {
 	}
 
 	k := NewKeeper(gravityKey, getSubspace(paramsKeeper, types.DefaultParamspace), marshaler, &bankKeeper,
-		&stakingKeeper, &slashingKeeper, &distKeeper, &accountKeeper, &ibcTransferKeeper, &bech32IbcKeeper)
+		&stakingKeeper, &slashingKeeper, &distKeeper, &accountKeeper, &ibcTransferKeeper, &bech32IbcKeeper, ibcKeeper.ChannelKeeper)
 
 	stakingKeeper = *stakingKeeper.SetHooks(
 		stakingtypes.NewMultiStakingHooks(
@@ -621,32 +650,38 @@ func CreateTestEnv(t *testing.T) TestInput {
 	)
 
 	// set gravityIDs for batches and tx items, simulating genesis setup
-	k.SetLatestValsetNonce(ctx, 0)
-	k.setLastObservedEventNonce(ctx, 0)
-	k.SetLastSlashedValsetNonce(ctx, 0)
-	k.SetLastSlashedBatchBlock(ctx, 0)
-	k.SetLastSlashedLogicCallBlock(ctx, 0)
-	k.setID(ctx, 0, types.KeyLastTXPoolID)
-	k.setID(ctx, 0, types.KeyLastOutgoingBatchID)
+	for _, evmChain := range EvmChains {
+		k.SetLatestValsetNonce(ctx, evmChain.EvmChainPrefix, 0)
+		k.setLastObservedEventNonce(ctx, evmChain.EvmChainPrefix, 0)
+		k.SetLastSlashedValsetNonce(ctx, evmChain.EvmChainPrefix, 0)
+		k.SetLastSlashedBatchBlock(ctx, evmChain.EvmChainPrefix, 0)
+		k.SetLastSlashedLogicCallBlock(ctx, evmChain.EvmChainPrefix, 0)
+		k.setID(ctx, 0, types.AppendChainPrefix(types.KeyLastTXPoolID, evmChain.EvmChainPrefix))
+		k.setID(ctx, 0, types.AppendChainPrefix(types.KeyLastOutgoingBatchID, evmChain.EvmChainPrefix))
+		k.SetEvmChainData(ctx, evmChain)
+	}
 
 	k.SetParams(ctx, TestingGravityParams)
 
 	testInput := TestInput{
-		GravityKeeper:   k,
-		AccountKeeper:   accountKeeper,
-		BankKeeper:      bankKeeper,
-		StakingKeeper:   stakingKeeper,
-		SlashingKeeper:  slashingKeeper,
-		DistKeeper:      distKeeper,
-		GovKeeper:       govKeeper,
-		Context:         ctx,
-		Marshaler:       marshaler,
-		LegacyAmino:     cdc,
-		GravityStoreKey: gravityKey,
+		GravityKeeper:     k,
+		AccountKeeper:     accountKeeper,
+		BankKeeper:        bankKeeper,
+		StakingKeeper:     stakingKeeper,
+		SlashingKeeper:    slashingKeeper,
+		IbcTransferKeeper: ibcTransferKeeper,
+		IBCKeeper:         &ibcKeeper,
+		DistKeeper:        distKeeper,
+		GovKeeper:         govKeeper,
+		Context:           ctx,
+		Marshaler:         marshaler,
+		LegacyAmino:       cdc,
+		GravityStoreKey:   gravityKey,
 	}
 	// check invariants before starting
 	testInput.Context.Logger().Info("Asserting invariants on new test env")
 	testInput.AssertInvariants()
+
 	return testInput
 }
 
@@ -723,8 +758,8 @@ func MakeTestEncodingConfig() gravityparams.EncodingConfig {
 }
 
 // MintVouchersFromAir creates new gravity vouchers given erc20tokens
-func MintVouchersFromAir(t *testing.T, ctx sdk.Context, k Keeper, dest sdk.AccAddress, amount types.InternalERC20Token) sdk.Coin {
-	coin := amount.GravityCoin()
+func MintVouchersFromAir(t *testing.T, ctx sdk.Context, k Keeper, emvChainPrefix string, dest sdk.AccAddress, amount types.InternalERC20Token) sdk.Coin {
+	coin := amount.GravityCoin(emvChainPrefix)
 	vouchers := sdk.Coins{coin}
 	err := k.bankKeeper.MintCoins(ctx, types.ModuleName, vouchers)
 	require.NoError(t, err)

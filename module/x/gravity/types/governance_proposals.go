@@ -12,6 +12,7 @@ const (
 	ProposalTypeUnhaltBridge = "UnhaltBridge"
 	ProposalTypeAirdrop      = "Airdrop"
 	ProposalTypeIBCMetadata  = "IBCMetadata"
+	ProposalTypeAddEvmChain  = "AddEvmChain"
 )
 
 func (p *UnhaltBridgeProposal) GetTitle() string { return p.Title }
@@ -124,5 +125,34 @@ func (p IBCMetadataProposal) String() string {
   Token Decimals:    %d
   Token Description: %s
 `, p.Title, p.Description, p.Metadata.Name, p.Metadata.Symbol, p.Metadata.Display, decimals, p.Metadata.Description))
+	return b.String()
+}
+
+func (p *AddEvmChainProposal) GetTitle() string { return p.Title }
+
+func (p *AddEvmChainProposal) GetDescription() string { return p.Description }
+
+func (p *AddEvmChainProposal) ProposalRoute() string { return RouterKey }
+
+func (p *AddEvmChainProposal) ProposalType() string {
+	return ProposalTypeUnhaltBridge
+}
+
+func (p *AddEvmChainProposal) ValidateBasic() error {
+	err := govtypes.ValidateAbstract(p)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+func (p AddEvmChainProposal) String() string {
+	var b strings.Builder
+	b.WriteString(fmt.Sprintf(`Add EVM Chain Proposal:
+  Title:          %s
+  Description:    %s
+  Evm Chain Name:   %s
+  Evm Chain Prefix: %s
+`, p.Title, p.Description, p.EvmChainName, p.EvmChainPrefix))
 	return b.String()
 }

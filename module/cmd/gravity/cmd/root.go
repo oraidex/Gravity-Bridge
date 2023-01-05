@@ -8,6 +8,7 @@ import (
 
 	"github.com/cosmos/cosmos-sdk/baseapp"
 	"github.com/cosmos/cosmos-sdk/client"
+	clientconfig "github.com/cosmos/cosmos-sdk/client/config"
 	"github.com/cosmos/cosmos-sdk/client/debug"
 	"github.com/cosmos/cosmos-sdk/client/flags"
 	"github.com/cosmos/cosmos-sdk/client/keys"
@@ -33,9 +34,11 @@ import (
 	ethermint "github.com/evmos/ethermint/crypto/hd"
 
 	"fmt"
+	"math/rand"
+
 	"github.com/Gravity-Bridge/Gravity-Bridge/module/app"
 	"github.com/Gravity-Bridge/Gravity-Bridge/module/app/params"
-	"math/rand"
+	appconfig "github.com/Gravity-Bridge/Gravity-Bridge/module/config"
 )
 
 // InvCheckPeriodPrimes A collection of all primes in (15, 200), for use with the crisis module's Invariant Check Period
@@ -49,6 +52,14 @@ var InvCheckPeriodPrimes = []uint{17, 19, 23, 29, 31, 37, 41, 43, 47, 53, 59, 61
 // main function.
 func NewRootCmd() (*cobra.Command, params.EncodingConfig) {
 	encodingConfig := app.MakeEncodingConfig()
+
+	// prevent changing config
+	cfg := sdk.GetConfig()
+	cfg.SetBech32PrefixForAccount(appconfig.Bech32PrefixAccAddr, appconfig.Bech32PrefixAccPub)
+	cfg.SetBech32PrefixForValidator(appconfig.Bech32PrefixValAddr, appconfig.Bech32PrefixValPub)
+	cfg.SetBech32PrefixForConsensusNode(appconfig.Bech32PrefixConsAddr, appconfig.Bech32PrefixConsPub)
+	cfg.Seal()
+
 	// nolint: exhaustruct
 	initClientCtx := client.Context{}.
 		WithCodec(encodingConfig.Marshaler).
@@ -59,13 +70,25 @@ func NewRootCmd() (*cobra.Command, params.EncodingConfig) {
 		WithAccountRetriever(types.AccountRetriever{}).
 		WithBroadcastMode(flags.BroadcastBlock).
 		WithHomeDir(app.DefaultNodeHome).
-		WithKeyringOptions(ethermint.EthSecp256k1Option())
+		WithKeyringOptions(ethermint.EthSecp256k1Option()).
+		WithViper(appconfig.Bech32Prefix)
 
 	// nolint: exhaustruct
 	rootCmd := &cobra.Command{
 		Use:   "gravity",
 		Short: "Stargate Gravity App",
 		PersistentPreRunE: func(cmd *cobra.Command, _ []string) error {
+
+			initClientCtx, err := client.ReadPersistentCommandFlags(initClientCtx, cmd.Flags())
+			if err != nil {
+				return err
+			}
+
+			initClientCtx, err = clientconfig.ReadFromClientConfig(initClientCtx)
+			if err != nil {
+				return err
+			}
+
 			if err := client.SetCmdClientContextHandler(initClientCtx, cmd); err != nil {
 				return err
 			}

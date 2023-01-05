@@ -2,7 +2,6 @@ package app
 
 import (
 	"fmt"
-	vestingtypes "github.com/cosmos/cosmos-sdk/x/auth/vesting/types"
 	"io"
 	"net/http"
 	"os"
@@ -22,6 +21,7 @@ import (
 	// Cosmos SDK
 	"github.com/cosmos/cosmos-sdk/baseapp"
 	"github.com/cosmos/cosmos-sdk/client"
+	nodeservice "github.com/cosmos/cosmos-sdk/client/grpc/node"
 	"github.com/cosmos/cosmos-sdk/client/grpc/tmservice"
 	"github.com/cosmos/cosmos-sdk/client/rpc"
 	"github.com/cosmos/cosmos-sdk/codec"
@@ -36,13 +36,14 @@ import (
 	"github.com/cosmos/cosmos-sdk/types/module"
 	"github.com/cosmos/cosmos-sdk/version"
 	"github.com/cosmos/cosmos-sdk/x/auth"
-	"github.com/cosmos/cosmos-sdk/x/auth/ante"
+	sdkante "github.com/cosmos/cosmos-sdk/x/auth/ante"
 	authrest "github.com/cosmos/cosmos-sdk/x/auth/client/rest"
 	authkeeper "github.com/cosmos/cosmos-sdk/x/auth/keeper"
 	authsims "github.com/cosmos/cosmos-sdk/x/auth/simulation"
 	authtx "github.com/cosmos/cosmos-sdk/x/auth/tx"
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
 	"github.com/cosmos/cosmos-sdk/x/auth/vesting"
+	vestingtypes "github.com/cosmos/cosmos-sdk/x/auth/vesting/types"
 	"github.com/cosmos/cosmos-sdk/x/authz"
 	authzkeeper "github.com/cosmos/cosmos-sdk/x/authz/keeper"
 	authzmodule "github.com/cosmos/cosmos-sdk/x/authz/module"
@@ -109,6 +110,7 @@ import (
 	// Tharsis Ethermint
 	ethante "github.com/evmos/ethermint/app/ante"
 
+	"github.com/Gravity-Bridge/Gravity-Bridge/module/app/ante"
 	gravityparams "github.com/Gravity-Bridge/Gravity-Bridge/module/app/params"
 	"github.com/Gravity-Bridge/Gravity-Bridge/module/app/upgrades"
 	v2 "github.com/Gravity-Bridge/Gravity-Bridge/module/app/upgrades/v2"
@@ -484,6 +486,7 @@ func NewGravityApp(
 		&accountKeeper,
 		&ibcTransferKeeper,
 		&bech32IbcKeeper,
+		ibcKeeper.ChannelKeeper, // interface default is reference
 	)
 	app.gravityKeeper = &gravityKeeper
 
@@ -536,10 +539,14 @@ func NewGravityApp(
 	app.govKeeper = &govKeeper
 
 	ibcTransferAppModule := transfer.NewAppModule(ibcTransferKeeper)
-	ibcTransferIBCModule := transfer.NewIBCModule(ibcTransferKeeper)
+
+	// create IBC module from top to bottom of stack
+	var transferStack porttypes.IBCModule
+	transferStack = transfer.NewIBCModule(ibcTransferKeeper)
+	transferStack = gravity.NewIBCMiddleware(transferStack, *app.gravityKeeper)
 
 	ibcRouter := porttypes.NewRouter()
-	ibcRouter.AddRoute(ibctransfertypes.ModuleName, ibcTransferIBCModule)
+	ibcRouter.AddRoute(ibctransfertypes.ModuleName, transferStack)
 	ibcKeeper.SetRouter(ibcRouter)
 
 	evidenceKeeper := *evidencekeeper.NewKeeper(
@@ -732,15 +739,16 @@ func NewGravityApp(
 	app.SetInitChainer(app.InitChainer)
 	app.SetBeginBlocker(app.BeginBlocker)
 
-	options := ante.HandlerOptions{
+	options := sdkante.HandlerOptions{
 		AccountKeeper:   accountKeeper,
 		BankKeeper:      bankKeeper,
-		FeegrantKeeper:  nil,
+		FeegrantKeeper:  nil, // Note: If feegrant keeper is added, change the bridge_fees.go antehandler to use it as well
 		SignModeHandler: encodingConfig.TxConfig.SignModeHandler(),
 		SigGasConsumer:  ethante.DefaultSigVerificationGasConsumer,
 	}
 
-	ah, err := newAnteHandler(options, &ibcKeeper, appCodec)
+	// Note: If feegrant keeper is added, add it to the NewAnteHandler call instead of nil
+	ah, err := ante.NewAnteHandler(options, &gravityKeeper, &accountKeeper, &bankKeeper, nil, &ibcKeeper, appCodec)
 	if err != nil {
 		panic("invalid antehandler created")
 	}
@@ -923,6 +931,10 @@ func (app *Gravity) RegisterTendermintService(clientCtx client.Context) {
 	tmservice.RegisterTendermintService(app.BaseApp.GRPCQueryRouter(), clientCtx, app.interfaceRegistry)
 }
 
+func (app *Gravity) RegisterNodeService(clientCtx client.Context) {
+	nodeservice.RegisterNodeService(clientCtx, app.GRPCQueryRouter())
+}
+
 // GetMaccPerms returns a mapping of the application's module account permissions.
 func GetMaccPerms() map[string][]string {
 	modAccPerms := make(map[string][]string)
@@ -955,7 +967,7 @@ func initParamsKeeper(appCodec codec.BinaryCodec, legacyAmino *codec.LegacyAmino
 func (app *Gravity) registerUpgradeHandlers() {
 	upgrades.RegisterUpgradeHandlers(
 		app.mm, app.configurator, app.accountKeeper, app.bankKeeper, app.bech32IbcKeeper, app.distrKeeper,
-		app.mintKeeper, app.stakingKeeper, app.upgradeKeeper, app.crisisKeeper, app.ibcTransferKeeper,
+		app.mintKeeper, app.stakingKeeper, app.upgradeKeeper, app.crisisKeeper, app.ibcTransferKeeper, app.gravityKeeper,
 	)
 }
 

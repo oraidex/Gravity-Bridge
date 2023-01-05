@@ -18,6 +18,7 @@ func TestQueryGetAttestations(t *testing.T) {
 	encCfg := app.MakeEncodingConfig()
 	k := input.GravityKeeper
 	ctx := input.Context
+	evmChain := input.GravityKeeper.GetEvmChainData(ctx, keeper.EthChainPrefix)
 
 	// Some query functions use additional logic to determine if they should look up values using the v1 key, or the new
 	// hashed bytes keys used post-Mercury, so we must set the block height high enough here for the correct data to be found
@@ -28,7 +29,7 @@ func TestQueryGetAttestations(t *testing.T) {
 	queryClient := types.NewQueryClient(queryHelper)
 
 	numAttestations := 10
-	createAttestations(t, k, ctx, numAttestations)
+	createAttestations(t, k, ctx, evmChain.EvmChainPrefix, numAttestations)
 
 	testCases := []struct {
 		name      string
@@ -39,7 +40,7 @@ func TestQueryGetAttestations(t *testing.T) {
 	}{
 		{
 			name:      "no params (all attestations ascending)",
-			req:       &types.QueryAttestationsRequest{},
+			req:       &types.QueryAttestationsRequest{EvmChainPrefix: evmChain.EvmChainPrefix},
 			numResult: numAttestations,
 			nonces:    []uint64{1, 2, 3, 4, 5, 6, 7, 8, 9, 10},
 			expectErr: false,
@@ -47,7 +48,8 @@ func TestQueryGetAttestations(t *testing.T) {
 		{
 			name: "all attestations descending",
 			req: &types.QueryAttestationsRequest{
-				OrderBy: "desc",
+				OrderBy:        "desc",
+				EvmChainPrefix: evmChain.EvmChainPrefix,
 			},
 			numResult: numAttestations,
 			nonces:    []uint64{10, 9, 8, 7, 6, 5, 4, 3, 2, 1},
@@ -56,7 +58,8 @@ func TestQueryGetAttestations(t *testing.T) {
 		{
 			name: "all attestations descending",
 			req: &types.QueryAttestationsRequest{
-				OrderBy: "desc",
+				OrderBy:        "desc",
+				EvmChainPrefix: evmChain.EvmChainPrefix,
 			},
 			numResult: numAttestations,
 			nonces:    []uint64{10, 9, 8, 7, 6, 5, 4, 3, 2, 1},
@@ -65,8 +68,9 @@ func TestQueryGetAttestations(t *testing.T) {
 		{
 			name: "filter by height and limit",
 			req: &types.QueryAttestationsRequest{
-				Height: 1,
-				Limit:  5,
+				Height:         1,
+				Limit:          5,
+				EvmChainPrefix: evmChain.EvmChainPrefix,
 			},
 			numResult: 5,
 			nonces:    []uint64{1, 2, 3, 4, 5},
@@ -75,8 +79,9 @@ func TestQueryGetAttestations(t *testing.T) {
 		{
 			name: "filter by nonce and limit",
 			req: &types.QueryAttestationsRequest{
-				Nonce: 7,
-				Limit: 5,
+				Nonce:          7,
+				Limit:          5,
+				EvmChainPrefix: evmChain.EvmChainPrefix,
 			},
 			numResult: 1,
 			nonces:    []uint64{7},
@@ -85,8 +90,9 @@ func TestQueryGetAttestations(t *testing.T) {
 		{
 			name: "filter by missing nonce",
 			req: &types.QueryAttestationsRequest{
-				Nonce: 100000,
-				Limit: 5,
+				Nonce:          100000,
+				Limit:          5,
+				EvmChainPrefix: evmChain.EvmChainPrefix,
 			},
 			numResult: 0,
 			nonces:    []uint64{},
@@ -95,8 +101,9 @@ func TestQueryGetAttestations(t *testing.T) {
 		{
 			name: "filter by invalid claim type",
 			req: &types.QueryAttestationsRequest{
-				ClaimType: "foo",
-				Limit:     5,
+				ClaimType:      "foo",
+				Limit:          5,
+				EvmChainPrefix: evmChain.EvmChainPrefix,
 			},
 			numResult: 0,
 			nonces:    []uint64{},
@@ -127,7 +134,7 @@ func TestQueryGetAttestations(t *testing.T) {
 	}
 }
 
-func createAttestations(t *testing.T, k keeper.Keeper, ctx sdk.Context, length int) {
+func createAttestations(t *testing.T, k keeper.Keeper, ctx sdk.Context, evmChainPrefix string, length int) {
 	t.Helper()
 
 	for i := 0; i < length; i++ {
@@ -140,6 +147,7 @@ func createAttestations(t *testing.T, k keeper.Keeper, ctx sdk.Context, length i
 			EthereumSender: "0x00000000000000000002",
 			CosmosReceiver: "0x00000000000000000003",
 			Orchestrator:   "0x00000000000000000004",
+			EvmChainPrefix: evmChainPrefix,
 		}
 
 		any, err := codectypes.NewAnyWithValue(&msg)
@@ -154,6 +162,6 @@ func createAttestations(t *testing.T, k keeper.Keeper, ctx sdk.Context, length i
 		hash, err := msg.ClaimHash()
 		require.NoError(t, err)
 
-		k.SetAttestation(ctx, nonce, hash, att)
+		k.SetAttestation(ctx, evmChainPrefix, nonce, hash, att)
 	}
 }

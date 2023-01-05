@@ -3,6 +3,7 @@ package types
 import (
 	"encoding/hex"
 	"fmt"
+	"strings"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
@@ -72,16 +73,19 @@ func (msg *MsgSetOrchestratorAddress) GetSigners() []sdk.AccAddress {
 
 // NewMsgValsetConfirm returns a new msgValsetConfirm
 func NewMsgValsetConfirm(
+	evmChainPrefix string,
 	nonce uint64,
 	ethAddress EthAddress,
 	validator sdk.AccAddress,
 	signature string,
+
 ) *MsgValsetConfirm {
 	return &MsgValsetConfirm{
-		Nonce:        nonce,
-		Orchestrator: validator.String(),
-		EthAddress:   ethAddress.GetAddress().Hex(),
-		Signature:    signature,
+		Nonce:          nonce,
+		Orchestrator:   validator.String(),
+		EthAddress:     ethAddress.GetAddress().Hex(),
+		Signature:      signature,
+		EvmChainPrefix: evmChainPrefix,
 	}
 }
 
@@ -118,12 +122,14 @@ func (msg *MsgValsetConfirm) GetSigners() []sdk.AccAddress {
 }
 
 // NewMsgSendToEth returns a new msgSendToEth
-func NewMsgSendToEth(sender sdk.AccAddress, destAddress EthAddress, send sdk.Coin, bridgeFee sdk.Coin) *MsgSendToEth {
+func NewMsgSendToEth(sender sdk.AccAddress, destAddress EthAddress, send sdk.Coin, bridgeFee sdk.Coin, chainFee sdk.Coin, evmChainPrefix string) *MsgSendToEth {
 	return &MsgSendToEth{
-		Sender:    sender.String(),
-		EthDest:   destAddress.GetAddress().Hex(),
-		Amount:    send,
-		BridgeFee: bridgeFee,
+		Sender:         sender.String(),
+		EthDest:        destAddress.GetAddress().Hex(),
+		Amount:         send,
+		BridgeFee:      bridgeFee, // This is paid to the Ethereum Relayer
+		ChainFee:       chainFee,  // This is paid to Cosmos stakers
+		EvmChainPrefix: evmChainPrefix,
 	}
 }
 
@@ -140,21 +146,35 @@ func (msg MsgSendToEth) ValidateBasic() error {
 		return sdkerrors.Wrap(sdkerrors.ErrInvalidAddress, msg.Sender)
 	}
 
+	if msg.EvmChainPrefix == "" {
+		return fmt.Errorf("evm_chain_prefix is empty")
+	}
+
 	// fee and send must be of the same denom
+	// bridge fee (paid to relayers) and send must be of the same denom
 	if msg.Amount.Denom != msg.BridgeFee.Denom {
 		return sdkerrors.Wrap(sdkerrors.ErrInvalidCoins,
-			fmt.Sprintf("fee and amount must be the same type %s != %s", msg.Amount.Denom, msg.BridgeFee.Denom))
+			fmt.Sprintf("bridge fee (paid to relayers) and amount must be the same type %s != %s", msg.Amount.Denom, msg.BridgeFee.Denom))
+	}
+	// chain fee (paid to cosmos stakers) and send must be of the same denom
+	if msg.Amount.Denom != msg.ChainFee.Denom {
+		return sdkerrors.Wrap(sdkerrors.ErrInvalidCoins,
+			fmt.Sprintf("chain fee (paid to stakers) and amount must be the same type %s != %s", msg.Amount.Denom, msg.ChainFee.Denom))
 	}
 
 	if !msg.Amount.IsValid() || msg.Amount.IsZero() {
 		return sdkerrors.Wrap(sdkerrors.ErrInvalidCoins, "amount")
 	}
 	if !msg.BridgeFee.IsValid() {
-		return sdkerrors.Wrap(sdkerrors.ErrInvalidCoins, "fee")
+		return sdkerrors.Wrap(sdkerrors.ErrInvalidCoins, "bridge fee")
+	}
+	if !msg.ChainFee.IsValid() {
+		return sdkerrors.Wrap(sdkerrors.ErrInvalidCoins, "chain fee")
 	}
 	if err := ValidateEthAddress(msg.EthDest); err != nil {
 		return sdkerrors.Wrap(err, "ethereum address")
 	}
+
 	// TODO validate fee is sufficient, fixed fee to start
 	return nil
 }
@@ -175,10 +195,11 @@ func (msg MsgSendToEth) GetSigners() []sdk.AccAddress {
 }
 
 // NewMsgRequestBatch returns a new msgRequestBatch
-func NewMsgRequestBatch(orchestrator sdk.AccAddress) *MsgRequestBatch {
+func NewMsgRequestBatch(evmChainPrefix string, orchestrator sdk.AccAddress) *MsgRequestBatch {
 	return &MsgRequestBatch{
-		Sender: orchestrator.String(),
-		Denom:  "",
+		Sender:         orchestrator.String(),
+		Denom:          "",
+		EvmChainPrefix: evmChainPrefix,
 	}
 }
 
@@ -190,9 +211,15 @@ func (msg MsgRequestBatch) Type() string { return "request_batch" }
 
 // ValidateBasic performs stateless checks
 func (msg MsgRequestBatch) ValidateBasic() error {
+
+	if msg.EvmChainPrefix == "" {
+		return fmt.Errorf("evm_chain_prefix is empty")
+	}
+
 	if _, err := sdk.AccAddressFromBech32(msg.Sender); err != nil {
 		return sdkerrors.Wrap(sdkerrors.ErrInvalidAddress, msg.Sender)
 	}
+
 	return nil
 }
 
@@ -219,6 +246,11 @@ func (msg MsgConfirmBatch) Type() string { return "confirm_batch" }
 
 // ValidateBasic performs stateless checks
 func (msg MsgConfirmBatch) ValidateBasic() error {
+
+	if msg.EvmChainPrefix == "" {
+		return fmt.Errorf("evm_chain_prefix is empty")
+	}
+
 	if _, err := sdk.AccAddressFromBech32(msg.Orchestrator); err != nil {
 		return sdkerrors.Wrap(sdkerrors.ErrInvalidAddress, msg.Orchestrator)
 	}
@@ -257,6 +289,11 @@ func (msg MsgConfirmLogicCall) Type() string { return "confirm_logic" }
 
 // ValidateBasic performs stateless checks
 func (msg MsgConfirmLogicCall) ValidateBasic() error {
+
+	if msg.EvmChainPrefix == "" {
+		return fmt.Errorf("evm_chain_prefix is empty")
+	}
+
 	if _, err := sdk.AccAddressFromBech32(msg.Orchestrator); err != nil {
 		return sdkerrors.Wrap(sdkerrors.ErrInvalidAddress, msg.Orchestrator)
 	}
@@ -311,6 +348,8 @@ type EthereumClaim interface {
 	// validators claims agree. Therefore it's extremely important that this include all elements of the claim
 	// with the exception of the orchestrator who sent it in, which will be used as a different part of the index
 	ClaimHash() ([]byte, error)
+
+	GetEvmChainPrefix() string
 }
 
 // nolint: exhaustruct
@@ -319,6 +358,7 @@ var (
 	_ EthereumClaim = &MsgBatchSendToEthClaim{}
 	_ EthereumClaim = &MsgERC20DeployedClaim{}
 	_ EthereumClaim = &MsgLogicCallExecutedClaim{}
+	_ EthereumClaim = &MsgValsetUpdatedClaim{}
 )
 
 // GetType returns the type of the claim
@@ -328,6 +368,11 @@ func (msg *MsgSendToCosmosClaim) GetType() ClaimType {
 
 // ValidateBasic performs stateless checks
 func (msg *MsgSendToCosmosClaim) ValidateBasic() error {
+
+	if msg.EvmChainPrefix == "" {
+		return fmt.Errorf("evm_chain_prefix is empty")
+	}
+
 	if err := ValidateEthAddress(msg.EthereumSender); err != nil {
 		return sdkerrors.Wrap(err, "eth sender")
 	}
@@ -396,7 +441,7 @@ const (
 // note that the Orchestrator is the only field excluded from this hash, this is because that value is used higher up in the store
 // structure for who has made what claim and is verified by the msg ante-handler for signatures
 func (msg *MsgSendToCosmosClaim) ClaimHash() ([]byte, error) {
-	path := fmt.Sprintf("%d/%d/%s/%s/%s/%s", msg.EventNonce, msg.EthBlockHeight, msg.TokenContract, msg.Amount.String(), msg.EthereumSender, msg.CosmosReceiver)
+	path := fmt.Sprintf("%s/%d/%d/%s/%s/%s/%s", msg.EvmChainPrefix, msg.EventNonce, msg.EthBlockHeight, msg.TokenContract, msg.Amount.String(), msg.EthereumSender, msg.CosmosReceiver)
 	return tmhash.Sum([]byte(path)), nil
 }
 
@@ -404,7 +449,20 @@ func (msg *MsgExecuteIbcAutoForwards) ValidateBasic() error {
 	if _, err := sdk.AccAddressFromBech32(msg.Executor); err != nil {
 		return sdkerrors.Wrap(err, "Unable to parse executor as a valid bech32 address")
 	}
+
+	if msg.EvmChainPrefix == "" {
+		return fmt.Errorf("evm_chain_prefix is empty")
+	}
+
 	return nil
+}
+
+func (msg *MsgSendToCosmosClaim) GetSourceChannelAndReceiver() (string, string) {
+	if ind := strings.Index(msg.CosmosReceiver, "/"); ind != -1 {
+		return msg.CosmosReceiver[0:ind], msg.CosmosReceiver[ind+1:]
+	} else {
+		return "", msg.CosmosReceiver
+	}
 }
 
 func (msg *MsgExecuteIbcAutoForwards) GetSigners() []sdk.AccAddress {
@@ -429,6 +487,9 @@ func (e *MsgBatchSendToEthClaim) ValidateBasic() error {
 	if e.BatchNonce == 0 {
 		return fmt.Errorf("batch_nonce == 0")
 	}
+	if e.EvmChainPrefix == "" {
+		return fmt.Errorf("evm_chain_prefix is empty")
+	}
 	if err := ValidateEthAddress(e.TokenContract); err != nil {
 		return sdkerrors.Wrap(err, "erc20 token")
 	}
@@ -438,9 +499,9 @@ func (e *MsgBatchSendToEthClaim) ValidateBasic() error {
 	return nil
 }
 
-// Hash implements WithdrawBatch.Hash
+// Hash implements WithdrawBatch.Hash, add evm chain prefix at top
 func (msg *MsgBatchSendToEthClaim) ClaimHash() ([]byte, error) {
-	path := fmt.Sprintf("%d/%d/%d/%s", msg.EventNonce, msg.EthBlockHeight, msg.BatchNonce, msg.TokenContract)
+	path := fmt.Sprintf("%s/%d/%d/%d/%s", msg.EvmChainPrefix, msg.EventNonce, msg.EthBlockHeight, msg.BatchNonce, msg.TokenContract)
 	return tmhash.Sum([]byte(path)), nil
 }
 
@@ -497,6 +558,9 @@ func (e *MsgERC20DeployedClaim) ValidateBasic() error {
 	if e.EventNonce == 0 {
 		return fmt.Errorf("nonce == 0")
 	}
+	if e.EvmChainPrefix == "" {
+		return fmt.Errorf("evm_chain_prefix is empty")
+	}
 	return nil
 }
 
@@ -537,7 +601,7 @@ func (msg MsgERC20DeployedClaim) Route() string { return RouterKey }
 // note that the Orchestrator is the only field excluded from this hash, this is because that value is used higher up in the store
 // structure for who has made what claim and is verified by the msg ante-handler for signatures
 func (b *MsgERC20DeployedClaim) ClaimHash() ([]byte, error) {
-	path := fmt.Sprintf("%d/%d/%s/%s/%s/%s/%d", b.EventNonce, b.EthBlockHeight, b.CosmosDenom, b.TokenContract, b.Name, b.Symbol, b.Decimals)
+	path := fmt.Sprintf("%s/%d/%d/%s/%s/%s/%s/%d", b.EvmChainPrefix, b.EventNonce, b.EthBlockHeight, b.CosmosDenom, b.TokenContract, b.Name, b.Symbol, b.Decimals)
 	return tmhash.Sum([]byte(path)), nil
 }
 
@@ -556,6 +620,9 @@ func (e *MsgLogicCallExecutedClaim) ValidateBasic() error {
 	}
 	if e.EventNonce == 0 {
 		return fmt.Errorf("nonce == 0")
+	}
+	if e.EvmChainPrefix == "" {
+		return fmt.Errorf("evm_chain_prefix is empty")
 	}
 	return nil
 }
@@ -597,7 +664,7 @@ func (msg MsgLogicCallExecutedClaim) Route() string { return RouterKey }
 // note that the Orchestrator is the only field excluded from this hash, this is because that value is used higher up in the store
 // structure for who has made what claim and is verified by the msg ante-handler for signatures
 func (b *MsgLogicCallExecutedClaim) ClaimHash() ([]byte, error) {
-	path := fmt.Sprintf("%d,%d,%s/%d/", b.EventNonce, b.EthBlockHeight, b.InvalidationId, b.InvalidationNonce)
+	path := fmt.Sprintf("%s,%d,%d,%s/%d/", b.EvmChainPrefix, b.EventNonce, b.EthBlockHeight, b.InvalidationId, b.InvalidationNonce)
 	return tmhash.Sum([]byte(path)), nil
 }
 
@@ -617,7 +684,9 @@ func (e *MsgValsetUpdatedClaim) ValidateBasic() error {
 	if e.EventNonce == 0 {
 		return fmt.Errorf("nonce == 0")
 	}
-
+	if e.EvmChainPrefix == "" {
+		return fmt.Errorf("evm_chain_prefix is empty")
+	}
 	err := ValidateEthAddress(e.RewardToken)
 	if err != nil {
 		return err
@@ -676,15 +745,16 @@ func (b *MsgValsetUpdatedClaim) ClaimHash() ([]byte, error) {
 		return nil, sdkerrors.Wrap(err, "invalid members")
 	}
 	internalMembers.Sort()
-	path := fmt.Sprintf("%d/%d/%d/%x/%s/%s", b.EventNonce, b.ValsetNonce, b.EthBlockHeight, internalMembers.ToExternal(), b.RewardAmount.String(), b.RewardToken)
+	path := fmt.Sprintf("%s/%d/%d/%d/%x/%s/%s", b.EvmChainPrefix, b.EventNonce, b.ValsetNonce, b.EthBlockHeight, internalMembers.ToExternal(), b.RewardAmount.String(), b.RewardToken)
 	return tmhash.Sum([]byte(path)), nil
 }
 
 // NewMsgCancelSendToEth returns a new msgSetOrchestratorAddress
-func NewMsgCancelSendToEth(user sdk.AccAddress, id uint64) *MsgCancelSendToEth {
+func NewMsgCancelSendToEth(evmChainPrefix string, user sdk.AccAddress, id uint64) *MsgCancelSendToEth {
 	return &MsgCancelSendToEth{
-		Sender:        user.String(),
-		TransactionId: id,
+		Sender:         user.String(),
+		TransactionId:  id,
+		EvmChainPrefix: evmChainPrefix,
 	}
 }
 

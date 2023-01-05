@@ -26,6 +26,7 @@ pub async fn relayer(
     let ethereum_rpc = args.ethereum_rpc;
     let ethereum_key = args.ethereum_key;
     let cosmos_key = args.cosmos_phrase;
+    let evm_chain_prefix = args.evm_chain_prefix;
     let connections = create_rpc_connections(
         address_prefix,
         Some(cosmos_grpc),
@@ -124,6 +125,7 @@ pub async fn relayer(
         web3,
         contact,
         grpc,
+        &evm_chain_prefix,
         contract_address,
         params.gravity_id,
         args.fees,

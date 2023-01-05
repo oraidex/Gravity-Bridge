@@ -62,6 +62,9 @@ pub struct OrchestratorOpts {
     /// The address fo the Gravity contract on Ethereum
     #[clap(short, long, parse(try_from_str))]
     pub gravity_contract_address: Option<EthAddress>,
+    /// (Optional) The passphrase that will be used to decrypt key
+    #[clap(long, default_value = "")]
+    pub passphrase: String,
 }
 
 /// The Gravity Bridge Relayer is an unpermissioned role that takes data from the Cosmos blockchain
@@ -91,6 +94,8 @@ pub struct RelayerOpts {
     /// (Optional) The Cosmos gRPC server that will be used to
     #[clap(short, long, default_value = "http://localhost:9090")]
     pub cosmos_grpc: String,
+    #[clap(short, long)]
+    pub evm_chain_prefix: String,
 }
 
 /// The Gravity Bridge client contains helpful command line tools for interacting with the Gravity bridge
@@ -129,6 +134,8 @@ pub struct CosmosToEthOpts {
     /// The destination address on the Ethereum chain
     #[clap(short, long, parse(try_from_str))]
     pub eth_destination: EthAddress,
+    #[clap(short, long)]
+    pub evm_chain_prefix: String,
 }
 
 /// Send an Ethereum ERC20 token to Cosmos
@@ -173,6 +180,8 @@ pub struct DeployErc20RepresentationOpts {
     /// The address fo the Gravity contract on Ethereum
     #[clap(short, long, parse(try_from_str))]
     pub gravity_contract_address: Option<EthAddress>,
+    #[clap(short, long)]
+    pub evm_chain_prefix: String,
 }
 
 /// Manage keys
@@ -269,6 +278,8 @@ pub struct RecoverFundsOpts {
     /// **Only use this with the send-on-cosmos flag**
     #[clap(long, parse(try_from_str))]
     pub cosmos_destination: Option<CosmosAddress>,
+    #[clap(short, long)]
+    pub evm_chain_prefix: String,
 }
 
 /// Initialize configuration

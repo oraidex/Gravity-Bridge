@@ -18,3 +18,12 @@ artifacts
 
 #build artifacts
 /module/artifacts
+
+build
+
+# data folder 
+data/validator*/data/*
+data/validator*/config/write-file*
+data/validator*_backup/
+data/validator*/U*
+data/validator*/config/addrbook.json

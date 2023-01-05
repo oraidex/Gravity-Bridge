@@ -16,12 +16,14 @@ use crate::ibc_auto_forward::ibc_auto_forward_test;
 use crate::ibc_metadata::ibc_metadata_proposal_test;
 use crate::invalid_events::invalid_events;
 use crate::pause_bridge::pause_bridge_test;
+use crate::send_to_eth_fees::send_to_eth_fees_test;
 use crate::signature_slashing::signature_slashing_test;
 use crate::slashing_delegation::slashing_delegation_test;
 use crate::tx_cancel::send_to_eth_and_cancel;
-use crate::upgrade::{upgrade_part_1, upgrade_part_2};
+use crate::upgrade::{run_upgrade, upgrade_part_1, upgrade_part_2};
 use crate::utils::*;
 use crate::valset_rewards::valset_rewards_test;
+use crate::vesting::vesting_test;
 use clarity::PrivateKey as EthPrivateKey;
 use clarity::{Address as EthAddress, Uint256};
 use deep_space::coin::Coin;
@@ -60,6 +62,7 @@ mod orch_keys;
 mod orch_only;
 mod pause_bridge;
 mod relay_market;
+mod send_to_eth_fees;
 mod signature_slashing;
 mod slashing_delegation;
 mod transaction_stress_test;
@@ -69,6 +72,7 @@ mod upgrade;
 mod utils;
 mod valset_rewards;
 mod valset_stress;
+mod vesting;
 
 /// the timeout for individual requests
 const OPERATION_TIMEOUT: Duration = Duration::from_secs(30);
@@ -104,6 +108,9 @@ lazy_static! {
     // LOCAL ETHEREUM CONSTANTS
     static ref ETH_NODE: String =
         env::var("ETH_NODE").unwrap_or_else(|_| "http://localhost:8545".to_owned());
+
+    static ref EVM_CHAIN_PREFIX: String =
+        env::var("EVM_CHAIN_PREFIX").unwrap_or_else(|_| "bsc".to_owned());
 }
 
 /// this value reflects the contents of /tests/container-scripts/setup-validator.sh
@@ -208,7 +215,6 @@ pub async fn main() {
     let keys = get_keys();
     // keys for the IBC chain connected to the main test chain
     let (ibc_keys, ibc_phrases) = parse_ibc_validator_keys();
-
     // if we detect this env var we are only deploying contracts, do that then exit.
     if should_deploy_contracts() {
         info!("test-runner in contract deploying mode, deploying contracts, then exiting");
@@ -275,6 +281,7 @@ pub async fn main() {
     // RUN_ORCH_ONLY runs only the orchestrators, for local testing where you want the chain to just run.
     // ETHERMINT_KEYS runs a gamut of transactions using a Ethermint key to test no loss of functionality
     // BATCH_TIMEOUT is a stress test for batch timeouts, setting an extremely agressive timeout value
+    // VESTING checks that the vesting module delivers partially and fully vested accounts
     let test_type = env::var("TEST_TYPE");
     info!("Starting tests with {:?}", test_type);
     if let Ok(test_type) = test_type {
@@ -331,7 +338,15 @@ pub async fn main() {
             return;
         } else if test_type == "RELAY_MARKET" {
             info!("Starting relay market tests!");
-            relay_market_test(&web30, grpc_client, &contact, keys, gravity_address).await;
+            relay_market_test(
+                &web30,
+                grpc_client,
+                EVM_CHAIN_PREFIX.as_str(),
+                &contact,
+                keys,
+                gravity_address,
+            )
+            .await;
             return;
         } else if test_type == "ORCHESTRATOR_KEYS" {
             info!("Starting orchestrator key update tests!");
@@ -339,7 +354,7 @@ pub async fn main() {
             return;
         } else if test_type == "EVIDENCE" {
             info!("Starting evidence based slashing tests!");
-            evidence_based_slashing(&web30, &contact, keys, gravity_address).await;
+            evidence_based_slashing(&web30, grpc_client, &contact, keys, gravity_address).await;
             return;
         } else if test_type == "TXCANCEL" {
             info!("Starting SendToEth cancellation test!");
@@ -464,6 +479,17 @@ pub async fn main() {
             )
             .await;
             return;
+        } else if test_type == "UPGRADE_ONLY" {
+            info!("Running a gravity upgrade with no assertions");
+            let contact = Contact::new(
+                COSMOS_NODE_GRPC.as_str(),
+                TOTAL_TIMEOUT,
+                ADDRESS_PREFIX.as_str(),
+            )
+            .unwrap();
+            let plan_name = env::var("UPGRADE_NAME").unwrap_or_else(|_| "upgrade".to_owned());
+            run_upgrade(&contact, keys, plan_name, true).await;
+            return;
         } else if test_type == "IBC_AUTO_FORWARD" {
             info!("Starting IBC Auto-Forward test");
             ibc_auto_forward_test(
@@ -492,7 +518,24 @@ pub async fn main() {
             assert!(result);
             return;
         } else if test_type == "BATCH_TIMEOUT" || test_type == "TIMEOUT_STRESS" {
+            info!("Starting Batch Timeout/Timeout Stress test");
             batch_timeout_test(
+                &web30,
+                &contact,
+                grpc_client,
+                keys,
+                gravity_address,
+                erc20_addresses,
+            )
+            .await;
+            return;
+        } else if test_type == "VESTING" {
+            info!("Starting Vesting test");
+            let vesting_keys = parse_vesting_keys();
+            vesting_test(&contact, vesting_keys).await;
+            return;
+        } else if test_type == "SEND_TO_ETH_FEES" {
+            send_to_eth_fees_test(
                 &web30,
                 &contact,
                 grpc_client,

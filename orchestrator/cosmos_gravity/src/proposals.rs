@@ -110,6 +110,7 @@ pub struct UnhaltBridgeProposalJson {
     pub title: String,
     pub description: String,
     pub target_nonce: u64,
+    pub evm_chain_prefix: String,
 }
 impl From<UnhaltBridgeProposalJson> for UnhaltBridgeProposal {
     fn from(v: UnhaltBridgeProposalJson) -> Self {
@@ -117,6 +118,7 @@ impl From<UnhaltBridgeProposalJson> for UnhaltBridgeProposal {
             title: v.title,
             description: v.description,
             target_nonce: v.target_nonce,
+            evm_chain_prefix: v.evm_chain_prefix,
         }
     }
 }
@@ -210,6 +212,7 @@ pub struct IbcMetadataProposalJson {
     description: String,
     metadata: MetadataJson,
     ibc_denom: String,
+    evm_chain_prefix: String,
 }
 impl From<IbcMetadataProposalJson> for IbcMetadataProposal {
     fn from(v: IbcMetadataProposalJson) -> Self {
@@ -218,6 +221,7 @@ impl From<IbcMetadataProposalJson> for IbcMetadataProposal {
             description: v.description,
             ibc_denom: v.ibc_denom,
             metadata: Some(v.metadata.into()),
+            evm_chain_prefix: v.evm_chain_prefix,
         }
     }
 }
@@ -271,4 +275,36 @@ pub async fn submit_ibc_metadata_proposal(
     contact
         .create_gov_proposal(any, deposit, fee, key, wait_timeout)
         .await
+}
+
+/// The proposal.json representation for setting the MinChainFeeBasisPoints parameter
+#[derive(Serialize, Deserialize, Debug, Clone)]
+pub struct SendToEthFeesProposalJson {
+    pub title: String,
+    pub description: String,
+    pub min_chain_fee_basis_points: u64,
+}
+
+/// Submit a parameter change proposal to set the MinChainFeeBasisPoints parameter
+pub async fn submit_send_to_eth_fees_proposal(
+    proposal: SendToEthFeesProposalJson,
+    deposit: Coin,
+    fee: Coin,
+    contact: &Contact,
+    key: impl PrivateKey,
+    wait_timeout: Option<Duration>,
+) -> Result<TxResponse, CosmosGrpcError> {
+    let mut params_to_change = Vec::new();
+    let set_fees = ParamChange {
+        subspace: "gravity".to_string(),
+        key: "MinChainFeeBasisPoints".to_string(),
+        value: format!("\"{}\"", proposal.min_chain_fee_basis_points),
+    };
+    params_to_change.push(set_fees);
+    let proposal = ParameterChangeProposal {
+        title: proposal.title,
+        description: proposal.description,
+        changes: params_to_change,
+    };
+    submit_parameter_change_proposal(proposal, deposit, fee, contact, key, wait_timeout).await
 }

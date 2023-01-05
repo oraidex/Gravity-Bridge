@@ -20,6 +20,7 @@ const (
 	FlagUseV1Key  = "use-v1-key"
 )
 
+// GetQueryCmd bundles all the query subcmds together so they appear under `gravity query` or `gravity q`
 func GetQueryCmd() *cobra.Command {
 	// nolint: exhaustruct
 	gravityQueryCmd := &cobra.Command{
@@ -37,6 +38,7 @@ func GetQueryCmd() *cobra.Command {
 		CmdGetPendingOutgoingTXBatchRequest(),
 		CmdGetPendingSendToEth(),
 		GetCmdPendingIbcAutoForwards(),
+		GetCmdListEvmChains(),
 		CmdGetAttestations(),
 		CmdGetLastObservedEthBlock(),
 		CmdGetLastObservedEthNonce(),
@@ -46,20 +48,21 @@ func GetQueryCmd() *cobra.Command {
 	return gravityQueryCmd
 }
 
+// CmdGetCurrentValset fetches the current validator set
 func CmdGetCurrentValset() *cobra.Command {
 	// nolint: exhaustruct
 	cmd := &cobra.Command{
-		Use:   "current-valset",
+		Use:   "current-valset [evm chain prefix]",
 		Short: "Query current valset",
-		Args:  cobra.NoArgs,
-		RunE: func(cmd *cobra.Command, _ []string) error {
+		Args:  cobra.ExactArgs(1),
+		RunE: func(cmd *cobra.Command, args []string) error {
 			clientCtx, err := client.GetClientQueryContext(cmd)
 			if err != nil {
 				return err
 			}
 			queryClient := types.NewQueryClient(clientCtx)
 
-			req := &types.QueryCurrentValsetRequest{}
+			req := &types.QueryCurrentValsetRequest{EvmChainPrefix: args[0]}
 
 			res, err := queryClient.CurrentValset(cmd.Context(), req)
 			if err != nil {
@@ -73,12 +76,13 @@ func CmdGetCurrentValset() *cobra.Command {
 	return cmd
 }
 
+// CmdGetValsetRequest fetches a historical valset with the given valset nonce, for use in Ethereum relaying
 func CmdGetValsetRequest() *cobra.Command {
 	// nolint: exhaustruct
 	cmd := &cobra.Command{
-		Use:   "valset-request [nonce]",
+		Use:   "valset-request [nonce] [evm chain prefix]",
 		Short: "Get requested valset with a particular nonce",
-		Args:  cobra.ExactArgs(1),
+		Args:  cobra.ExactArgs(2),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			clientCtx, err := client.GetClientQueryContext(cmd)
 			if err != nil {
@@ -92,7 +96,8 @@ func CmdGetValsetRequest() *cobra.Command {
 			}
 
 			req := &types.QueryValsetRequestRequest{
-				Nonce: nonce,
+				Nonce:          nonce,
+				EvmChainPrefix: args[1],
 			}
 
 			res, err := queryClient.ValsetRequest(cmd.Context(), req)
@@ -107,12 +112,13 @@ func CmdGetValsetRequest() *cobra.Command {
 	return cmd
 }
 
+// CmdGetValsetConfirm fetches a confirm for the valset with the given nonce made by the given validator
 func CmdGetValsetConfirm() *cobra.Command {
 	// nolint: exhaustruct
 	cmd := &cobra.Command{
-		Use:   "valset-confirm [nonce] [bech32 validator address]",
+		Use:   "valset-confirm [nonce] [bech32 validator address] [evm chain prefix]",
 		Short: "Get valset confirmation with a particular nonce from a particular validator",
-		Args:  cobra.ExactArgs(2),
+		Args:  cobra.ExactArgs(3),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			clientCtx, err := client.GetClientQueryContext(cmd)
 			if err != nil {
@@ -126,8 +132,9 @@ func CmdGetValsetConfirm() *cobra.Command {
 			}
 
 			req := &types.QueryValsetConfirmRequest{
-				Nonce:   nonce,
-				Address: args[1],
+				Nonce:          nonce,
+				Address:        args[1],
+				EvmChainPrefix: args[2],
 			}
 
 			res, err := queryClient.ValsetConfirm(cmd.Context(), req)
@@ -142,12 +149,13 @@ func CmdGetValsetConfirm() *cobra.Command {
 	return cmd
 }
 
+// CmdGetPendingValsetRequest fetches the valset to be confirmed next by the given validator, if any exists
 func CmdGetPendingValsetRequest() *cobra.Command {
 	// nolint: exhaustruct
 	cmd := &cobra.Command{
-		Use:   "pending-valset-request [bech32 orchestrator address]",
+		Use:   "pending-valset-request [bech32 orchestrator address] [evm chain prefix]",
 		Short: "Get the latest valset request which has not been signed by a particular orchestrator",
-		Args:  cobra.ExactArgs(1),
+		Args:  cobra.ExactArgs(2),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			clientCtx, err := client.GetClientQueryContext(cmd)
 			if err != nil {
@@ -156,7 +164,8 @@ func CmdGetPendingValsetRequest() *cobra.Command {
 			queryClient := types.NewQueryClient(clientCtx)
 
 			req := &types.QueryLastPendingValsetRequestByAddrRequest{
-				Address: args[0],
+				Address:        args[0],
+				EvmChainPrefix: args[1],
 			}
 
 			res, err := queryClient.LastPendingValsetRequestByAddr(cmd.Context(), req)
@@ -171,12 +180,13 @@ func CmdGetPendingValsetRequest() *cobra.Command {
 	return cmd
 }
 
+// CmdGetPendingOutgoingTXBatchRequest fetches the batch to be confirmed next by the given validator, if any exists
 func CmdGetPendingOutgoingTXBatchRequest() *cobra.Command {
 	// nolint: exhaustruct
 	cmd := &cobra.Command{
-		Use:   "pending-batch-request [bech32 orchestrator address]",
+		Use:   "pending-batch-request [bech32 orchestrator address] [evm chain prefix]",
 		Short: "Get the latest outgoing TX batch request which has not been signed by a particular orchestrator",
-		Args:  cobra.ExactArgs(1),
+		Args:  cobra.ExactArgs(2),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			clientCtx, err := client.GetClientQueryContext(cmd)
 			if err != nil {
@@ -185,7 +195,8 @@ func CmdGetPendingOutgoingTXBatchRequest() *cobra.Command {
 			queryClient := types.NewQueryClient(clientCtx)
 
 			req := &types.QueryLastPendingBatchRequestByAddrRequest{
-				Address: args[0],
+				Address:        args[0],
+				EvmChainPrefix: args[1],
 			}
 
 			res, err := queryClient.LastPendingBatchRequestByAddr(cmd.Context(), req)
@@ -200,12 +211,13 @@ func CmdGetPendingOutgoingTXBatchRequest() *cobra.Command {
 	return cmd
 }
 
+// CmdGetPendingSendToEth fetches all pending Sends to Ethereum made by the given address
 func CmdGetPendingSendToEth() *cobra.Command {
 	// nolint: exhaustruct
 	cmd := &cobra.Command{
-		Use:   "pending-send-to-eth [address]",
+		Use:   "pending-send-to-eth [address] [evm chain prefix]",
 		Short: "Query transactions waiting to go to Ethereum",
-		Args:  cobra.ExactArgs(1),
+		Args:  cobra.ExactArgs(2),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			clientCtx, err := client.GetClientQueryContext(cmd)
 			if err != nil {
@@ -214,7 +226,8 @@ func CmdGetPendingSendToEth() *cobra.Command {
 			queryClient := types.NewQueryClient(clientCtx)
 
 			req := &types.QueryPendingSendToEth{
-				SenderAddress: args[0],
+				SenderAddress:  args[0],
+				EvmChainPrefix: args[1],
 			}
 
 			res, err := queryClient.GetPendingSendToEth(cmd.Context(), req)
@@ -229,6 +242,7 @@ func CmdGetPendingSendToEth() *cobra.Command {
 	return cmd
 }
 
+// GetCmdPendingIbcAutoForwards fetches the next IBC auto forwards to be executed, up to an optional limit
 func GetCmdPendingIbcAutoForwards() *cobra.Command {
 	// nolint: exhaustruct
 	cmd := &cobra.Command{
@@ -264,14 +278,52 @@ func GetCmdPendingIbcAutoForwards() *cobra.Command {
 	return cmd
 }
 
+// GetCmdPendingIbcAutoForwards fetches the next IBC auto forwards to be executed, up to an optional limit
+func GetCmdListEvmChains() *cobra.Command {
+	// nolint: exhaustruct
+	cmd := &cobra.Command{
+		Use:   "evm-chains [optional limit]",
+		Short: "Query list evm chains",
+		Args:  cobra.MaximumNArgs(1),
+		RunE: func(cmd *cobra.Command, args []string) error {
+			clientCtx, err := client.GetClientQueryContext(cmd)
+			if err != nil {
+				return err
+			}
+			queryClient := types.NewQueryClient(clientCtx)
+
+			var limit uint64 = 0
+			if len(args) == 1 {
+				var err error
+				limit, err = strconv.ParseUint(args[0], 10, 0)
+				if err != nil {
+					return sdkerrors.Wrapf(err, "Unable to parse limit from %v", args[0])
+				}
+			}
+
+			req := &types.QueryListEvmChains{Limit: limit}
+			res, err := queryClient.GetListEvmChains(cmd.Context(), req)
+			if err != nil {
+				return err
+			}
+
+			return clientCtx.PrintProto(res)
+		},
+	}
+	flags.AddQueryFlagsToCmd(cmd)
+	return cmd
+}
+
+// CmdGetAttestations fetches the most recently created Attestations in the store (only the most recent 1000 are available)
+// up to an optional limit
 func CmdGetAttestations() *cobra.Command {
 	short := "Query gravity current and historical attestations (only the most recent 1000 are stored)"
 	long := short + "\n\n" + "Optionally provide a limit to reduce the number of attestations returned" + "\n" +
 		"Note that when querying with --height less than 1282013 '--use-v1-key' must be provided to locate the attestations"
 
 	cmd := &cobra.Command{
-		Use:   "attestations [optional limit]",
-		Args:  cobra.MaximumNArgs(1),
+		Use:   "attestations [evm chain prefix] [optional limit]",
+		Args:  cobra.RangeArgs(1, 2),
 		Short: short,
 		Long:  long,
 		RunE: func(cmd *cobra.Command, args []string) error {
@@ -283,10 +335,10 @@ func CmdGetAttestations() *cobra.Command {
 
 			var limit uint64
 			// Limit is 0 or whatever the user put in
-			if len(args) == 0 || args[0] == "" {
+			if len(args) == 1 || args[1] == "" {
 				limit = 0
 			} else {
-				limit, err = strconv.ParseUint(args[0], 10, 64)
+				limit, err = strconv.ParseUint(args[1], 10, 64)
 				if err != nil {
 					return err
 				}
@@ -313,12 +365,13 @@ func CmdGetAttestations() *cobra.Command {
 			}
 
 			req := &types.QueryAttestationsRequest{
-				Limit:     limit,
-				OrderBy:   orderBy,
-				ClaimType: claimType,
-				Nonce:     nonce,
-				Height:    height,
-				UseV1Key:  useV1Key,
+				Limit:          limit,
+				OrderBy:        orderBy,
+				ClaimType:      claimType,
+				Nonce:          nonce,
+				Height:         height,
+				UseV1Key:       useV1Key,
+				EvmChainPrefix: args[0],
 			}
 			res, err := queryClient.GetAttestations(cmd.Context(), req)
 			if err != nil {
@@ -341,6 +394,8 @@ func CmdGetAttestations() *cobra.Command {
 	return cmd
 }
 
+// CmdGetLastObservedEthBlock fetches the Ethereum block height for the most recent "observed" Attestation, indicating
+// the state of Cosmos consensus on the submitted Ethereum events
 // nolint: dupl
 func CmdGetLastObservedEthBlock() *cobra.Command {
 	short := "Query the last observed Ethereum block height"
@@ -350,10 +405,10 @@ func CmdGetLastObservedEthBlock() *cobra.Command {
 
 	// nolint: exhaustruct
 	cmd := &cobra.Command{
-		Use:   "last-observed-eth-block",
+		Use:   "last-observed-eth-block [evm chain prefix]",
 		Short: short,
 		Long:  long,
-		Args:  cobra.NoArgs,
+		Args:  cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			clientCtx, err := client.GetClientQueryContext(cmd)
 			if err != nil {
@@ -367,7 +422,8 @@ func CmdGetLastObservedEthBlock() *cobra.Command {
 			}
 
 			req := &types.QueryLastObservedEthBlockRequest{
-				UseV1Key: useV1Key,
+				UseV1Key:       useV1Key,
+				EvmChainPrefix: args[0],
 			}
 			res, err := queryClient.GetLastObservedEthBlock(cmd.Context(), req)
 			if err != nil {
@@ -382,6 +438,8 @@ func CmdGetLastObservedEthBlock() *cobra.Command {
 	return cmd
 }
 
+// CmdGetLastObservedEthNonce fetches the Ethereum event nonce for the most recent "observed" Attestation, indicating
+// // the state of Cosmos consensus on the submitted Ethereum events
 // nolint: dupl
 func CmdGetLastObservedEthNonce() *cobra.Command {
 	short := "Query the last observed Ethereum event nonce"
@@ -391,10 +449,10 @@ func CmdGetLastObservedEthNonce() *cobra.Command {
 
 	// nolint: exhaustruct
 	cmd := &cobra.Command{
-		Use:   "last-observed-eth-nonce",
+		Use:   "last-observed-eth-nonce [evm chain prefix]",
 		Short: short,
 		Long:  long,
-		Args:  cobra.NoArgs,
+		Args:  cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			clientCtx, err := client.GetClientQueryContext(cmd)
 			if err != nil {
@@ -408,7 +466,8 @@ func CmdGetLastObservedEthNonce() *cobra.Command {
 			}
 
 			req := &types.QueryLastObservedEthNonceRequest{
-				UseV1Key: useV1Key,
+				UseV1Key:       useV1Key,
+				EvmChainPrefix: args[0],
 			}
 			res, err := queryClient.GetLastObservedEthNonce(cmd.Context(), req)
 			if err != nil {
@@ -423,6 +482,7 @@ func CmdGetLastObservedEthNonce() *cobra.Command {
 	return cmd
 }
 
+// GetCmdQueryParams fetches the current Gravity module params
 func GetCmdQueryParams() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "params",
