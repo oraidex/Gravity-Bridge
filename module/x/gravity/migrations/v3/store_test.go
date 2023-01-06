@@ -78,7 +78,7 @@ func TestMigrateStoreKeys(t *testing.T) {
 		Orchestrator:   accAddr.String(),
 		EthAddress:     ethAddr.GetAddress().String(),
 		Signature:      "dummySignature",
-		EvmChainPrefix: keeper.EthChainPrefix,
+		EvmChainPrefix: v3.EthereumChainPrefix,
 	}
 
 	dummyBatchConfirm := types.MsgConfirmBatch{
@@ -87,7 +87,7 @@ func TestMigrateStoreKeys(t *testing.T) {
 		EthSigner:      ethAddr.GetAddress().String(),
 		Orchestrator:   accAddr.String(),
 		Signature:      "dummySignature",
-		EvmChainPrefix: keeper.EthChainPrefix,
+		EvmChainPrefix: v3.EthereumChainPrefix,
 	}
 
 	// additional data for creating InternalOutgoingTransferTx
@@ -116,7 +116,7 @@ func TestMigrateStoreKeys(t *testing.T) {
 		EthereumSender: "0x00000000000000000002",
 		CosmosReceiver: "0x00000000000000000003",
 		Orchestrator:   "0x00000000000000000004",
-		EvmChainPrefix: keeper.EthChainPrefix,
+		EvmChainPrefix: v3.EthereumChainPrefix,
 	}
 	any, _ := codectypes.NewAnyWithValue(&msg)
 
@@ -160,7 +160,7 @@ func TestMigrateStoreKeys(t *testing.T) {
 		EthSigner:         "dummySignature",
 		Orchestrator:      valAddr.String(),
 		Signature:         "dummySignature",
-		EvmChainPrefix:    keeper.EthChainPrefix,
+		EvmChainPrefix:    v3.EthereumChainPrefix,
 	}
 	decInvalidationId, err := hex.DecodeString(confirm.InvalidationId)
 	require.NoError(t, err)
@@ -170,6 +170,11 @@ func TestMigrateStoreKeys(t *testing.T) {
 		Token:           &sdk.Coin{Denom: "", Amount: sdk.ZeroInt()},
 		IbcChannel:      "channel-0",
 		EventNonce:      0,
+	}
+
+	dummyLastObservedEthereumBlockHeight := types.LastObservedEthereumBlockHeight{
+		CosmosBlockHeight:   10,
+		EthereumBlockHeight: 10,
 	}
 
 	// creating test cases
@@ -203,7 +208,7 @@ func TestMigrateStoreKeys(t *testing.T) {
 			"LastObservedEthereumBlockHeightKey",
 			v2.LastObservedEthereumBlockHeightKey,
 			types.AppendChainPrefix(types.LastObservedEvmBlockHeightKey, v3.EthereumChainPrefix),
-			dummyValue,
+			marshaler.MustMarshal(&dummyLastObservedEthereumBlockHeight),
 		},
 		{
 			"LastSlashedValsetNonce",
@@ -366,6 +371,11 @@ func TestMigrateAttestation(t *testing.T) {
 
 	nonce := uint64(1)
 
+	// check last observed ethereum block. It should be empty initially
+	lastObservedHeightBytes := store.Get(v2.LastObservedEthereumBlockHeightKey)
+	require.Equal(t, 0, len(lastObservedHeightBytes))
+
+	// old claim do not have EvmChainPrefix
 	msg := types.MsgBatchSendToEthClaim{
 		EventNonce:     nonce,
 		EthBlockHeight: 1,
@@ -402,6 +412,66 @@ func TestMigrateAttestation(t *testing.T) {
 	require.NotEqual(t, oldKeyEntry, newKeyEntry)
 	require.NotEqual(t, newKeyEntry, []byte(""))
 	require.NotEmpty(t, newKeyEntry)
+
+	// other msg like send to cosmos has a different condition branch
+	// old claim do not have EvmChainPrefix
+	cosmosClaim := types.MsgSendToCosmosClaim{
+		EventNonce:     nonce,
+		EthBlockHeight: 1,
+		TokenContract:  "0x00000000000000000001",
+		Orchestrator:   "0x00000000000000000004",
+		Amount:         sdk.NewInt(1),
+		EthereumSender: "0x00000000000000000002",
+		CosmosReceiver: "oraib01234",
+	}
+	msgAny, _ = codectypes.NewAnyWithValue(&cosmosClaim)
+
+	_, err = cosmosClaim.ClaimHash()
+	require.NoError(t, err)
+
+	dummyAttestation = &types.Attestation{
+		Observed: true, // change to true to also test last observed evm block height
+		Height:   uint64(1),
+		Claim:    msgAny,
+	}
+	oldClaimHash, err = v2.MsgSendToCosmosClaimHash(cosmosClaim)
+	require.NoError(t, err)
+	newClaimHash, err = cosmosClaim.ClaimHash()
+	require.NoError(t, err)
+	attestationOldKey = v2.GetAttestationKey(nonce, oldClaimHash)
+
+	store.Set(attestationOldKey, marshaler.MustMarshal(dummyAttestation))
+
+	// Run migrations
+	err = v3.MigrateStore(ctx, gravityKey, marshaler)
+	require.NoError(t, err)
+
+	oldKeyEntry = store.Get(attestationOldKey)
+	newKeyEntry = store.Get(types.GetAttestationKey(v3.EthereumChainPrefix, nonce, newClaimHash))
+	// Check migration results:
+	require.Empty(t, oldKeyEntry)
+	require.NotEqual(t, oldKeyEntry, newKeyEntry)
+	require.NotEqual(t, newKeyEntry, []byte(""))
+	require.NotEmpty(t, newKeyEntry)
+
+	// check EvmChainPrefix
+	var att types.Attestation
+	marshaler.MustUnmarshal(newKeyEntry, &att)
+	var ethClaim types.EthereumClaim
+	marshaler.UnpackAny(att.Claim, &ethClaim)
+
+	require.Equal(t, ethClaim.GetEvmChainPrefix(), v3.EthereumChainPrefix)
+
+	// after migrating, the last observed evm block should increase to 1
+	// check last observed ethereum block. It should be empty initially
+	lastObservedHeightBytes = store.Get(types.AppendChainPrefix(types.LastObservedEvmBlockHeightKey, v3.EthereumChainPrefix))
+	require.NotEqual(t, 0, len(lastObservedHeightBytes))
+	lastObservedHeight := types.LastObservedEthereumBlockHeight{
+		CosmosBlockHeight:   0,
+		EthereumBlockHeight: 0,
+	}
+	marshaler.MustUnmarshal(lastObservedHeightBytes, &lastObservedHeight)
+	require.Equal(t, uint64(1), lastObservedHeight.EthereumBlockHeight)
 }
 
 // Need to duplicate these because of cyclical imports

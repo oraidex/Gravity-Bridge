@@ -7,6 +7,7 @@ import (
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
+	"github.com/gogo/protobuf/proto"
 	"github.com/tendermint/tendermint/crypto/tmhash"
 )
 
@@ -349,7 +350,12 @@ type EthereumClaim interface {
 	// with the exception of the orchestrator who sent it in, which will be used as a different part of the index
 	ClaimHash() ([]byte, error)
 
+	// for get and set EvmChainPrefix
 	GetEvmChainPrefix() string
+	SetEvmChainPrefix(evmChainPrefix string)
+
+	// to be compartible with proto
+	proto.Message
 }
 
 // nolint: exhaustruct
@@ -361,6 +367,10 @@ var (
 	_ EthereumClaim = &MsgValsetUpdatedClaim{}
 )
 
+func (msg *MsgSendToCosmosClaim) SetEvmChainPrefix(evmChainPrefix string) {
+	msg.EvmChainPrefix = evmChainPrefix
+}
+
 // GetType returns the type of the claim
 func (msg *MsgSendToCosmosClaim) GetType() ClaimType {
 	return CLAIM_TYPE_SEND_TO_COSMOS
@@ -368,10 +378,6 @@ func (msg *MsgSendToCosmosClaim) GetType() ClaimType {
 
 // ValidateBasic performs stateless checks
 func (msg *MsgSendToCosmosClaim) ValidateBasic() error {
-
-	if msg.EvmChainPrefix == "" {
-		return fmt.Errorf("evm_chain_prefix is empty")
-	}
 
 	if err := ValidateEthAddress(msg.EthereumSender); err != nil {
 		return sdkerrors.Wrap(err, "eth sender")
@@ -441,7 +447,7 @@ const (
 // note that the Orchestrator is the only field excluded from this hash, this is because that value is used higher up in the store
 // structure for who has made what claim and is verified by the msg ante-handler for signatures
 func (msg *MsgSendToCosmosClaim) ClaimHash() ([]byte, error) {
-	path := fmt.Sprintf("%s/%d/%d/%s/%s/%s/%s", msg.EvmChainPrefix, msg.EventNonce, msg.EthBlockHeight, msg.TokenContract, msg.Amount.String(), msg.EthereumSender, msg.CosmosReceiver)
+	path := fmt.Sprintf("%d/%d/%s/%s/%s/%s", msg.EventNonce, msg.EthBlockHeight, msg.TokenContract, msg.Amount.String(), msg.EthereumSender, msg.CosmosReceiver)
 	return tmhash.Sum([]byte(path)), nil
 }
 
@@ -474,6 +480,10 @@ func (msg *MsgExecuteIbcAutoForwards) GetSigners() []sdk.AccAddress {
 	return []sdk.AccAddress{acc}
 }
 
+func (msg *MsgBatchSendToEthClaim) SetEvmChainPrefix(evmChainPrefix string) {
+	msg.EvmChainPrefix = evmChainPrefix
+}
+
 // GetType returns the claim type
 func (msg *MsgBatchSendToEthClaim) GetType() ClaimType {
 	return CLAIM_TYPE_BATCH_SEND_TO_ETH
@@ -501,7 +511,7 @@ func (e *MsgBatchSendToEthClaim) ValidateBasic() error {
 
 // Hash implements WithdrawBatch.Hash, add evm chain prefix at top
 func (msg *MsgBatchSendToEthClaim) ClaimHash() ([]byte, error) {
-	path := fmt.Sprintf("%s/%d/%d/%d/%s", msg.EvmChainPrefix, msg.EventNonce, msg.EthBlockHeight, msg.BatchNonce, msg.TokenContract)
+	path := fmt.Sprintf("%d/%d/%d/%s", msg.EventNonce, msg.EthBlockHeight, msg.BatchNonce, msg.TokenContract)
 	return tmhash.Sum([]byte(path)), nil
 }
 
@@ -541,6 +551,10 @@ const (
 
 // EthereumClaim implementation for MsgERC20DeployedClaim
 // ======================================================
+
+func (msg *MsgERC20DeployedClaim) SetEvmChainPrefix(evmChainPrefix string) {
+	msg.EvmChainPrefix = evmChainPrefix
+}
 
 // GetType returns the type of the claim
 func (e *MsgERC20DeployedClaim) GetType() ClaimType {
@@ -601,12 +615,16 @@ func (msg MsgERC20DeployedClaim) Route() string { return RouterKey }
 // note that the Orchestrator is the only field excluded from this hash, this is because that value is used higher up in the store
 // structure for who has made what claim and is verified by the msg ante-handler for signatures
 func (b *MsgERC20DeployedClaim) ClaimHash() ([]byte, error) {
-	path := fmt.Sprintf("%s/%d/%d/%s/%s/%s/%s/%d", b.EvmChainPrefix, b.EventNonce, b.EthBlockHeight, b.CosmosDenom, b.TokenContract, b.Name, b.Symbol, b.Decimals)
+	path := fmt.Sprintf("%d/%d/%s/%s/%s/%s/%d", b.EventNonce, b.EthBlockHeight, b.CosmosDenom, b.TokenContract, b.Name, b.Symbol, b.Decimals)
 	return tmhash.Sum([]byte(path)), nil
 }
 
 // EthereumClaim implementation for MsgLogicCallExecutedClaim
 // ======================================================
+
+func (msg *MsgLogicCallExecutedClaim) SetEvmChainPrefix(evmChainPrefix string) {
+	msg.EvmChainPrefix = evmChainPrefix
+}
 
 // GetType returns the type of the claim
 func (e *MsgLogicCallExecutedClaim) GetType() ClaimType {
@@ -664,12 +682,16 @@ func (msg MsgLogicCallExecutedClaim) Route() string { return RouterKey }
 // note that the Orchestrator is the only field excluded from this hash, this is because that value is used higher up in the store
 // structure for who has made what claim and is verified by the msg ante-handler for signatures
 func (b *MsgLogicCallExecutedClaim) ClaimHash() ([]byte, error) {
-	path := fmt.Sprintf("%s,%d,%d,%s/%d/", b.EvmChainPrefix, b.EventNonce, b.EthBlockHeight, b.InvalidationId, b.InvalidationNonce)
+	path := fmt.Sprintf("%d,%d,%s/%d/", b.EventNonce, b.EthBlockHeight, b.InvalidationId, b.InvalidationNonce)
 	return tmhash.Sum([]byte(path)), nil
 }
 
 // EthereumClaim implementation for MsgValsetUpdatedClaim
 // ======================================================
+
+func (msg *MsgValsetUpdatedClaim) SetEvmChainPrefix(evmChainPrefix string) {
+	msg.EvmChainPrefix = evmChainPrefix
+}
 
 // GetType returns the type of the claim
 func (e *MsgValsetUpdatedClaim) GetType() ClaimType {
@@ -745,7 +767,7 @@ func (b *MsgValsetUpdatedClaim) ClaimHash() ([]byte, error) {
 		return nil, sdkerrors.Wrap(err, "invalid members")
 	}
 	internalMembers.Sort()
-	path := fmt.Sprintf("%s/%d/%d/%d/%x/%s/%s", b.EvmChainPrefix, b.EventNonce, b.ValsetNonce, b.EthBlockHeight, internalMembers.ToExternal(), b.RewardAmount.String(), b.RewardToken)
+	path := fmt.Sprintf("%d/%d/%d/%x/%s/%s", b.EventNonce, b.ValsetNonce, b.EthBlockHeight, internalMembers.ToExternal(), b.RewardAmount.String(), b.RewardToken)
 	return tmhash.Sum([]byte(path)), nil
 }
 

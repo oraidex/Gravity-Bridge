@@ -79,9 +79,16 @@ func (k Keeper) HandleAddEvmChainProposal(ctx sdk.Context, p *types.AddEvmChainP
 		return sdkerrors.Wrap(types.ErrInvalid, "The proposed EVM Chain already exists on-chain. Cannot re-add it!")
 	}
 
+	evmChains := k.GetEvmChains(ctx)
+	for _, chain := range evmChains {
+		if chain.EvmChainNetVersion == p.EvmChainNetVersion {
+			return sdkerrors.Wrap(types.ErrInvalid, "The proposed EVM Chain net version already exists on-chain. Cannot add a new chain with the same net version")
+		}
+	}
+
 	ctx.Logger().Info("Gov vote passed: Adding new EVM chain", "evm chain prefix", p.EvmChainPrefix)
 	evmChain := types.EvmChainData{
-		EvmChain:           types.EvmChain{EvmChainPrefix: p.EvmChainPrefix, EvmChainName: p.EvmChainName},
+		EvmChain:           types.EvmChain{EvmChainPrefix: p.EvmChainPrefix, EvmChainName: p.EvmChainName, EvmChainNetVersion: p.EvmChainNetVersion},
 		GravityNonces:      types.GravityNonces{},
 		Valsets:            []types.Valset{},
 		ValsetConfirms:     []types.MsgValsetConfirm{},
@@ -102,6 +109,7 @@ func (k Keeper) HandleAddEvmChainProposal(ctx sdk.Context, p *types.AddEvmChainP
 	k.SetLastSlashedValsetNonce(ctx, chainPrefix, evmChain.GravityNonces.LastSlashedValsetNonce)
 	k.SetLastSlashedBatchBlock(ctx, chainPrefix, evmChain.GravityNonces.LastSlashedBatchBlock)
 	k.SetLastSlashedLogicCallBlock(ctx, chainPrefix, evmChain.GravityNonces.LastSlashedLogicCallBlock)
+	k.SetLastObservedEvmChainBlockHeight(ctx, chainPrefix, evmChain.GravityNonces.LastObservedEvmBlockHeight)
 	k.setID(ctx, evmChain.GravityNonces.LastTxPoolId, types.AppendChainPrefix(types.KeyLastTXPoolID, chainPrefix))
 	k.setID(ctx, evmChain.GravityNonces.LastBatchId, types.AppendChainPrefix(types.KeyLastOutgoingBatchID, chainPrefix))
 	k.SetEvmChainData(ctx, evmChain.EvmChain)

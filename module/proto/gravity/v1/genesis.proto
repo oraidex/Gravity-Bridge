@@ -170,6 +170,7 @@ message EvmChainData {
 message EvmChain {
   string evm_chain_prefix = 1;
   string evm_chain_name   = 2;
+  uint64 evm_chain_net_version = 3;
 }
 
 // GravityCounters contains the many noces and counters required to maintain the bridge state in the genesis
@@ -192,4 +193,6 @@ message GravityNonces {
   // the last batch id from the Gravity batch pool, this prevents ID duplication
   // during chain upgrades
   uint64 last_batch_id = 7;
+  // last observed evm block height
+  uint64 last_observed_evm_block_height = 8;
 }

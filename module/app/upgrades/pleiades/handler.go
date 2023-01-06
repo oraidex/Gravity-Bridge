@@ -25,8 +25,9 @@ func GetPleiadesUpgradeHandler(
 
 		evmChains := []types.EvmChain{
 			{
-				EvmChainPrefix: "oraib",
-				EvmChainName:   "Binance Smart Chain",
+				EvmChainPrefix:     EthereumChainPrefix,
+				EvmChainName:       "Binance Smart Chain",
+				EvmChainNetVersion: 5,
 			},
 		}
 

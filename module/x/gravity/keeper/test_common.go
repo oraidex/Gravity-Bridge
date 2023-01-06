@@ -247,8 +247,8 @@ var (
 	}
 
 	EvmChains = []types.EvmChain{
-		{EvmChainPrefix: EthChainPrefix, EvmChainName: "Ethereum Mainnet"},
-		{EvmChainPrefix: BscChainPrefix, EvmChainName: "BSC Mainnet"},
+		{EvmChainPrefix: EthChainPrefix, EvmChainName: "Ethereum Mainnet", EvmChainNetVersion: 1},
+		{EvmChainPrefix: BscChainPrefix, EvmChainName: "BSC Mainnet", EvmChainNetVersion: 2},
 	}
 )
 
@@ -634,6 +634,10 @@ func CreateTestEnv(t *testing.T) TestInput {
 
 	// Set the native prefix to the "gravity" value we like in module/config/config.go
 	err = bech32IbcKeeper.SetNativeHrp(ctx, sdk.GetConfig().GetBech32AccountAddrPrefix())
+	if err != nil {
+		panic("Test Env Creation failure, could not set native hrp")
+	}
+
 	if err != nil {
 		panic("Test Env Creation failure, could not set native hrp")
 	}

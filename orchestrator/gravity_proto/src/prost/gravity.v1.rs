@@ -406,6 +406,8 @@ pub struct AddEvmChainProposal {
     pub evm_chain_name: ::prost::alloc::string::String,
     #[prost(string, tag = "4")]
     pub evm_chain_prefix: ::prost::alloc::string::String,
+    #[prost(uint64, tag = "5")]
+    pub evm_chain_net_version: u64,
 }
 /// PendingIbcAutoForward represents a SendToCosmos transaction with a foreign CosmosReceiver which will be added to the
 /// PendingIbcAutoForward queue in attestation_handler and sent over IBC on some submission of a MsgExecuteIbcAutoForwards
@@ -1368,6 +1370,8 @@ pub struct EvmChain {
     pub evm_chain_prefix: ::prost::alloc::string::String,
     #[prost(string, tag = "2")]
     pub evm_chain_name: ::prost::alloc::string::String,
+    #[prost(uint64, tag = "3")]
+    pub evm_chain_net_version: u64,
 }
 /// GravityCounters contains the many noces and counters required to maintain the bridge state in the genesis
 #[allow(clippy::derive_partial_eq_without_eq)]

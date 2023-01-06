@@ -24,7 +24,7 @@ use tonic::transport::Channel;
 use web30::client::Web3;
 use web30::jsonrpc::error::Web3Error;
 
-use crate::oracle_resync::BLOCKS_TO_SEARCH;
+use crate::oracle_resync::convert_block_to_search;
 
 pub struct CheckedNonces {
     pub block_number: Uint256,
@@ -49,13 +49,14 @@ pub async fn check_for_events(
         starting_block,
         latest_block
     );
+    let block_to_search = convert_block_to_search();
 
     // if the latest block is more than BLOCKS_TO_SEARCH ahead do not search the full history
     // comparison only to prevent panic on underflow.
     let latest_block = if latest_block > starting_block
-        && latest_block.clone() - starting_block.clone() > BLOCKS_TO_SEARCH.into()
+        && latest_block.clone() - starting_block.clone() > block_to_search.into()
     {
-        starting_block.clone() + BLOCKS_TO_SEARCH.into()
+        starting_block.clone() + block_to_search.into()
     } else {
         latest_block
     };
@@ -307,6 +308,7 @@ pub async fn get_latest_safe_block(web3: &Web3) -> Uint256 {
         // up to num validators blocks. Number is higher than Ethereum based
         // on experience with operational issues
         4 | 5 => block_number - 10u8.into(),
+        420 | 421 => block_number,
         // assume the safe option where we don't know
         _ => block_number - 96u8.into(),
     }
