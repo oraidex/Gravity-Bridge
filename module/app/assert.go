@@ -17,11 +17,6 @@ func (app *Gravity) assertBech32PrefixMatches(ctx sdk.Context) {
 		panic("Invalid app/config/keeper state")
 	}
 
-	err := app.bech32IbcKeeper.SetNativeHrp(ctx, config.GetBech32AccountAddrPrefix())
-	if err != nil {
-		panic(sdkerrors.Wrap(err, "Unable to start, bech32ibc module not initialized to the correct prefix"))
-	}
-
 	nativePrefix, err := app.bech32IbcKeeper.GetNativeHrp(ctx)
 	if err != nil {
 		panic(sdkerrors.Wrap(err, "Error obtaining bech32ibc NativeHrp"))
