@@ -41,6 +41,7 @@ func TestBatches(t *testing.T) {
 	// ==================
 
 	for _, evmChain := range input.GravityKeeper.GetEvmChains(ctx) {
+		println("evm chain prefix: ", evmChain.EvmChainPrefix)
 		// batch should not be created if there is no txs of the given token type in tx pool
 		noBatch, err := input.GravityKeeper.BuildOutgoingTxBatch(ctx, evmChain.EvmChainPrefix, *myTokenContractAddr, 2)
 		require.Nil(t, noBatch)
@@ -730,8 +731,9 @@ func TestBatchesNotCreatedWhenBridgePaused(t *testing.T) {
 
 	// pause the bridge
 	params := input.GravityKeeper.GetParams(ctx)
-	evmChainParams := params.EvmChain(evmChain.EvmChainPrefix)
-	evmChainParams.BridgeActive = false
+	evmChainParam := params.GetEvmChain(evmChain.EvmChainPrefix)
+	evmChainParam.BridgeActive = false
+
 	input.GravityKeeper.SetParams(ctx, params)
 
 	// mint some voucher first
@@ -774,7 +776,7 @@ func TestBatchesNotCreatedWhenBridgePaused(t *testing.T) {
 	require.Nil(t, gotFirstBatch)
 
 	// resume the bridge
-	evmChainParams.BridgeActive = true
+	evmChainParam.BridgeActive = true
 	input.GravityKeeper.SetParams(ctx, params)
 
 	// when
@@ -810,8 +812,9 @@ func TestEthereumBlacklistBatches(t *testing.T) {
 
 	// add the blacklisted address to the blacklist
 	params := input.GravityKeeper.GetParams(ctx)
-	evmChainParams := params.EvmChain(evmChain.EvmChainPrefix)
-	evmChainParams.EthereumBlacklist = append(evmChainParams.EthereumBlacklist, blacklistedReceiver.GetAddress().Hex())
+	evmChainParam := params.GetEvmChain(evmChain.EvmChainPrefix)
+	evmChainParam.EthereumBlacklist = append(evmChainParam.EthereumBlacklist, blacklistedReceiver.GetAddress().Hex())
+
 	input.GravityKeeper.SetParams(ctx, params)
 
 	// mint some voucher first

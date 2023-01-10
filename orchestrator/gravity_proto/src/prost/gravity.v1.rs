@@ -408,6 +408,8 @@ pub struct AddEvmChainProposal {
     pub evm_chain_prefix: ::prost::alloc::string::String,
     #[prost(uint64, tag = "5")]
     pub evm_chain_net_version: u64,
+    #[prost(string, tag = "6")]
+    pub gravity_id: ::prost::alloc::string::String,
 }
 /// PendingIbcAutoForward represents a SendToCosmos transaction with a foreign CosmosReceiver which will be added to the
 /// PendingIbcAutoForward queue in attestation_handler and sent over IBC on some submission of a MsgExecuteIbcAutoForwards
@@ -1313,7 +1315,7 @@ pub struct Params {
     #[prost(uint64, tag = "12")]
     pub min_chain_fee_basis_points: u64,
     #[prost(message, repeated, tag = "13")]
-    pub evm_chain_params: ::prost::alloc::vec::Vec<EvmChainParams>,
+    pub evm_chain_params: ::prost::alloc::vec::Vec<EvmChainParam>,
 }
 /// GenesisState struct, containing all persistant data required by the Gravity
 /// module
@@ -1330,7 +1332,7 @@ pub struct GenesisState {
 /// only and is not actually used by any Gravity code
 #[allow(clippy::derive_partial_eq_without_eq)]
 #[derive(Clone, PartialEq, ::prost::Message)]
-pub struct EvmChainParams {
+pub struct EvmChainParam {
     #[prost(string, tag = "1")]
     pub gravity_id: ::prost::alloc::string::String,
     #[prost(bool, tag = "2")]

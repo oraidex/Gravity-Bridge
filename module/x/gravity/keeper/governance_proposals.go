@@ -115,6 +115,21 @@ func (k Keeper) HandleAddEvmChainProposal(ctx sdk.Context, p *types.AddEvmChainP
 	k.SetEvmChainData(ctx, evmChain.EvmChain)
 
 	initBridgeDataFromGenesis(ctx, k, evmChain)
+
+	// update param to match with the new evm chain
+	params := k.GetParams(ctx)
+	evmChainParam := &types.EvmChainParam{
+		EvmChainPrefix:           p.EvmChainPrefix,
+		GravityId:                p.GravityId,
+		ContractSourceHash:       "",
+		BridgeEthereumAddress:    "0x0000000000000000000000000000000000000000",
+		BridgeChainId:            p.EvmChainNetVersion,
+		AverageEthereumBlockTime: 15000,
+		BridgeActive:             true,
+		EthereumBlacklist:        []string{},
+	}
+	params.EvmChainParams = append(params.EvmChainParams, evmChainParam)
+	k.SetParams(ctx, params)
 	return nil
 }
 
