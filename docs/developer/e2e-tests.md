@@ -86,7 +86,7 @@ BLOCK_TO_SEARCH=100 cargo run -p gbt -- --home /root/.gbt/ --address-prefix orai
 In side the Gravity test network, run:
 
 ```bash
-gravity tx gravity send-to-eth 0xc9B6f87d637d4774EEB54f8aC2b89dBC3D38226b 9goerli-testnet0xf48007ea0F3AA4d2A59DFb4473dd30f90488c8Ef 1goerli-testnet0xf48007ea0F3AA4d2A59DFb4473dd30f90488c8Ef goerli-testnet --home data/validator1 -y --from validator1
+gravity tx gravity send-to-eth 0xc9B6f87d637d4774EEB54f8aC2b89dBC3D38226b 1foobar0xf48007ea0F3AA4d2A59DFb4473dd30f90488c8Ef 1foobar0xf48007ea0F3AA4d2A59DFb4473dd30f90488c8Ef 1foobar0xf48007ea0F3AA4d2A59DFb4473dd30f90488c8Ef foobar --home upgrade-tests/data/validator1 -y --from validator1 --keyring-backend test --chain-id gravity-test
 ```
 
 # Useful commands
@@ -106,7 +106,7 @@ npx ts-node scripts/get-dummy-balance.ts
 
 # Add new evm chain
 gravity tx gravity add-evm-chain "goerli network 2nd" "foobar" "421" "defaultgravityid" "add goerli network 2nd" 100000000uoraib "foobar" --from validator1 --home e2e/data/validator1/ -y --keyring-backend test --chain-id gravity-test -b block --gas 2000000
-gravity tx gov vote 1 yes --from validator1 --home e2e/data/validator1/ -y
+gravity tx gov vote 1 yes --from validator1 --home e2e/data/validator1/ -y --keyring-backend test --chain-id gravity-test -b block
 ```
 
 <!-- oraid tx ibc-transfer transfer transfer channel-0 oraib1kvx7v59g9e8zvs7e8jm2a8w4mtp9ys2sjufdm4 1orai --from validator -y -->

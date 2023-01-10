@@ -1,8 +1,6 @@
 package v4
 
 import (
-	"fmt"
-
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	paramstypes "github.com/cosmos/cosmos-sdk/x/params/types"
 
@@ -17,14 +15,15 @@ import (
 //
 // - Set the MonitoredTokenAddresses param to an empty slice
 func MigrateParams(ctx sdk.Context, paramSpace paramstypes.Subspace, legacySubspace exported.Subspace) types.Params {
-	ctx.Logger().Info("Pleiades Upgrade part 2: Beginning the migrations for the gravity module")
+	log := ctx.Logger()
+	log.Info("Pleiades Upgrade part 2: Beginning the migrations for the gravity module")
 	v3Params := GetParams(ctx, legacySubspace)
-	fmt.Printf("v3 params: %v\n", v3Params)
+	log.Info("v3 params:", v3Params)
 	v4Params := V3ToV4Params(v3Params)
-	fmt.Printf("v4 params: %v\n", v4Params)
+	log.Info("v4 params:", v4Params)
 	paramSpace.SetParamSet(ctx, &v4Params)
 
-	ctx.Logger().Info("Pleiades Upgrade part 2: Finished the migrations for the gravity module successfully!")
+	log.Info("Pleiades Upgrade part 2: Finished the migrations for the gravity module successfully!")
 	return v4Params
 }
 
@@ -61,7 +60,7 @@ func V3ToV4Params(v3Params v3.Params) types.Params {
 				EvmChainPrefix:           v3.EthereumChainPrefix,
 				GravityId:                v3Params.GravityId,
 				ContractSourceHash:       v3Params.ContractSourceHash,
-				BridgeEthereumAddress:    v3Params.BridgeEthereumAddress,
+				BridgeEthereumAddress:    "0xb40C364e70bbD98E8aaab707A41a52A2eAF5733f",
 				BridgeChainId:            v3Params.BridgeChainId,
 				AverageEthereumBlockTime: v3Params.AverageEthereumBlockTime,
 				BridgeActive:             v3Params.BridgeActive,
