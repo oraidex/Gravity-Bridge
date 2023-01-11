@@ -3,8 +3,30 @@ use gravity_proto::gravity::query_client::QueryClient as GravityQueryClient;
 use gravity_utils::types::event_signatures::*;
 use gravity_utils::types::{EthereumEvent, ValsetUpdatedEvent};
 use gravity_utils::{error::GravityError, types::Valset};
+use std::collections::HashMap;
+use std::sync::{Arc, RwLock};
 use tonic::transport::Channel;
 use web30::client::Web3;
+
+// TODO: using leveldb
+lazy_static! {
+    // cache evm_chain_prefix => (scan_block,Valset)
+    static ref LATEST_VALSET_INFO: Arc<RwLock<HashMap<String, (Uint256,Option<Valset>)>>> =
+        Arc::new(RwLock::new(HashMap::new()));
+}
+
+fn get_latest_valset_info(evm_chain_prefix: &str) -> Option<(Uint256, Option<Valset>)> {
+    LATEST_VALSET_INFO
+        .read()
+        .unwrap()
+        .get(evm_chain_prefix)
+        .cloned()
+}
+
+fn set_latest_valset_info(evm_chain_prefix: &str, info: (Uint256, Option<Valset>)) {
+    let mut lock = LATEST_VALSET_INFO.write().unwrap();
+    lock.insert(evm_chain_prefix.to_string(), info);
+}
 
 /// This function finds the latest valset on the Gravity contract by looking back through the event
 /// history and finding the most recent ValsetUpdatedEvent. Most of the time this will be very fast
@@ -17,11 +39,14 @@ pub async fn find_latest_valset(
     gravity_contract_address: Address,
     web3: &Web3,
 ) -> Result<Valset, GravityError> {
-    const BLOCKS_TO_SEARCH: u128 = 100u128;
+    const BLOCKS_TO_SEARCH: u128 = 5_000u128;
     let latest_block = web3.eth_block_number().await?;
     let mut current_block: Uint256 = latest_block.clone();
 
-    while current_block.clone() > 0u8.into() {
+    let (previous_block, mut latest_eth_valset) =
+        get_latest_valset_info(evm_chain_prefix).unwrap_or((0u8.into(), None));
+
+    while current_block.clone() > previous_block {
         trace!(
             "About to submit a Valset or Batch looking back into the history to find the last Valset Update, on block {}",
             current_block
@@ -31,14 +56,24 @@ pub async fn find_latest_valset(
         } else {
             current_block.clone() - BLOCKS_TO_SEARCH.into()
         };
-        let mut all_valset_events = web3
+        let mut all_valset_events = match web3
             .check_for_events(
                 end_search.clone(),
                 Some(current_block.clone()),
                 vec![gravity_contract_address],
                 vec![VALSET_UPDATED_EVENT_SIG],
             )
-            .await?;
+            .await
+        {
+            Ok(events) => events,
+            Err(_) => {
+                warn!(
+                    "Failed to get events for block range {} - {}, repeating...",
+                    end_search, current_block
+                );
+                continue;
+            }
+        };
         // by default the lowest found valset goes first, we want the highest.
         all_valset_events.reverse();
 
@@ -49,25 +84,40 @@ pub async fn find_latest_valset(
             let event = &all_valset_events[0];
             match ValsetUpdatedEvent::from_log(event) {
                 Ok(event) => {
-                    let latest_eth_valset = Valset {
+                    // update latest_eth_valset
+                    latest_eth_valset = Some(Valset {
                         nonce: event.valset_nonce,
                         members: event.members,
                         reward_amount: event.reward_amount,
                         reward_token: event.reward_token,
-                    };
-                    let cosmos_chain_valset = cosmos_gravity::query::get_valset(
-                        grpc_client,
+                    });
+
+                    // cache latest_eth_valset and current_block
+                    set_latest_valset_info(
                         evm_chain_prefix,
-                        latest_eth_valset.nonce,
-                    )
-                    .await?;
-                    check_if_valsets_differ(cosmos_chain_valset, &latest_eth_valset);
-                    return Ok(latest_eth_valset);
+                        (current_block, latest_eth_valset.clone()),
+                    );
+
+                    // now break from loop
+                    break;
                 }
                 Err(e) => error!("Got valset event that we can't parse {}", e),
             }
         }
         current_block = end_search;
+    }
+
+    // return cached valset
+    if let Some(latest_eth_valset) = latest_eth_valset {
+        // just for warning
+        let cosmos_chain_valset = cosmos_gravity::query::get_valset(
+            grpc_client,
+            evm_chain_prefix,
+            latest_eth_valset.nonce,
+        )
+        .await?;
+        check_if_valsets_differ(cosmos_chain_valset, &latest_eth_valset);
+        return Ok(latest_eth_valset);
     }
 
     panic!("Could not find the last validator set for contract {}, probably not a valid Gravity contract!", gravity_contract_address)
