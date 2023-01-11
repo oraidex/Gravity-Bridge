@@ -15,7 +15,7 @@ COSMOS_SDK_DIR=${COSMOS_SDK_DIR:-$(go list -f "{{ .Dir }}" -m github.com/cosmos/
 IBC_DIR=${IBC_DIR:-$(go list -f "{{ .Dir }}" -m github.com/cosmos/ibc-go/v3)}
 
 # scan all folders that contain proto file
-proto_dirs=$(find $PROJECTDIR/proto -path -prune -o -name '*.proto' -print0 | xargs -0 -n1 dirname | sort | uniq)
+proto_dirs=$(find $PROJECTDIR/proto $IBC_DIR/proto $COSMOS_SDK_DIR/proto $COSMOS_SDK_DIR/third_party/proto -path -prune -o -name '*.proto' -print0 | xargs -0 -n1 dirname | sort | uniq)
 proto_files=()
 
 for dir in $proto_dirs; do
@@ -29,10 +29,10 @@ NPM_PATH=$(npm config get prefix)
 
 buf alpha protoc \
     --plugin=$NPM_PATH/bin/protoc-gen-ts_proto \
-    --proto_path="$PROJECTDIR/proto" \
-    --proto_path="$IBC_DIR/proto" \
-    --proto_path="$COSMOS_SDK_DIR/third_party/proto" \
-    --proto_path="$COSMOS_SDK_DIR/proto" \
+    -I="$PROJECTDIR/proto" \
+    -I="$IBC_DIR/proto" \
+    -I="$COSMOS_SDK_DIR/third_party/proto" \
+    -I="$COSMOS_SDK_DIR/proto" \
     --ts_proto_opt=forceLong=string \
     --ts_proto_opt=esModuleInterop=true \
     --ts_proto_opt=outputClientImpl=false \
