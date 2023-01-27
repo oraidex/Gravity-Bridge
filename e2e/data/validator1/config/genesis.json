@@ -410,6 +410,53 @@
                             "reward_token": "0x0000000000000000000000000000000000000000"
                         }
                     ]
+                },
+                {
+                    "attestations": [],
+                    "batch_confirms": [],
+                    "batches": [],
+                    "delegate_keys": [
+                        {
+                            "eth_address": "0xc9B6f87d637d4774EEB54f8aC2b89dBC3D38226b",
+                            "orchestrator": "oraib1t8luzfnnrnupg6uhwr9gfdd6t7amshpj0nxh0g",
+                            "validator": "oraibvaloper1kvx7v59g9e8zvs7e8jm2a8w4mtp9ys2su2jgqk"
+                        }
+                    ],
+                    "erc20_to_denoms": [],
+                    "evm_chain": {
+                        "evm_chain_name": "bsc mainnet fork",
+                        "evm_chain_net_version": "421",
+                        "evm_chain_prefix": "bsc-mainnet"
+                    },
+                    "gravity_nonces": {
+                        "last_batch_id": "0",
+                        "last_observed_evm_block_height": "0",
+                        "last_observed_nonce": "0",
+                        "last_slashed_batch_block": "0",
+                        "last_slashed_logic_call_block": "0",
+                        "last_slashed_valset_nonce": "0",
+                        "last_tx_pool_id": "0",
+                        "latest_valset_nonce": "1"
+                    },
+                    "logic_call_confirms": [],
+                    "logic_calls": [],
+                    "pending_ibc_auto_forwards": [],
+                    "unbatched_transfers": [],
+                    "valset_confirms": [],
+                    "valsets": [
+                        {
+                            "height": "1",
+                            "members": [
+                                {
+                                    "ethereum_address": "0xc9B6f87d637d4774EEB54f8aC2b89dBC3D38226b",
+                                    "power": "4294967296"
+                                }
+                            ],
+                            "nonce": "1",
+                            "reward_amount": "0",
+                            "reward_token": "0x0000000000000000000000000000000000000000"
+                        }
+                    ]
                 }
             ],
             "params": {
@@ -419,10 +466,20 @@
                         "average_ethereum_block_time": "15000",
                         "bridge_active": true,
                         "bridge_chain_id": "420",
-                        "bridge_ethereum_address": "0x0000000000000000000000000000000000000000",
+                        "bridge_ethereum_address": "0xa49e040d7b8F045B090306C88aEF48955404B2e8",
                         "contract_source_hash": "",
                         "ethereum_blacklist": [],
                         "gravity_id": "defaultgravityid"
+                    },
+                    {
+                        "evm_chain_prefix": "bsc-mainnet",
+                        "average_ethereum_block_time": "15000",
+                        "bridge_active": true,
+                        "bridge_chain_id": "421",
+                        "bridge_ethereum_address": "0xc020aEcE63cbba5c1EbC46d1B39fB047977b0539",
+                        "contract_source_hash": "",
+                        "ethereum_blacklist": [],
+                        "gravity_id": "oraibridge-fork"
                     }
                 ],
                 "average_block_time": "5000",
@@ -574,7 +631,7 @@
                                     "root": {
                                         "hash": "zBkhVQwwUthUvN2uRs1wOrQ6nbatEXKw64vWBrXXfAs="
                                     },
-                                    "timestamp": "2023-01-08T22:27:54.999307696Z"
+                                    "timestamp": "2023-01-18T04:08:50.757146613Z"
                                 },
                                 "height": {
                                     "revision_height": "10",
@@ -588,7 +645,7 @@
                                     "root": {
                                         "hash": "tEsyyUzCAkz8E6PN7glbEo+k4xmzF/hJ27AEp+ml5iI="
                                     },
-                                    "timestamp": "2023-01-08T22:28:25.080787534Z"
+                                    "timestamp": "2023-01-18T04:08:50.757146613Z"
                                 },
                                 "height": {
                                     "revision_height": "16",
@@ -602,7 +659,7 @@
                                     "root": {
                                         "hash": "vtMLWf9qgApe+pwCpfGVo61Leur3dSSszO1cvjj4fV0="
                                     },
-                                    "timestamp": "2023-01-08T22:27:19.906519374Z"
+                                    "timestamp": "2023-01-18T04:08:50.757146613Z"
                                 },
                                 "height": {
                                     "revision_height": "3",
@@ -616,7 +673,7 @@
                                     "root": {
                                         "hash": "kI3f9LTPz5UeiE2Mhj65cTQeHG8DYIQjRfq2LnQYpiM="
                                     },
-                                    "timestamp": "2023-01-08T22:27:34.944702232Z"
+                                    "timestamp": "2023-01-18T04:08:50.757146613Z"
                                 },
                                 "height": {
                                     "revision_height": "6",
@@ -859,7 +916,7 @@
         },
         "version": {}
     },
-    "genesis_time": "2022-12-28T21:25:49.364897384Z",
+    "genesis_time": "2023-01-18T04:08:50.757146613Z",
     "initial_height": "15",
     "validators": [
         {

@@ -23,7 +23,8 @@ const args = commandLineArgs([
   { name: "contractERC721", type: String },
   // test mode, if enabled this script deploys three ERC20 contracts for testing
   { name: "test-mode", type: String },
-  { name: "evm-chain", type: String, defaultValue: "goerli-testnet" },
+  { name: "evm-prefix", type: String, defaultValue: "" },
+  { name: "admin", type: String, defaultValue: "0xD7F771664541b3f647CBA2be9Ab1Bc121bEEC913" },
 ]);
 
 // 4. Now, the deployer script hits a full node api, gets the Eth signatures of the valset from the latest block, and deploys the Ethereum contract.
@@ -190,7 +191,9 @@ async function deploy() {
     const erc721TestAddress = testERC721.address;
     console.log("ERC721 deployed at Address - ", erc721TestAddress);
   }
+  // TODO: Need to fix querying gravity to get the correct gravity id from the network
   const gravityIdString = await getGravityId();
+  console.log("gravity id: ", gravityIdString)
   const gravityId = ethers.utils.formatBytes32String(gravityIdString);
 
   console.log("Starting Gravity contract deploy");
@@ -232,23 +235,23 @@ async function deploy() {
     gravityId,
     eth_addresses,
     powers,
+    args["admin"],
     overrides
   )) as Gravity;
 
   await gravity.deployed();
   console.log("Gravity deployed at Address - ", gravity.address);
-  await submitGravityAddress(gravity.address);
 
-  console.log("Starting Gravity ERC721 contract deploy");
-  const { abi: abiERC721, bytecode: bytecodeERC721 } = getContractArtifacts(args["contractERC721"]);
-  const factoryERC721 = new ethers.ContractFactory(abiERC721, bytecodeERC721, wallet);
+  // console.log("Starting Gravity ERC721 contract deploy");
+  // const { abi: abiERC721, bytecode: bytecodeERC721 } = getContractArtifacts(args["contractERC721"]);
+  // const factoryERC721 = new ethers.ContractFactory(abiERC721, bytecodeERC721, wallet);
 
-  const gravityERC721 = (await factoryERC721.deploy(
-    gravity.address
-  ) as GravityERC721);
+  // const gravityERC721 = (await factoryERC721.deploy(
+  //   gravity.address
+  // ) as GravityERC721);
 
-  await gravityERC721.deployed();
-  console.log("GravityERC721 deployed at Address - ", gravityERC721.address);
+  // await gravityERC721.deployed();
+  // console.log("GravityERC721 deployed at Address - ", gravityERC721.address);
 }
 
 function getContractArtifacts(path: string): { bytecode: string; abi: string } {
@@ -269,7 +272,7 @@ async function getLatestValset(): Promise<Valset> {
   let request_string = args["cosmos-node"] + "/abci_query"
   let params = {
     params: {
-      path: `\"/custom/gravity/currentValset/${args['evm-chain']}\"`,
+      path: `\"/custom/gravity/currentValset/${args['evm-prefix']}\"`,
       height: block_height,
       prove: "false",
     }
@@ -306,26 +309,28 @@ async function getLatestValset(): Promise<Valset> {
   let valset: ValsetTypeWrapper = JSON.parse(decode(valsets.result.response.value))
   return valset.value;
 }
+
 async function getGravityId(): Promise<string> {
-  let block_height_request_string = args["cosmos-node"] + '/status';
+  let block_height_request_string = args["cosmos-node"] + "/status";
   let block_height_response = await axios.get(block_height_request_string);
   let info: StatusWrapper = await block_height_response.data;
   let block_height = info.result.sync_info.latest_block_height;
   if (info.result.sync_info.catching_up) {
-    console.log("This node is still syncing! You can not deploy using this gravityID!");
+    console.log(
+      "This node is still syncing! You can not deploy using this gravityID!"
+    );
     exit(1);
   }
-  let request_string = args["cosmos-node"] + "/abci_query"
+  let request_string = args["cosmos-node"] + "/abci_query";
   let params = {
     params: {
-      path: "\"/custom/gravity/gravityID/\"",
+      path: `\"/custom/gravity/gravityID/${args['evm-prefix']}\"`,
       height: block_height,
       prove: "false",
-    }
+    },
   };
 
-  let response = await axios.get(request_string,
-    params);
+  let response = await axios.get(request_string, params);
   let gravityIDABCIResponse: ABCIWrapper = await response.data;
 
   // if in test mode retry the request as needed in some cases
@@ -336,26 +341,26 @@ async function getGravityId(): Promise<string> {
     while (gravityIDABCIResponse.result.response.value == null) {
       var present = new Date();
       var timeDiff: number = present.getTime() - startTime.getTime();
-      timeDiff = timeDiff / 1000
+      timeDiff = timeDiff / 1000;
 
-      response = await axios.get(request_string,
-        params);
+      response = await axios.get(request_string, params);
       gravityIDABCIResponse = await response.data;
 
-      if (timeDiff > 600) {
-        console.log("Could not contact Cosmos ABCI after 10 minutes, check the URL!")
-        exit(1)
+      if (timeDiff > 10) {
+        console.log(
+          "Could not contact Cosmos ABCI after 10 minutes, check the URL!"
+        );
+        exit(1);
       }
       await sleep(1000);
     }
   }
 
-  let gravityID: string = JSON.parse(decode(gravityIDABCIResponse.result.response.value))
+  let gravityID: string = JSON.parse(
+    decode(gravityIDABCIResponse.result.response.value)
+  );
   return gravityID;
-
 }
-
-async function submitGravityAddress(address: string) { }
 
 async function main() {
   await deploy();

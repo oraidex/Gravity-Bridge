@@ -54,7 +54,7 @@ cat data/validator-phrases
 ```bash
 docker-compose up -d
 
-# Gravity contract on Goerli: 0xa49e040d7b8F045B090306C88aEF48955404B2e8
+# Gravity contract on Goerli: 0xa49e040d7b8F045B090306C88aEF48955404B2e8; Gravity id: defaultgravityid
 
 # Dummy token on Goerli: 0xf48007ea0F3AA4d2A59DFb4473dd30f90488c8Ef
 ```
@@ -93,7 +93,7 @@ gravity tx gravity send-to-eth 0xc9B6f87d637d4774EEB54f8aC2b89dBC3D38226b 1fooba
 
 ```bash
 ## Deploy new contract
-npx ts-node contract-deployer.ts --cosmos-node="http://localhost:26657" --eth-node=http://localhost:8545 --eth-privkey=0xbbfb76c92cd13796899f63dc6ead6d2420e8d0bc502d42bd5773c2d4b8897f08 --contract=artifacts/contracts/Gravity.sol/Gravity.json
+npx ts-node contract-deployer.ts --cosmos-node="http://localhost:26657" --eth-node=http://localhost:8545 --eth-privkey=0xbbfb76c92cd13796899f63dc6ead6d2420e8d0bc502d42bd5773c2d4b8897f08 --contract=artifacts/contracts/Gravity.sol/Gravity.json --evm-prefix="foobar"
 
 # fork Goerli. 8218229 is a block after the block of gravity contract & dummy token deployment. By doing this, we can re-play the network
 yarn hardhat node --fork https://rpc.ankr.com/eth_goerli --fork-block-number 8218229 --port 8545
@@ -107,6 +107,12 @@ npx ts-node scripts/get-dummy-balance.ts
 # Add new evm chain
 gravity tx gravity add-evm-chain "goerli network 2nd" "foobar" "421" "defaultgravityid" "add goerli network 2nd" 100000000uoraib "foobar" --from validator1 --home e2e/data/validator1/ -y --keyring-backend test --chain-id gravity-test -b block --gas 2000000
 gravity tx gov vote 1 yes --from validator1 --home e2e/data/validator1/ -y --keyring-backend test --chain-id gravity-test -b block
+
+# bsc mainnet test gravity contract - 0xc020aece63cbba5c1ebc46d1b39fb047977b0539
+# gravity id of bsc mainnet test: "oraibridge-fork"
 ```
 
-<!-- oraid tx ibc-transfer transfer transfer channel-0 oraib1kvx7v59g9e8zvs7e8jm2a8w4mtp9ys2sjufdm4 1orai --from validator -y -->
+<!-- oraid tx ibc-transfer transfer transfer channel-0 oraib1kvx7v59g9e8zvs7e8jm2a8w4mtp9ys2sjufdm4 1orai --from validator -y
+
+oraid tx ibc-transfer transfer transfer channel-0 oraib1kvx7v59g9e8zvs7e8jm2a8w4mtp9ys2sjufdm4 1ibc/C720B50B80E3DEB56C76A3DB053DF269597B4B80B56D562BA914B6BF8D0DF982 --from validator --chain-id orai-test -y --keyring-backend test -b block --memo "goerli-testnet0xc9B6f87d637d4774EEB54f8aC2b89dBC3D38226b"
+ -->
