@@ -126,17 +126,11 @@ message MsgValsetConfirmResponse {}
 // certain percentage of the AMOUNT, as determined by governance.
 // This Msg will be rejected if CHAIN_FEE is insufficient.
 message MsgSendToEth {
-  string                   sender   = 1;
-  string                   eth_dest = 2;
-  cosmos.base.v1beta1.Coin amount   = 3 [
-    (gogoproto.nullable) = false
-  ];
-  cosmos.base.v1beta1.Coin bridge_fee = 4 [
-    (gogoproto.nullable) = false
-  ];
-  cosmos.base.v1beta1.Coin chain_fee = 5 [
-    (gogoproto.nullable) = false
-  ];
+  string sender = 1;
+  string eth_dest = 2;
+  cosmos.base.v1beta1.Coin amount = 3 [ (gogoproto.nullable) = false ];
+  cosmos.base.v1beta1.Coin bridge_fee = 4 [ (gogoproto.nullable) = false ];
+  cosmos.base.v1beta1.Coin chain_fee = 5 [ (gogoproto.nullable) = false ];
   string evm_chain_prefix = 6;
 }
 
@@ -379,4 +373,10 @@ message EventSignatureSlashing {
 message EventOutgoingTxId {
   string message = 1;
   string tx_id = 2;
+}
+
+message EventSendToEthFeeCollected {
+  string sender = 1;
+  string send_amount = 2;
+  string fee_amount = 3;
 }
