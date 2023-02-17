@@ -9,7 +9,9 @@ use std::sync::{Arc, RwLock};
 use tonic::transport::Channel;
 use web30::client::Web3;
 
-const BLOCKS_TO_SEARCH: u128 = 5_000u128;
+/// This is roughly the maximum number of blocks a reasonable Ethereum node
+/// can search in a single request before it starts timing out or behaving badly
+pub const BLOCKS_TO_SEARCH: u128 = 5_000u128;
 
 pub fn convert_block_to_search() -> u128 {
     env::var("BLOCK_TO_SEARCH")
@@ -64,7 +66,6 @@ pub async fn find_latest_valset(
         let end_search = if current_block.clone() < block_to_search.into() {
             0u8.into()
         } else {
-            // must be >= previous_block and < current_block
             Uint256::max(
                 current_block.clone() - block_to_search.into(),
                 previous_block.clone(),
