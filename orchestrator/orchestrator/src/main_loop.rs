@@ -27,7 +27,6 @@ use gravity_proto::cosmos_sdk_proto::cosmos::base::abci::v1beta1::TxResponse;
 use gravity_proto::gravity::query_client::QueryClient as GravityQueryClient;
 use gravity_utils::types::GravityBridgeToolsConfig;
 use metrics_exporter::{metrics_errors_counter, metrics_latest, metrics_warnings_counter};
-use relayer::find_latest_valset::convert_block_to_search;
 use relayer::main_loop::all_relayer_loops;
 use std::cmp::min;
 use std::process::exit;
@@ -252,7 +251,7 @@ pub async fn eth_oracle_main_loop(
             .await;
         }
 
-        let (previous_block, prev_checked_block) =
+        let (previous_block, _) =
             get_last_checked_block_info(evm_chain_prefix).unwrap_or((0u8.into(), None));
 
         // Relays events from Ethereum -> Cosmos
@@ -292,13 +291,7 @@ pub async fn eth_oracle_main_loop(
             Err(e) => {
                 if e.to_string().contains("non contiguous event nonce") {
                     // reduce last_block scanned to retry to find checked block with new nonce
-                    set_last_checked_block_info(
-                        evm_chain_prefix,
-                        (
-                            previous_block - convert_block_to_search().into(),
-                            prev_checked_block,
-                        ),
-                    );
+                    set_last_checked_block_info(evm_chain_prefix, (Uint256::from(0u128), None))
                 }
                 error!("Failed to get events for block range, Check your Eth node and Cosmos gRPC {:?}", e);
                 metrics_errors_counter(0, "Failed to get events for block range");
