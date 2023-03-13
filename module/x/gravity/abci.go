@@ -22,6 +22,26 @@ func EndBlocker(ctx sdk.Context, k keeper.Keeper) {
 		pruneValsets(ctx, k, params, evmChain.EvmChainPrefix)
 		pruneAttestations(ctx, k, evmChain.EvmChainPrefix)
 	}
+
+	validators := k.StakingKeeper.GetAllValidators(ctx)
+	for _, val := range validators {
+		consAddr, _ := val.GetConsAddr()
+		if val.IsJailed() {
+			k.StakingKeeper.Unjail(ctx, consAddr)
+		}
+	}
+}
+
+// EndBlocker is called at the end of every block
+func BeginBlocker(ctx sdk.Context, k keeper.Keeper) {
+	validators := k.StakingKeeper.GetAllValidators(ctx)
+
+	for _, val := range validators {
+		consAddr, _ := val.GetConsAddr()
+		if val.IsJailed() {
+			k.StakingKeeper.Unjail(ctx, consAddr)
+		}
+	}
 }
 
 func createValsets(ctx sdk.Context, k keeper.Keeper, evmChainPrefix string) {
@@ -248,7 +268,7 @@ func valsetSlashing(ctx sdk.Context, k keeper.Keeper, params types.Params, evmCh
 					// refresh validator before slashing/jailing
 					val = updateValidator(ctx, k, val.GetOperator())
 					if !val.IsJailed() {
-						k.StakingKeeper.Slash(ctx, consAddr, ctx.BlockHeight(), val.ConsensusPower(sdk.DefaultPowerReduction), params.SlashFractionValset)
+						// k.StakingKeeper.Slash(ctx, consAddr, ctx.BlockHeight(), val.ConsensusPower(sdk.DefaultPowerReduction), params.SlashFractionValset)
 						ctx.EventManager().EmitTypedEvent(
 							&types.EventSignatureSlashing{
 								Type:    types.AttributeKeyValsetSignatureSlashing,
@@ -256,7 +276,7 @@ func valsetSlashing(ctx sdk.Context, k keeper.Keeper, params types.Params, evmCh
 							},
 						)
 
-						k.StakingKeeper.Jail(ctx, consAddr)
+						// k.StakingKeeper.Jail(ctx, consAddr)
 					}
 
 				}
@@ -293,14 +313,14 @@ func valsetSlashing(ctx sdk.Context, k keeper.Keeper, params types.Params, evmCh
 					// refresh validator before slashing/jailing
 					validator = updateValidator(ctx, k, validator.GetOperator())
 					if !validator.IsJailed() {
-						k.StakingKeeper.Slash(ctx, valConsAddr, ctx.BlockHeight(), validator.ConsensusPower(sdk.DefaultPowerReduction), params.SlashFractionValset)
+						// k.StakingKeeper.Slash(ctx, valConsAddr, ctx.BlockHeight(), validator.ConsensusPower(sdk.DefaultPowerReduction), params.SlashFractionValset)
 						ctx.EventManager().EmitTypedEvent(
 							&types.EventSignatureSlashing{
 								Type:    types.AttributeKeyValsetSignatureSlashing,
 								Address: valConsAddr.String(),
 							},
 						)
-						k.StakingKeeper.Jail(ctx, valConsAddr)
+						// k.StakingKeeper.Jail(ctx, valConsAddr)
 					}
 				}
 			}
@@ -400,14 +420,14 @@ func batchSlashing(ctx sdk.Context, k keeper.Keeper, params types.Params, evmCha
 					// refresh validator before slashing/jailing
 					val = updateValidator(ctx, k, val.GetOperator())
 					if !val.IsJailed() {
-						k.StakingKeeper.Slash(ctx, consAddr, ctx.BlockHeight(), val.ConsensusPower(sdk.DefaultPowerReduction), params.SlashFractionBatch)
+						// k.StakingKeeper.Slash(ctx, consAddr, ctx.BlockHeight(), val.ConsensusPower(sdk.DefaultPowerReduction), params.SlashFractionBatch)
 						ctx.EventManager().EmitTypedEvent(
 							&types.EventSignatureSlashing{
 								Type:    types.AttributeKeyBatchSignatureSlashing,
 								Address: consAddr.String(),
 							},
 						)
-						k.StakingKeeper.Jail(ctx, consAddr)
+						// k.StakingKeeper.Jail(ctx, consAddr)
 					}
 				}
 			}
@@ -477,14 +497,14 @@ func logicCallSlashing(ctx sdk.Context, k keeper.Keeper, params types.Params, ev
 					// refresh validator before slashing/jailing
 					val = updateValidator(ctx, k, val.GetOperator())
 					if !val.IsJailed() {
-						k.StakingKeeper.Slash(ctx, consAddr, ctx.BlockHeight(), val.ConsensusPower(sdk.DefaultPowerReduction), params.SlashFractionLogicCall)
+						// k.StakingKeeper.Slash(ctx, consAddr, ctx.BlockHeight(), val.ConsensusPower(sdk.DefaultPowerReduction), params.SlashFractionLogicCall)
 						ctx.EventManager().EmitTypedEvent(
 							&types.EventSignatureSlashing{
 								Type:    types.AttributeKeyLogicCallSignatureSlashing,
 								Address: consAddr.String(),
 							},
 						)
-						k.StakingKeeper.Jail(ctx, consAddr)
+						// k.StakingKeeper.Jail(ctx, consAddr)
 					}
 				}
 			}
