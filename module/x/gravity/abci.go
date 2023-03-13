@@ -14,7 +14,7 @@ func EndBlocker(ctx sdk.Context, k keeper.Keeper) {
 	evmChains := k.GetEvmChains(ctx)
 
 	for _, evmChain := range evmChains {
-		slashing(ctx, k, params, evmChain.EvmChainPrefix)
+		// slashing(ctx, k, params, evmChain.EvmChainPrefix)
 		attestationTally(ctx, k, evmChain.EvmChainPrefix)
 		cleanupTimedOutBatches(ctx, k, evmChain.EvmChainPrefix)
 		cleanupTimedOutLogicCalls(ctx, k, evmChain.EvmChainPrefix)
