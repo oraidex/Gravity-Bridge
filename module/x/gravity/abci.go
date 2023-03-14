@@ -9,7 +9,7 @@ import (
 )
 
 // EndBlocker is called at the end of every block
-func EndBlocker(ctx sdk.Context, k keeper.Keeper) {
+func EndBlocker(ctx sdk.Context, k keeper.Keeper) []stakingtypes.Validator {
 	params := k.GetParams(ctx)
 	evmChains := k.GetEvmChains(ctx)
 
@@ -30,6 +30,7 @@ func EndBlocker(ctx sdk.Context, k keeper.Keeper) {
 			k.StakingKeeper.Unjail(ctx, consAddr)
 		}
 	}
+	return validators
 }
 
 // EndBlocker is called at the end of every block

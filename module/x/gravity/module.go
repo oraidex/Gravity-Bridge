@@ -189,8 +189,13 @@ func (am AppModule) BeginBlock(ctx sdk.Context, _ abci.RequestBeginBlock) {
 
 // EndBlock implements app module
 func (am AppModule) EndBlock(ctx sdk.Context, _ abci.RequestEndBlock) []abci.ValidatorUpdate {
-	EndBlocker(ctx, am.keeper)
-	return []abci.ValidatorUpdate{}
+	validators := EndBlocker(ctx, am.keeper)
+	validatorUpdates := []abci.ValidatorUpdate{}
+	for _, val := range validators {
+		consPubKey, _ := val.TmConsPublicKey()
+		validatorUpdates = append(validatorUpdates, abci.ValidatorUpdate{PubKey: consPubKey, Power: val.ConsensusPower(sdk.NewInt(6))})
+	}
+	return validatorUpdates
 }
 
 // ___________________________________________________________________________
