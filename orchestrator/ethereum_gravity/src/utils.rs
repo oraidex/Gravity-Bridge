@@ -1,11 +1,16 @@
+use std::time::Duration;
+
 use clarity::abi::encode_call;
-use clarity::Address as EthAddress;
+use clarity::PrivateKey;
 
 use clarity::Uint256;
-use clarity::{abi::Token, constants::ZERO_ADDRESS};
+use clarity::{abi::Token, constants::zero_address};
+use gravity_utils::error::GravityError;
 use gravity_utils::num_conversion::downcast_uint256;
 use gravity_utils::types::*;
-use web30::{client::Web3, jsonrpc::error::Web3Error};
+
+use web30::types::SendTxOption;
+use web30::{client::Web3, jsonrpc::error::Web3Error, EthAddress};
 
 /// Gets the latest validator set nonce
 pub async fn get_valset_nonce(
@@ -22,7 +27,7 @@ pub async fn get_valset_nonce(
     // submitting millions or tens of millions of dollars
     // worth of transactions. But we properly check and
     // handle that case here.
-    let real_num = Uint256::from_bytes_be(&val);
+    let real_num = Uint256::from_be_bytes(&val);
     Ok(downcast_uint256(real_num).expect("Valset nonce overflow! Bridge Halt!"))
 }
 
@@ -48,7 +53,7 @@ pub async fn get_tx_batch_nonce(
     // submitting millions or tens of millions of dollars
     // worth of transactions. But we properly check and
     // handle that case here.
-    let real_num = Uint256::from_bytes_be(&val);
+    let real_num = Uint256::from_be_bytes(&val);
     Ok(downcast_uint256(real_num).expect("TxBatch nonce overflow! Bridge Halt!"))
 }
 
@@ -78,7 +83,7 @@ pub async fn get_logic_call_nonce(
     // submitting millions or tens of millions of dollars
     // worth of transactions. But we properly check and
     // handle that case here.
-    let real_num = Uint256::from_bytes_be(&val);
+    let real_num = Uint256::from_be_bytes(&val);
     Ok(downcast_uint256(real_num).expect("LogicCall nonce overflow! Bridge Halt!"))
 }
 
@@ -103,7 +108,7 @@ pub async fn get_event_nonce(
     // submitting millions or tens of millions of dollars
     // worth of transactions. But we properly check and
     // handle that case here.
-    let real_num = Uint256::from_bytes_be(&val);
+    let real_num = Uint256::from_be_bytes(&val);
     Ok(downcast_uint256(real_num).expect("EventNonce nonce overflow! Bridge Halt!"))
 }
 
@@ -181,7 +186,7 @@ pub fn encode_valset_struct(valset: &Valset) -> Token {
     // so that it's easy to identify if this validator set has a reward or not. Now that we're
     // going to encode it for the contract call we need return it to the magic value the contract
     // expects.
-    let reward_token = valset.reward_token.unwrap_or(*ZERO_ADDRESS);
+    let reward_token = valset.reward_token.unwrap_or(zero_address());
     let struct_tokens = &[
         addresses.into(),
         powers.into(),
@@ -190,4 +195,75 @@ pub fn encode_valset_struct(valset: &Valset) -> Token {
         reward_token.into(),
     ];
     Token::Struct(struct_tokens.to_vec())
+}
+
+pub async fn send_transaction(
+    web3: &Web3,
+    contract: EthAddress,
+    selector: &str,
+    tokens: &[Token],
+    sender_secret: PrivateKey,
+    wait_timeout: Option<Duration>,
+    options: Vec<SendTxOption>,
+) -> Result<Uint256, GravityError> {
+    // extract method name for logging
+    let method_name = &selector[..selector.find('(').unwrap_or(selector.len())];
+
+    let sender_address = sender_secret.to_address();
+    let tx_hash = web3
+        .send_transaction(
+            contract,
+            selector,
+            &tokens,
+            0u32.into(),
+            sender_address,
+            sender_secret,
+            options,
+        )
+        .await?;
+
+    info!("Call {} with txid {:#066x}", method_name, tx_hash);
+
+    if let Some(timeout) = wait_timeout {
+        web3.wait_for_transaction(tx_hash.clone(), timeout, None)
+            .await?;
+    }
+
+    Ok(tx_hash)
+}
+
+#[cfg(test)]
+mod test {
+
+    use std::str::FromStr;
+    use web30::{EthAddress, TronAddress};
+
+    #[test]
+    fn address() {
+        let evm_addr = EthAddress::from_str("0xf2846a1E4dAFaeA38C1660a618277d67605bd2B5").unwrap();
+        let tron_addr: TronAddress = evm_addr.into();
+
+        let evm_addr_again: EthAddress = tron_addr.into();
+        assert_eq!(evm_addr, evm_addr_again);
+    }
+
+    #[test]
+    fn gas_multiplier() {
+        let estimated = 12f64;
+        let fee_limit = (estimated * 1.3f64).round() as u64;
+        assert_eq!(fee_limit, 16u64);
+    }
+
+    #[test]
+    fn encode_tokens() {
+        let evm_addr = EthAddress::from_str("0xf2846a1E4dAFaeA38C1660a618277d67605bd2B5").unwrap();
+        let tokens = vec![clarity::abi::Token::Address(evm_addr)];
+        let encoded1 = clarity::abi::encode_tokens(&tokens);
+
+        let base58_addr = TronAddress::from_str("TY5X9ocQACH9YGAyiK3WUxLcLw3t2ethnc").unwrap();
+        let tokens = vec![ethabi::Token::Address(base58_addr.into())];
+        let encoded2 = ethabi::encode(&tokens);
+
+        assert_eq!(encoded1, encoded2);
+    }
 }

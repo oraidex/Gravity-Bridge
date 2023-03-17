@@ -1,7 +1,7 @@
 use crate::{
     get_fee, one_eth, one_eth_128, one_hundred_eth, utils::*, EVM_CHAIN_PREFIX, TOTAL_TIMEOUT,
 };
-use clarity::{Address as EthAddress, Uint256};
+use clarity::Uint256;
 use cosmos_gravity::{
     query::get_pending_send_to_eth,
     send::{cancel_send_to_eth, send_request_batch, send_to_eth},
@@ -19,7 +19,7 @@ use std::{
 };
 use tokio::time::sleep as delay_for;
 use tonic::transport::Channel;
-use web30::{client::Web3, types::SendTxOption};
+use web30::{client::Web3, types::SendTxOption, EthAddress};
 
 const TIMEOUT: Duration = Duration::from_secs(120);
 
@@ -312,8 +312,7 @@ pub async fn test_bulk_send_to_cosmos(
         }
         let results = join_all(wait_for_txid).await;
         for result in results {
-            let result = result.unwrap();
-            result.block_number.unwrap();
+            result.unwrap();
         }
         info!(
             "Locked 100 {} from {} into the Gravity Ethereum Contract",

@@ -7,8 +7,15 @@ import { TestERC721A } from "./typechain/TestERC721A";
 import { ethers } from "ethers";
 import fs from "fs";
 import commandLineArgs from "command-line-args";
-import axios, { AxiosError, AxiosRequestConfig, AxiosResponse } from "axios";
+import axios from "axios";
 import { exit } from "process";
+// @ts-ignore
+import TronWeb from 'tronweb';
+
+const networkType = {
+  ETHEREUM: "eth",
+  TRON: "tron",
+}
 
 const args = commandLineArgs([
   // the ethernum node used to deploy the contract
@@ -25,6 +32,8 @@ const args = commandLineArgs([
   { name: "test-mode", type: String },
   { name: "evm-prefix", type: String, defaultValue: "" },
   { name: "admin", type: String, defaultValue: "0xD7F771664541b3f647CBA2be9Ab1Bc121bEEC913" },
+  { name: "network-type", type: String, defaultValue: networkType.ETHEREUM },
+  { name: 'headers', type: String }
 ]);
 
 // 4. Now, the deployer script hits a full node api, gets the Eth signatures of the valset from the latest block, and deploys the Ethereum contract.
@@ -98,107 +107,16 @@ const overrides = {
 }
 
 async function deploy() {
-  var startTime = new Date();
-  const provider = await new ethers.providers.JsonRpcProvider(args["eth-node"]);
+  const provider = new ethers.providers.JsonRpcProvider(args["eth-node"]);
   let wallet = new ethers.Wallet(args["eth-privkey"], provider);
 
-
-  if (args["test-mode"] == "True" || args["test-mode"] == "true") {
-    var success = false;
-    while (!success) {
-      var present = new Date();
-      var timeDiff: number = present.getTime() - startTime.getTime();
-      timeDiff = timeDiff / 1000
-      provider.getBlockNumber().then(_ => success = true).catch(_ => console.log("Ethereum RPC error, trying again"))
-
-      if (timeDiff > 600) {
-        console.log("Could not contact Ethereum RPC after 10 minutes, check the URL!")
-        exit(1)
-      }
-      await sleep(1000);
-    }
-  }
-
-  if (args["test-mode"] == "True" || args["test-mode"] == "true") {
-    console.log("Test mode, deploying ERC20 contracts");
-
-    // this handles several possible locations for the ERC20 artifacts
-    var erc20_a_path: string
-    var erc20_b_path: string
-    var erc20_c_path: string
-    var erc721_a_path: string
-    const main_location_a = "/gravity/solidity/artifacts/contracts/TestERC20A.sol/TestERC20A.json"
-    const main_location_b = "/gravity/solidity/artifacts/contracts/TestERC20B.sol/TestERC20B.json"
-    const main_location_c = "/gravity/solidity/artifacts/contracts/TestERC20C.sol/TestERC20C.json"
-    const main_location_721_a = "/gravity/solidity/artifacts/contracts/TestERC721A.sol/TestERC721A.json"
-
-    const alt_location_1_a = "/solidity/TestERC20A.json"
-    const alt_location_1_b = "/solidity/TestERC20B.json"
-    const alt_location_1_c = "/solidity/TestERC20C.json"
-    const alt_location_1_721a = "/solidity/TestERC721A.json"
-
-    const alt_location_2_a = "TestERC20A.json"
-    const alt_location_2_b = "TestERC20B.json"
-    const alt_location_2_c = "TestERC20C.json"
-    const alt_location_2_721a = "TestERC721A.json"
-
-    if (fs.existsSync(main_location_a)) {
-      erc20_a_path = main_location_a
-      erc20_b_path = main_location_b
-      erc20_c_path = main_location_c
-      erc721_a_path = main_location_721_a
-    } else if (fs.existsSync(alt_location_1_a)) {
-      erc20_a_path = alt_location_1_a
-      erc20_b_path = alt_location_1_b
-      erc20_c_path = alt_location_1_c
-      erc721_a_path = alt_location_1_721a
-    } else if (fs.existsSync(alt_location_2_a)) {
-      erc20_a_path = alt_location_2_a
-      erc20_b_path = alt_location_2_b
-      erc20_c_path = alt_location_2_c
-      erc721_a_path = alt_location_2_721a
-    } else {
-      console.log("Test mode was enabled but the ERC20 contracts can't be found!")
-      exit(1)
-    }
-
-
-    const { abi, bytecode } = getContractArtifacts(erc20_a_path);
-    const erc20Factory = new ethers.ContractFactory(abi, bytecode, wallet);
-    const testERC20 = (await erc20Factory.deploy(overrides)) as TestERC20A;
-    await testERC20.deployed();
-    const erc20TestAddress = testERC20.address;
-    console.log("ERC20 deployed at Address - ", erc20TestAddress);
-
-    const { abi: abi1, bytecode: bytecode1 } = getContractArtifacts(erc20_b_path);
-    const erc20Factory1 = new ethers.ContractFactory(abi1, bytecode1, wallet);
-    const testERC201 = (await erc20Factory1.deploy(overrides)) as TestERC20B;
-    await testERC201.deployed();
-    const erc20TestAddress1 = testERC201.address;
-    console.log("ERC20 deployed at Address - ", erc20TestAddress1);
-
-    const { abi: abi2, bytecode: bytecode2 } = getContractArtifacts(erc20_c_path);
-    const erc20Factory2 = new ethers.ContractFactory(abi2, bytecode2, wallet);
-    const testERC202 = (await erc20Factory2.deploy(overrides)) as TestERC20C;
-    await testERC202.deployed();
-    const erc20TestAddress2 = testERC202.address;
-    console.log("ERC20 deployed at Address - ", erc20TestAddress2);
-
-    const { abi: abi3, bytecode: bytecode3 } = getContractArtifacts(erc721_a_path);
-    const erc721Factory1 = new ethers.ContractFactory(abi3, bytecode3, wallet);
-    const testERC721 = (await erc721Factory1.deploy(overrides)) as TestERC721A;
-    await testERC721.deployed();
-    const erc721TestAddress = testERC721.address;
-    console.log("ERC721 deployed at Address - ", erc721TestAddress);
-  }
-  // TODO: Need to fix querying gravity to get the correct gravity id from the network
   const gravityIdString = await getGravityId();
   console.log("gravity id: ", gravityIdString)
   const gravityId = ethers.utils.formatBytes32String(gravityIdString);
 
   console.log("Starting Gravity contract deploy");
   const { abi, bytecode } = getContractArtifacts(args["contract"]);
-  const factory = new ethers.ContractFactory(abi, bytecode, wallet);
+  const factory = new ethers.ContractFactory(JSON.stringify(abi), JSON.stringify(bytecode), wallet);
 
   console.log("About to get latest Gravity valset");
   const latestValset = await getLatestValset();
@@ -241,20 +159,81 @@ async function deploy() {
 
   await gravity.deployed();
   console.log("Gravity deployed at Address - ", gravity.address);
-
-  // console.log("Starting Gravity ERC721 contract deploy");
-  // const { abi: abiERC721, bytecode: bytecodeERC721 } = getContractArtifacts(args["contractERC721"]);
-  // const factoryERC721 = new ethers.ContractFactory(abiERC721, bytecodeERC721, wallet);
-
-  // const gravityERC721 = (await factoryERC721.deploy(
-  //   gravity.address
-  // ) as GravityERC721);
-
-  // await gravityERC721.deployed();
-  // console.log("GravityERC721 deployed at Address - ", gravityERC721.address);
 }
 
-function getContractArtifacts(path: string): { bytecode: string; abi: string } {
+async function deployTron() {
+  console.log(args['eth-node'], args['headers'], args['eth-privkey'])
+  const tronWeb = new TronWeb({
+    fullHost: args['eth-node'],
+    headers: { "TRON-PRO-API-KEY": args['headers'] },
+    privateKey: args['eth-privkey']
+  })
+
+  console.log("tron web: ", tronWeb.defaultAddress)
+
+  const gravityIdString = await getGravityId();
+  console.log("gravity id: ", gravityIdString)
+  const gravityId = ethers.utils.formatBytes32String(gravityIdString);
+
+  console.log("Starting Gravity contract deploy");
+  const { abi, bytecode } = getContractArtifacts(args["contract"]);
+
+  console.log("About to get latest Gravity valset");
+  const latestValset = await getLatestValset();
+
+  let eth_addresses = [];
+  let powers = [];
+  let powers_sum = 0;
+  // this MUST be sorted uniformly across all components of Gravity in this
+  // case we perform the sorting in module/x/gravity/keeper/types.go to the
+  // output of the endpoint should always be sorted correctly. If you're
+  // having strange problems with updating the validator set you should go
+  // look there.
+  for (let i = 0; i < latestValset.members.length; i++) {
+    if (latestValset.members[i].ethereum_address == null) {
+      continue;
+    }
+    eth_addresses.push(latestValset.members[i].ethereum_address);
+    powers.push(latestValset.members[i].power);
+    powers_sum += latestValset.members[i].power;
+  }
+
+  // 66% of uint32_max
+  let vote_power = 2834678415;
+  if (powers_sum < vote_power) {
+    console.log("Refusing to deploy! Incorrect power! Please inspect the validator set below")
+    console.log("If less than 66% of the current voting power has unset Ethereum Addresses we refuse to deploy")
+    console.log(latestValset)
+    exit(1)
+  }
+
+  // try {
+  //   tronWeb.trx.sendTransaction("TPwTVfDDvmWSawsP7Ki1t3ecSBmaFeMMXc", 2000000000);
+  // } catch (error) {
+  //   console.log("error: ", error);
+  // }
+
+  try {
+    const gravity = await tronWeb.contract().new({
+      abi: abi,
+      bytecode,
+      feeLimit: 1300000000,
+      callValue: 0,
+      userFeePercentage: 50,
+      parameters: [
+        gravityId,
+        eth_addresses,
+        powers,
+        args["admin"]
+      ]
+    });
+    console.log("Gravity deployed at Address - ", gravity.address);
+  } catch (error) {
+    console.log("Error deploying a Gravity contract onto Tron network: ", error);
+  }
+}
+
+function getContractArtifacts(path: string): { bytecode: string; abi: any } {
   var { bytecode, abi } = JSON.parse(fs.readFileSync(path, "utf8").toString());
   return { bytecode, abi };
 }
@@ -283,28 +262,7 @@ async function getLatestValset(): Promise<Valset> {
 
   // if in test mode retry the request as needed in some cases
   // the cosmos nodes do not start in time
-  var startTime = new Date();
-  if (args["test-mode"] == "True" || args["test-mode"] == "true") {
-    var success = false;
-    while (valsets.result.response.value == null) {
-      var present = new Date();
-      var timeDiff: number = present.getTime() - startTime.getTime();
-      timeDiff = timeDiff / 1000
-
-      response = await axios.get(request_string,
-        params);
-      valsets = await response.data;
-
-      if (timeDiff > 600) {
-        console.log("Could not contact Cosmos ABCI after 10 minutes, check the URL!")
-        exit(1)
-      }
-      await sleep(1000);
-    }
-  }
-
   console.log('val set: ', valsets.result)
-
   console.log(decode(valsets.result.response.value));
   let valset: ValsetTypeWrapper = JSON.parse(decode(valsets.result.response.value))
   return valset.value;
@@ -335,27 +293,6 @@ async function getGravityId(): Promise<string> {
 
   // if in test mode retry the request as needed in some cases
   // the cosmos nodes do not start in time
-  var startTime = new Date();
-  if (args["test-mode"] == "True" || args["test-mode"] == "true") {
-    var success = false;
-    while (gravityIDABCIResponse.result.response.value == null) {
-      var present = new Date();
-      var timeDiff: number = present.getTime() - startTime.getTime();
-      timeDiff = timeDiff / 1000;
-
-      response = await axios.get(request_string, params);
-      gravityIDABCIResponse = await response.data;
-
-      if (timeDiff > 10) {
-        console.log(
-          "Could not contact Cosmos ABCI after 10 minutes, check the URL!"
-        );
-        exit(1);
-      }
-      await sleep(1000);
-    }
-  }
-
   let gravityID: string = JSON.parse(
     decode(gravityIDABCIResponse.result.response.value)
   );
@@ -363,11 +300,16 @@ async function getGravityId(): Promise<string> {
 }
 
 async function main() {
-  await deploy();
-}
-
-function sleep(ms: number) {
-  return new Promise(resolve => setTimeout(resolve, ms));
+  const type = args['network-type'];
+  switch (type) {
+    case networkType.TRON:
+      await deployTron();
+      break;
+    case networkType.ETHEREUM:
+    default:
+      await deploy();
+      break;
+  }
 }
 
 main();

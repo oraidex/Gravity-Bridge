@@ -1,10 +1,10 @@
 //! Basic utility functions to stubbornly get data
-use clarity::Address as EthAddress;
 use clarity::Uint256;
 use deep_space::{address::Address as CosmosAddress, Coin, Contact};
 use std::time::Duration;
 use tokio::time::sleep as delay_for;
 use web30::client::Web3;
+use web30::EthAddress;
 
 pub const RETRY_TIME: Duration = Duration::from_secs(5);
 
@@ -13,6 +13,10 @@ pub async fn get_block_number_with_retry(web3: &Web3) -> Uint256 {
     let mut res = web3.eth_block_number().await;
     while res.is_err() {
         error!("Failed to get latest block! Is your Eth node working?");
+        error!(
+            "Error getting the latest block: {}",
+            res.unwrap_err().to_string()
+        );
         delay_for(RETRY_TIME).await;
         res = web3.eth_block_number().await;
     }

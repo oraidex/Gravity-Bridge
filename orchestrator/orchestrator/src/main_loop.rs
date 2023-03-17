@@ -5,7 +5,7 @@
 use crate::oracle_resync::{get_last_checked_block_info, set_last_checked_block_info};
 use crate::{ethereum_event_watcher::check_for_events, oracle_resync::get_last_checked_block};
 use clarity::PrivateKey as EthPrivateKey;
-use clarity::{address::Address as EthAddress, Uint256};
+use clarity::Uint256;
 use cosmos_gravity::query::get_gravity_params;
 use cosmos_gravity::{
     query::{
@@ -27,7 +27,7 @@ use gravity_proto::cosmos_sdk_proto::cosmos::base::abci::v1beta1::TxResponse;
 use gravity_proto::gravity::query_client::QueryClient as GravityQueryClient;
 use gravity_utils::types::GravityBridgeToolsConfig;
 use metrics_exporter::{metrics_errors_counter, metrics_latest, metrics_warnings_counter};
-use relayer::find_latest_valset::convert_block_to_search;
+use num::ToPrimitive;
 use relayer::main_loop::all_relayer_loops;
 use std::cmp::min;
 use std::process::exit;
@@ -36,6 +36,7 @@ use std::time::Instant;
 use tokio::time::sleep as delay_for;
 use tonic::transport::Channel;
 use web30::client::Web3;
+use web30::EthAddress;
 
 /// The execution speed governing all loops in this file
 /// which is to say all loops started by Orchestrator main
@@ -156,7 +157,8 @@ pub async fn eth_oracle_main_loop(
     fee: Coin,
 ) {
     let our_cosmos_address = cosmos_key.to_address(&contact.get_prefix()).unwrap();
-    let long_timeout_web30 = Web3::new(&web3.get_url(), Duration::from_secs(120));
+    let mut long_timeout_web30 = web3.clone();
+    long_timeout_web30.timeout = Duration::from_secs(120);
     let mut last_checked_block: Uint256 = get_last_checked_block(
         grpc_client.clone(),
         evm_chain_prefix,
@@ -189,7 +191,7 @@ pub async fn eth_oracle_main_loop(
 
                 metrics_latest(block_height, "latest_cosmos_block");
                 // Converting into u64
-                metrics_latest(latest_eth_block.to_u64_digits()[0], "latest_eth_block");
+                metrics_latest(latest_eth_block.to_u64().unwrap(), "latest_eth_block");
             }
             (Ok(_latest_eth_block), Ok(ChainStatus::Syncing)) => {
                 warn!("Cosmos node syncing, Eth oracle paused");
@@ -252,7 +254,7 @@ pub async fn eth_oracle_main_loop(
             .await;
         }
 
-        let (previous_block, prev_checked_block) =
+        let (previous_block, _) =
             get_last_checked_block_info(evm_chain_prefix).unwrap_or((0u8.into(), None));
 
         // Relays events from Ethereum -> Cosmos
@@ -292,13 +294,7 @@ pub async fn eth_oracle_main_loop(
             Err(e) => {
                 if e.to_string().contains("non contiguous event nonce") {
                     // reduce last_block scanned to retry to find checked block with new nonce
-                    set_last_checked_block_info(
-                        evm_chain_prefix,
-                        (
-                            previous_block - convert_block_to_search().into(),
-                            prev_checked_block,
-                        ),
-                    );
+                    set_last_checked_block_info(evm_chain_prefix, (Uint256::from(0u128), None))
                 }
                 error!("Failed to get events for block range, Check your Eth node and Cosmos gRPC {:?}", e);
                 metrics_errors_counter(0, "Failed to get events for block range");

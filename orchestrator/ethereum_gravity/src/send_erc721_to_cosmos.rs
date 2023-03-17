@@ -1,6 +1,6 @@
 //! Helper functions for sending tokens to Cosmos
 
-use clarity::abi::{encode_call, Token};
+use clarity::abi::Token;
 use clarity::PrivateKey as EthPrivateKey;
 use clarity::{Address, Uint256};
 use deep_space::address::Address as CosmosAddress;
@@ -10,6 +10,7 @@ use web30::client::Web3;
 use web30::types::SendTxOption;
 
 pub const SEND_TO_COSMOS_GAS_LIMIT: u128 = 100_000;
+pub const SEND_ERC721_TO_COSMOS_SELECTOR: &str = "sendERC721ToCosmos(address,string,uint256)";
 
 #[allow(clippy::too_many_arguments)]
 pub async fn send_erc721_to_cosmos(
@@ -100,28 +101,18 @@ pub async fn send_erc721_to_cosmos(
     );
     let encoded_destination_address = Token::String(cosmos_destination.to_string());
 
-    let tx_hash = web3
-        .send_transaction(
-            gravityerc721_contract,
-            encode_call(
-                "sendERC721ToCosmos(address,string,uint256)",
-                &[
-                    erc721.into(),
-                    encoded_destination_address,
-                    token_id.clone().into(),
-                ],
-            )?,
-            0u32.into(),
-            sender_address,
-            sender_secret,
-            options,
-        )
-        .await?;
-
-    if let Some(timeout) = wait_timeout {
-        web3.wait_for_transaction(tx_hash.clone(), timeout, None)
-            .await?;
-    }
-
-    Ok(tx_hash)
+    crate::utils::send_transaction(
+        web3,
+        gravityerc721_contract,
+        SEND_ERC721_TO_COSMOS_SELECTOR,
+        &[
+            erc721.into(),
+            encoded_destination_address,
+            token_id.clone().into(),
+        ],
+        sender_secret,
+        wait_timeout,
+        options,
+    )
+    .await
 }

@@ -92,16 +92,19 @@ impl From<Web3Error> for GravityError {
         GravityError::EthereumRestError(error)
     }
 }
+
 impl From<Status> for GravityError {
     fn from(error: Status) -> Self {
         GravityError::GravityGrpcError(error)
     }
 }
+
 impl From<CosmosAddressError> for GravityError {
     fn from(error: CosmosAddressError) -> Self {
         GravityError::CosmosAddressError(error)
     }
 }
+
 impl From<ParseBigIntError> for GravityError {
     fn from(error: ParseBigIntError) -> Self {
         GravityError::InvalidBigInt(error)
