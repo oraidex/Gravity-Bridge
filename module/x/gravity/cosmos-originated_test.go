@@ -123,9 +123,11 @@ func lockCoinsInModule(tv *testingVars) {
 		startingCoinAmount  sdk.Int   = sdk.NewIntFromUint64(150)
 		sendAmount          sdk.Int   = sdk.NewIntFromUint64(50)
 		feeAmount           sdk.Int   = sdk.NewIntFromUint64(5)
+		chainFeeAmount      sdk.Int   = sdk.NewIntFromUint64(0)
 		startingCoins       sdk.Coins = sdk.Coins{sdk.NewCoin(denom, startingCoinAmount)}
 		sendingCoin         sdk.Coin  = sdk.NewCoin(denom, sendAmount)
 		feeCoin             sdk.Coin  = sdk.NewCoin(denom, feeAmount)
+		chainFeeCoin        sdk.Coin  = sdk.NewCoin(denom, chainFeeAmount)
 		ethDestination                = "0x3c9289da00b02dC623d0D8D907619890301D26d4"
 	)
 	assert.Nil(tv.t, err)
@@ -142,6 +144,7 @@ func lockCoinsInModule(tv *testingVars) {
 		EthDest:        ethDestination,
 		Amount:         sendingCoin,
 		BridgeFee:      feeCoin,
+		ChainFee:       chainFeeCoin,
 		EvmChainPrefix: tv.evm.EvmChainPrefix,
 	}
 

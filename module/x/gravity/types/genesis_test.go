@@ -31,6 +31,7 @@ func TestGenesisStateValidate(t *testing.T) {
 					Denom:  "",
 					Amount: types.Int{},
 				},
+				MinChainFeeBasisPoints: 0,
 				EvmChainParams: []*EvmChainParam{
 					{
 						GravityId:                "",
@@ -61,6 +62,7 @@ func TestGenesisStateValidate(t *testing.T) {
 					Denom:  "",
 					Amount: types.Int{},
 				},
+				MinChainFeeBasisPoints: 0,
 				EvmChainParams: []*EvmChainParam{
 					{
 						GravityId:                "foo",

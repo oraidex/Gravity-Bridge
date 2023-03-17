@@ -153,7 +153,7 @@ func DefaultParams() *Params {
 		SlashFractionBadEthSignature: sdk.NewDecWithPrec(1, 3),
 		ValsetReward:                 sdk.Coin{Denom: GravityDenomPrefix, Amount: sdk.ZeroInt()},
 
-		MinChainFeeBasisPoints: 2,
+		MinChainFeeBasisPoints: 0,
 		EvmChainParams: []*EvmChainParam{
 			{
 				EvmChainPrefix:           GravityDenomPrefix,

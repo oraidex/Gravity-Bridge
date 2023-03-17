@@ -35,9 +35,11 @@ func TestHandleMsgSendToEth(t *testing.T) {
 		startingCoinAmount, _            = sdk.NewIntFromString("150000000000000000000") // 150 ETH worth, required to reach above u64 limit (which is about 18 ETH)
 		sendAmount, _                    = sdk.NewIntFromString("50000000000000000000")  // 50 ETH
 		feeAmount, _                     = sdk.NewIntFromString("5000000000000000000")   // 5 ETH
+		chainFeeAmount, _                = sdk.NewIntFromString("0")                     // 0 ETH
 		startingCoins          sdk.Coins = sdk.Coins{sdk.NewCoin(denom, startingCoinAmount)}
 		sendingCoin            sdk.Coin  = sdk.NewCoin(denom, sendAmount)
 		feeCoin                sdk.Coin  = sdk.NewCoin(denom, feeAmount)
+		chainFeeCoin           sdk.Coin  = sdk.NewCoin(denom, chainFeeAmount)
 		ethDestination                   = "0x3c9289da00b02dC623d0D8D907619890301D26d4"
 		invalidEthDestinations           = []string{"obviously invalid", "0x3c9289da00b02dC623d0D8D907", "0x3c9289da00b02dC623d0D8D907dC623d0D8D907619890", "0x3c9289da00b02dC623d0D8D907619890301D26dU"}
 	)
@@ -56,6 +58,7 @@ func TestHandleMsgSendToEth(t *testing.T) {
 		EthDest:        ethDestination,
 		Amount:         sendingCoin,
 		BridgeFee:      feeCoin,
+		ChainFee:       chainFeeCoin,
 		EvmChainPrefix: evmChain.EvmChainPrefix,
 	}
 
@@ -63,7 +66,7 @@ func TestHandleMsgSendToEth(t *testing.T) {
 	_, err := h(ctx, msg)
 	require.NoError(t, err)
 	balance2 := input.BankKeeper.GetAllBalances(ctx, userCosmosAddr)
-	assert.Equal(t, sdk.Coins{sdk.NewCoin(denom, startingCoinAmount.Sub(sendAmount).Sub(feeAmount))}, balance2)
+	assert.Equal(t, sdk.Coins{sdk.NewCoin(denom, startingCoinAmount.Sub(sendAmount).Sub(feeAmount).Sub(chainFeeAmount))}, balance2)
 
 	// do the same thing again and make sure it works twice
 	msg1 := &types.MsgSendToEth{
@@ -71,13 +74,14 @@ func TestHandleMsgSendToEth(t *testing.T) {
 		EthDest:        ethDestination,
 		Amount:         sendingCoin,
 		BridgeFee:      feeCoin,
+		ChainFee:       chainFeeCoin,
 		EvmChainPrefix: evmChain.EvmChainPrefix,
 	}
 	ctx = ctx.WithBlockTime(blockTime).WithBlockHeight(blockHeight)
 	_, err1 := h(ctx, msg1)
 	require.NoError(t, err1)
 	balance3 := input.BankKeeper.GetAllBalances(ctx, userCosmosAddr)
-	finalAmount3 := startingCoinAmount.Sub(sendAmount).Sub(sendAmount).Sub(feeAmount).Sub(feeAmount)
+	finalAmount3 := startingCoinAmount.Sub(sendAmount).Sub(sendAmount).Sub(feeAmount).Sub(feeAmount).Sub(chainFeeAmount).Sub(chainFeeAmount)
 	assert.Equal(t, sdk.Coins{sdk.NewCoin(denom, finalAmount3)}, balance3)
 
 	// now we should be out of coins and error
@@ -86,6 +90,7 @@ func TestHandleMsgSendToEth(t *testing.T) {
 		EthDest:        ethDestination,
 		Amount:         sendingCoin,
 		BridgeFee:      feeCoin,
+		ChainFee:       chainFeeCoin,
 		EvmChainPrefix: evmChain.EvmChainPrefix,
 	}
 	ctx = ctx.WithBlockTime(blockTime).WithBlockHeight(blockHeight)
@@ -101,6 +106,7 @@ func TestHandleMsgSendToEth(t *testing.T) {
 			EthDest:        val,
 			Amount:         sendingCoin,
 			BridgeFee:      feeCoin,
+			ChainFee:       chainFeeCoin,
 			EvmChainPrefix: evmChain.EvmChainPrefix,
 		}
 		ctx = ctx.WithBlockTime(blockTime).WithBlockHeight(blockHeight)

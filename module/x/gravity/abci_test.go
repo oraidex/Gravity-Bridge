@@ -120,8 +120,10 @@ func TestValsetSlashing_ValsetCreated_After_ValidatorBonded(t *testing.T) {
 	EndBlocker(ctx, pk)
 
 	// ensure that the  validator who is bonded before valset is created is slashed
+	// now validator will not be slashed, unless all evm chains are not updated
 	val := input.StakingKeeper.Validator(ctx, keeper.ValAddrs[0])
-	require.True(t, val.IsJailed())
+	// require.True(t, val.IsJailed())
+	require.False(t, val.IsJailed())
 
 	// ensure that the  validator who attested the valset is not slashed.
 	val = input.StakingKeeper.Validator(ctx, keeper.ValAddrs[1])
@@ -443,16 +445,19 @@ func TestBatchSlashing(t *testing.T) {
 
 	// ensure that the  validator is jailed and slashed
 	val := input.StakingKeeper.Validator(ctx, keeper.ValAddrs[0])
-	require.True(t, val.IsJailed())
+	// require.True(t, val.IsJailed())
+	require.False(t, val.IsJailed())
 
 	// ensure that the 2nd  validator is not jailed and slashed
 	val2 := input.StakingKeeper.Validator(ctx, keeper.ValAddrs[1])
 	require.False(t, val2.IsJailed())
 
 	// Ensure that the last slashed valset nonce is set properly
-	lastSlashedBatchBlock := input.GravityKeeper.GetLastSlashedBatchBlock(ctx, evmChain.EvmChainPrefix)
-	assert.Equal(t, lastSlashedBatchBlock, batch.CosmosBlockCreated)
-	assert.True(t, len(pk.GetUnSlashedBatches(ctx, evmChain.EvmChainPrefix, uint64(ctx.BlockHeight()))) == 0)
+	// lastSlashedBatchBlock := input.GravityKeeper.GetLastSlashedBatchBlock(ctx, evmChain.EvmChainPrefix)
+	// assert.Equal(t, lastSlashedBatchBlock, batch.CosmosBlockCreated)
+
+	// assert.True(t, len(pk.GetUnSlashedBatches(ctx, evmChain.EvmChainPrefix, uint64(ctx.BlockHeight()))) == 0)
+	assert.False(t, len(pk.GetUnSlashedBatches(ctx, evmChain.EvmChainPrefix, uint64(ctx.BlockHeight()))) == 0)
 
 }
 

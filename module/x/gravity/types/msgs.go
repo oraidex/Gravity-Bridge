@@ -356,6 +356,8 @@ type EthereumClaim interface {
 
 	// to be compartible with proto
 	proto.Message
+	// Sets the orchestrator value on the claim
+	SetOrchestrator(sdk.AccAddress)
 }
 
 // nolint: exhaustruct
@@ -369,6 +371,10 @@ var (
 
 func (msg *MsgSendToCosmosClaim) SetEvmChainPrefix(evmChainPrefix string) {
 	msg.EvmChainPrefix = evmChainPrefix
+}
+
+func (msg *MsgSendToCosmosClaim) SetOrchestrator(orchestrator sdk.AccAddress) {
+	msg.Orchestrator = orchestrator.String()
 }
 
 // GetType returns the type of the claim
@@ -484,6 +490,10 @@ func (msg *MsgBatchSendToEthClaim) SetEvmChainPrefix(evmChainPrefix string) {
 	msg.EvmChainPrefix = evmChainPrefix
 }
 
+func (msg *MsgBatchSendToEthClaim) SetOrchestrator(orchestrator sdk.AccAddress) {
+	msg.Orchestrator = orchestrator.String()
+}
+
 // GetType returns the claim type
 func (msg *MsgBatchSendToEthClaim) GetType() ClaimType {
 	return CLAIM_TYPE_BATCH_SEND_TO_ETH
@@ -553,6 +563,10 @@ func (msg *MsgERC20DeployedClaim) SetEvmChainPrefix(evmChainPrefix string) {
 	msg.EvmChainPrefix = evmChainPrefix
 }
 
+func (msg *MsgERC20DeployedClaim) SetOrchestrator(orchestrator sdk.AccAddress) {
+	msg.Orchestrator = orchestrator.String()
+}
+
 // GetType returns the type of the claim
 func (e *MsgERC20DeployedClaim) GetType() ClaimType {
 	return CLAIM_TYPE_ERC20_DEPLOYED
@@ -620,6 +634,10 @@ func (msg *MsgLogicCallExecutedClaim) SetEvmChainPrefix(evmChainPrefix string) {
 	msg.EvmChainPrefix = evmChainPrefix
 }
 
+func (msg *MsgLogicCallExecutedClaim) SetOrchestrator(orchestrator sdk.AccAddress) {
+	msg.Orchestrator = orchestrator.String()
+}
+
 // GetType returns the type of the claim
 func (e *MsgLogicCallExecutedClaim) GetType() ClaimType {
 	return CLAIM_TYPE_LOGIC_CALL_EXECUTED
@@ -673,12 +691,15 @@ func (msg MsgLogicCallExecutedClaim) Route() string { return RouterKey }
 // note that the Orchestrator is the only field excluded from this hash, this is because that value is used higher up in the store
 // structure for who has made what claim and is verified by the msg ante-handler for signatures
 func (b *MsgLogicCallExecutedClaim) ClaimHash() ([]byte, error) {
-	path := fmt.Sprintf("%d,%d,%s/%d/", b.EventNonce, b.EthBlockHeight, b.InvalidationId, b.InvalidationNonce)
+	path := fmt.Sprintf("%d/%d/%s/%d", b.EventNonce, b.EthBlockHeight, b.InvalidationId, b.InvalidationNonce)
 	return tmhash.Sum([]byte(path)), nil
 }
 
 // EthereumClaim implementation for MsgValsetUpdatedClaim
 // ======================================================
+func (e *MsgValsetUpdatedClaim) SetOrchestrator(orchestrator sdk.AccAddress) {
+	e.Orchestrator = orchestrator.String()
+}
 
 func (msg *MsgValsetUpdatedClaim) SetEvmChainPrefix(evmChainPrefix string) {
 	msg.EvmChainPrefix = evmChainPrefix
