@@ -358,8 +358,7 @@ func (k Keeper) SetLastObservedEvmChainBlockHeight(ctx sdk.Context, evmChainPref
 	store := ctx.KVStore(k.storeKey)
 	previous := k.GetLastObservedEvmChainBlockHeight(ctx, evmChainPrefix)
 	if previous.EthereumBlockHeight > evmChainHeight {
-		ctx.Logger().Error("Attempt to roll back Ethereum block height!")
-		return
+		panic("Attempt to roll back Ethereum block height!")
 	}
 	height := types.LastObservedEthereumBlockHeight{
 		EthereumBlockHeight: evmChainHeight,
