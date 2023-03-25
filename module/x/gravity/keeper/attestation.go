@@ -358,7 +358,8 @@ func (k Keeper) SetLastObservedEvmChainBlockHeight(ctx sdk.Context, evmChainPref
 	store := ctx.KVStore(k.storeKey)
 	previous := k.GetLastObservedEvmChainBlockHeight(ctx, evmChainPrefix)
 	if previous.EthereumBlockHeight > evmChainHeight {
-		panic("Attempt to roll back Ethereum block height!")
+		ctx.Logger().Error("Attempt to roll back Ethereum block height!")
+		return
 	}
 	height := types.LastObservedEthereumBlockHeight{
 		EthereumBlockHeight: evmChainHeight,
@@ -403,7 +404,8 @@ func (k Keeper) setLastObservedEventNonce(ctx sdk.Context, evmChainPrefix string
 	// as many times as needed (genesis test setup etc)
 	zeroCase := last == 0 && nonce == 0
 	if last >= nonce && !zeroCase {
-		panic("Event nonce going backwards or replay!")
+		ctx.Logger().Error("Event nonce going backwards or replay!")
+		return
 	}
 	store.Set(types.AppendChainPrefix(types.LastObservedEventNonceKey, evmChainPrefix), types.UInt64Bytes(nonce))
 }

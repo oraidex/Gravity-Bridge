@@ -12,8 +12,6 @@ import (
 	upgradekeeper "github.com/cosmos/cosmos-sdk/x/upgrade/keeper"
 	ibctransferkeeper "github.com/cosmos/ibc-go/v3/modules/apps/transfer/keeper"
 	bech32ibckeeper "github.com/osmosis-labs/bech32-ibc/x/bech32ibc/keeper"
-
-	"github.com/Gravity-Bridge/Gravity-Bridge/module/app/upgrades/tron"
 )
 
 // RegisterUpgradeHandlers registers handlers for all upgrades
@@ -63,8 +61,8 @@ func RegisterUpgradeHandlers(
 	// 	pleiades.GetPleiades2UpgradeHandler(mm, configurator, crisisKeeper),
 	// )
 
-	upgradeKeeper.SetUpgradeHandler(
-		tron.PlanName,
-		tron.GetTronUpgradeHandler(mm, configurator, crisisKeeper),
-	)
+	// upgradeKeeper.SetUpgradeHandler(
+	// 	tron.PlanName,
+	// 	tron.GetTronUpgradeHandler(mm, configurator, crisisKeeper),
+	// )
 }

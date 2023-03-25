@@ -306,7 +306,7 @@ func (a AttestationHandler) handleValsetUpdated(ctx sdk.Context, claim types.Msg
 		observedValset.Height = trustedValset.Height // overwrite the height, since it's not part of the claim
 
 		if _, err := trustedValset.Equal(observedValset); err != nil {
-			panic(fmt.Sprintf("Potential bridge highjacking: observed valset (%+v) does not match stored valset (%+v)! %s", observedValset, trustedValset, err.Error()))
+			return sdkerrors.Wrapf(types.ErrInvalidValset, "Potential bridge highjacking: observed valset (%+v) does not match stored valset (%+v)! %s", observedValset, trustedValset, err.Error())
 		}
 
 		a.keeper.SetLastObservedValset(ctx, claim.EvmChainPrefix, observedValset)
@@ -555,7 +555,7 @@ func (a AttestationHandler) addToIbcAutoForwardQueue(
 	claim types.MsgSendToCosmosClaim,
 ) error {
 	if strings.TrimSpace(cosmosReceiver) == "" {
-		panic(fmt.Sprintf("invalid call to addToIbcAutoForwardQueue: invalid or inaccurate receiver %s!", claim.CosmosReceiver))
+		return sdkerrors.Wrap(types.ErrInvalid, fmt.Sprintf("invalid call to addToIbcAutoForwardQueue: invalid or inaccurate receiver %s!", claim.CosmosReceiver))
 	}
 
 	forward := types.PendingIbcAutoForward{

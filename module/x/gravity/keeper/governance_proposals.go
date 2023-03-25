@@ -74,10 +74,10 @@ func (k Keeper) HandleUnhaltBridgeProposal(ctx sdk.Context, p *types.UnhaltBridg
 // In the event we need to add new evm chains, we can create a new proposal
 func (k Keeper) HandleAddEvmChainProposal(ctx sdk.Context, p *types.AddEvmChainProposal) error {
 
-	// isEvmChainExist := k.GetEvmChainData(ctx, p.EvmChainPrefix)
-	// if isEvmChainExist != nil {
-	// 	return sdkerrors.Wrap(types.ErrInvalid, "The proposed EVM Chain already exists on-chain. Cannot re-add it!")
-	// }
+	isEvmChainExist := k.GetEvmChainData(ctx, p.EvmChainPrefix)
+	if isEvmChainExist != nil {
+		return sdkerrors.Wrap(types.ErrInvalid, "The proposed EVM Chain already exists on-chain. Cannot re-add it!")
+	}
 
 	// evmChains := k.GetEvmChains(ctx)
 	// for _, chain := range evmChains {
