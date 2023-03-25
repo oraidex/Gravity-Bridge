@@ -356,11 +356,11 @@ func (k Keeper) GetLastObservedEvmChainBlockHeight(ctx sdk.Context, evmChainPref
 // SetLastObservedEvmChainBlockHeight sets the block height in the store.
 func (k Keeper) SetLastObservedEvmChainBlockHeight(ctx sdk.Context, evmChainPrefix string, evmChainHeight uint64) {
 	store := ctx.KVStore(k.storeKey)
-	// previous := k.GetLastObservedEvmChainBlockHeight(ctx, evmChainPrefix)
-	// if previous.EthereumBlockHeight > evmChainHeight {
-	// 	ctx.Logger().Error("Attempt to roll back Ethereum block height!")
-	// 	return
-	// }
+	previous := k.GetLastObservedEvmChainBlockHeight(ctx, evmChainPrefix)
+	if previous.EthereumBlockHeight > evmChainHeight {
+		ctx.Logger().Error("Attempt to roll back Ethereum block height!")
+		return
+	}
 	height := types.LastObservedEthereumBlockHeight{
 		EthereumBlockHeight: evmChainHeight,
 		CosmosBlockHeight:   uint64(ctx.BlockHeight()),
