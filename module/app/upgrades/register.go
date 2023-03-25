@@ -1,6 +1,7 @@
 package upgrades
 
 import (
+	"github.com/Gravity-Bridge/Gravity-Bridge/module/app/upgrades/tron"
 	gravitykeeper "github.com/Gravity-Bridge/Gravity-Bridge/module/x/gravity/keeper"
 	"github.com/cosmos/cosmos-sdk/types/module"
 	authkeeper "github.com/cosmos/cosmos-sdk/x/auth/keeper"
@@ -61,8 +62,8 @@ func RegisterUpgradeHandlers(
 	// 	pleiades.GetPleiades2UpgradeHandler(mm, configurator, crisisKeeper),
 	// )
 
-	// upgradeKeeper.SetUpgradeHandler(
-	// 	tron.PlanName,
-	// 	tron.GetTronUpgradeHandler(mm, configurator, crisisKeeper),
-	// )
+	upgradeKeeper.SetUpgradeHandler(
+		tron.PlanName,
+		tron.GetTronUpgradeHandler(mm, configurator, crisisKeeper),
+	)
 }
