@@ -393,8 +393,7 @@ func (k Keeper) HasLastSlashedLogicCallBlock(ctx sdk.Context, evmChainPrefix str
 func (k Keeper) SetLastSlashedLogicCallBlock(ctx sdk.Context, evmChainPrefix string, blockHeight uint64) {
 
 	if k.HasLastSlashedLogicCallBlock(ctx, evmChainPrefix) && k.GetLastSlashedLogicCallBlock(ctx, evmChainPrefix) > blockHeight {
-		ctx.Logger().Error("Attempted to decrement LastSlashedBatchBlock")
-		return
+		panic("Attempted to decrement LastSlashedBatchBlock")
 	}
 
 	store := ctx.KVStore(k.storeKey)

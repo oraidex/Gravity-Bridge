@@ -103,8 +103,7 @@ func (k Keeper) GetLatestValsetNonce(ctx sdk.Context, evmChainPrefix string) uin
 func (k Keeper) SetLatestValsetNonce(ctx sdk.Context, evmChainPrefix string, nonce uint64) {
 	// this is purely an increasing counter and should never decrease
 	if k.CheckLatestValsetNonce(ctx, evmChainPrefix) && k.GetLatestValsetNonce(ctx, evmChainPrefix) > nonce {
-		ctx.Logger().Error("Decrementing valset nonce!")
-		return
+		panic("Decrementing valset nonce!")
 	}
 
 	store := ctx.KVStore(k.storeKey)

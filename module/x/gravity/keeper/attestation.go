@@ -404,8 +404,7 @@ func (k Keeper) setLastObservedEventNonce(ctx sdk.Context, evmChainPrefix string
 	// as many times as needed (genesis test setup etc)
 	zeroCase := last == 0 && nonce == 0
 	if last >= nonce && !zeroCase {
-		ctx.Logger().Error("Event nonce going backwards or replay!")
-		return
+		panic("Event nonce going backwards or replay!")
 	}
 	store.Set(types.AppendChainPrefix(types.LastObservedEventNonceKey, evmChainPrefix), types.UInt64Bytes(nonce))
 }
