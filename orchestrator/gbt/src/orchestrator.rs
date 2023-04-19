@@ -143,12 +143,10 @@ pub async fn orchestrator(
     };
 
     let contact = connections.contact.unwrap();
-    let mut grpc_client = connections.grpc.unwrap();
+    let grpc_client = connections.grpc.unwrap();
 
     // get correct evm_chain from rpc by querying net_id
-    let evm_chain_prefix = match query_evm_chain_from_net_version(&mut grpc_client, net_version)
-        .await
-    {
+    let evm_chain_prefix = match query_evm_chain_from_net_version(&mut grpc, net_version).await {
         Some(evm_chain) => evm_chain.evm_chain_prefix,
         None => {
             error!("Could not find the matching net version of evm chains on the network. Network from eth-rpc: {}", net_version);
@@ -164,11 +162,8 @@ pub async fn orchestrator(
 
     // get the gravity contract address, if not provided
     // override if there is args gravity contract address
-    let contract_address = if let Some(c) = args.gravity_contract_address {
-        c
-    } else {
-        parse_bridge_ethereum_address_with_exit(&evm_chain_params.bridge_ethereum_address)
-    };
+    let contract_address =
+        parse_bridge_ethereum_address_with_exit(&evm_chain_params.bridge_ethereum_address);
 
     orchestrator_main_loop(
         cosmos_key,

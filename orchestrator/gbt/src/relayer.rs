@@ -103,11 +103,8 @@ pub async fn relayer(
         .expect("Failed to get evm chain params");
 
     // get the gravity contract address, if not provided
-    let contract_address = if let Some(c) = args.gravity_contract_address {
-        c
-    } else {
-        parse_bridge_ethereum_address_with_exit(&evm_chain_params.bridge_ethereum_address)
-    };
+    let contract_address =
+        parse_bridge_ethereum_address_with_exit(&evm_chain_params.bridge_ethereum_address);
 
     info!("Gravity contract address {}", contract_address);
 

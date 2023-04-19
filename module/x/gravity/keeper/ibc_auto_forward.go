@@ -17,14 +17,13 @@ import (
 	"github.com/Gravity-Bridge/Gravity-Bridge/module/x/gravity/types"
 	"github.com/cosmos/cosmos-sdk/store/prefix"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	"github.com/cosmos/cosmos-sdk/types/bech32"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 	ibctransfertypes "github.com/cosmos/ibc-go/v3/modules/apps/transfer/types"
 	ibcclienttypes "github.com/cosmos/ibc-go/v3/modules/core/02-client/types"
 )
 
 // ValidatePendingIbcAutoForward performs basic validation, asserts the nonce is not ahead of what gravity is aware of,
-// requires ForeignReceiver's bech32 prefix to be registered and match with IbcChannel, and gravity module must have the
+// requires ForeignReceiver's is not empty because we have already checked it before sending to IBC wasm, and gravity module must have the
 // funds to meet this forward amount
 func (k Keeper) ValidatePendingIbcAutoForward(ctx sdk.Context, evmChainPrefix string, forward types.PendingIbcAutoForward) error {
 
@@ -35,12 +34,6 @@ func (k Keeper) ValidatePendingIbcAutoForward(ctx sdk.Context, evmChainPrefix st
 	latestEventNonce := k.GetLastObservedEventNonce(ctx, evmChainPrefix)
 	if forward.EventNonce > latestEventNonce {
 		return sdkerrors.Wrap(types.ErrInvalid, "EventNonce must be <= latest observed event nonce")
-	}
-
-	// no need to validate again because IbcChannel can come from prefix of Cosmos address
-	_, _, err := bech32.DecodeAndConvert(forward.ForeignReceiver)
-	if err != nil { // Covered by ValidateBasic, but check anyway to avoid linter issues
-		return sdkerrors.Wrapf(err, "ForeignReceiver %s is not a valid bech32 address", forward.ForeignReceiver)
 	}
 
 	modAcc := k.accountKeeper.GetModuleAccount(ctx, types.ModuleName).GetAddress()
@@ -192,10 +185,11 @@ func (k Keeper) ProcessNextPendingIbcAutoForward(ctx sdk.Context, evmChainPrefix
 
 	portId := k.ibcTransferKeeper.GetPort(ctx)
 
-	// This local gravity user receives the coins if the ibc transaction fails
-	var fallback sdk.AccAddress
-	fallback, err = types.IBCAddressFromBech32(forward.ForeignReceiver)
+	// This local gravity user receives the coins if the ibc transaction fails, works with both evm address and bech32 address format
+	// forward.ForeignReceiver = claim.CosmosReceiver
+	_, cosmosReceiver, memo, _, fallback, err := types.ParseReceiver(forward.ForeignReceiver)
 	if err != nil {
+		// sanity check only. In attestation_handler.go there should be a validation call on CosmosReceiver already
 		panic(fmt.Sprintf("Invalid ForeignReceiver found in Pending IBC Auto-Forward queue: %s [[%+v]]", err.Error(), forward))
 	}
 
@@ -207,8 +201,7 @@ func (k Keeper) ProcessNextPendingIbcAutoForward(ctx sdk.Context, evmChainPrefix
 	}
 
 	timeoutTime := thirtyDaysInFuture(ctx) // Set the ibc transfer to expire ~one month from now
-
-	msgTransfer := createIbcMsgTransfer(portId, *forward, fallback.String(), uint64(timeoutTime.UnixNano()))
+	msgTransfer := createIbcMsgTransfer(portId, *forward, sdk.AccAddress(fallback).String(), cosmosReceiver, memo, uint64(timeoutTime.UnixNano()))
 
 	// Make the ibc-transfer attempt
 	wCtx := sdk.WrapSDKContext(ctx)
@@ -242,17 +235,24 @@ func (k Keeper) ProcessNextPendingIbcAutoForward(ctx sdk.Context, evmChainPrefix
 
 // createIbcMsgTransfer creates a MsgTransfer for the given pending `forward` on port `portId` sent from `sender`,
 // with the given timeout timestamp and a zero timeout block height
-func createIbcMsgTransfer(portId string, forward types.PendingIbcAutoForward, sender string, timeoutTimestampNs uint64) ibctransfertypes.MsgTransfer {
+func createIbcMsgTransfer(portId string, forward types.PendingIbcAutoForward, sender, receiver, memo string, timeoutTimestampNs uint64) ibctransfertypes.MsgTransfer {
 	zeroHeight := ibcclienttypes.Height{}
-	return *ibctransfertypes.NewMsgTransfer(
-		portId,
-		forward.IbcChannel,
-		*forward.Token,
-		sender,
-		forward.ForeignReceiver,
-		zeroHeight, // Do not use block height based timeout
-		timeoutTimestampNs,
-	)
+	msgTransfer := ibctransfertypes.MsgTransfer{
+		SourcePort:       portId,
+		SourceChannel:    forward.IbcChannel,
+		Token:            *forward.Token,
+		Sender:           sender, // from bytes to acc address with oraib prefix serving as sender
+		Receiver:         receiver,
+		TimeoutHeight:    zeroHeight, // Do not use block height based timeout,
+		TimeoutTimestamp: timeoutTimestampNs,
+	}
+
+	// custom memo following standard channel:denom
+	if len(memo) > 0 {
+		msgTransfer.Memo = memo
+	}
+
+	return msgTransfer
 }
 
 // thirtyDaysInFuture creates a time.Time exactly 30 days from the last BlockTime for use in createIbcMsgTransfer
@@ -288,10 +288,9 @@ func (k Keeper) logEmitIbcForwardSuccessEvent(
 
 // logEmitIbcForwardFailureEvent logs failed IBC Auto-Forwarding and emits a EventSendToCosmosLocal type event
 func (k Keeper) logEmitIbcForwardFailureEvent(ctx sdk.Context, forward types.PendingIbcAutoForward, err error) {
-	var localReceiver sdk.AccAddress
-	localReceiver, _ = types.IBCAddressFromBech32(forward.ForeignReceiver) // checked valid bech32 receiver earlier
+
 	k.logger(ctx).Error("SendToCosmos IBC Auto-Forward Failure: funds sent to local address",
-		"localReceiver", localReceiver, "denom", forward.Token.Denom, "amount", forward.Token.Amount.String(),
+		"foreignReceiver", forward.ForeignReceiver, "denom", forward.Token.Denom, "amount", forward.Token.Amount.String(),
 		"failedIbcPort", ibctransfertypes.PortID, "failedIbcChannel", forward.IbcChannel,
 		"claimNonce", forward.EventNonce, "cosmosBlockHeight", ctx.BlockHeight(), "err", err,
 	)

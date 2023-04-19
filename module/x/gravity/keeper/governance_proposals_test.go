@@ -215,10 +215,103 @@ func TestAddEvmChainProposal(t *testing.T) {
 	evmChain := input.GravityKeeper.GetEvmChainData(ctx, "dummy")
 	require.NotNil(t, evmChain)
 
+	// set evm chain params so later we can try to override them with new ones when we try to update
+	params := gk.GetParams(ctx)
+	exists := false
+	for _, param := range params.EvmChainParams {
+		if param.EvmChainPrefix == evmChain.EvmChainPrefix {
+			param.GravityId = "sample-gravity-id"
+			exists = true
+		}
+	}
+	require.Equal(t, exists, true) // when adding correctly, the new evm chain param should exist
+	require.Equal(t, len(params.EvmChainParams), 3)
+	gk.SetParams(ctx, params)
+
 	// does not have a zero base unit
 	badEvmChainPrefix := "dummy" // already exists above
 	goodProposal.EvmChainPrefix = badEvmChainPrefix
+	goodProposal.EvmChainName = "foobar"
 
 	err = gk.HandleAddEvmChainProposal(ctx, &goodProposal)
-	require.Error(t, err)
+	require.NoError(t, err)
+
+	// when we update the chain based on the evm prefix, it should be updated
+	chains := gk.GetEvmChains(ctx)
+	for _, chain := range chains {
+		if chain.EvmChainPrefix == "dummy" {
+			require.Equal(t, chain.EvmChainName, "foobar")
+		}
+	}
+	require.Equal(t, len(chains), 3) // only has three chains, BSC, ETH and newly updated dummy chain
+
+	params = gk.GetParams(ctx)
+	for _, param := range params.EvmChainParams {
+		if param.EvmChainPrefix == evmChain.EvmChainPrefix {
+			require.Equal(t, param.GravityId, "")
+		}
+	}
+	require.Equal(t, len(params.EvmChainParams), 3) // should update params only, not append
+}
+
+func TestRemoveEvmChainProposal(t *testing.T) {
+
+	input := CreateTestEnv(t)
+	defer func() { input.Context.Logger().Info("Asserting invariants at test end"); input.AssertInvariants() }()
+
+	ctx := input.Context
+	addProposal := types.AddEvmChainProposal{
+		Title:          "test tile",
+		Description:    "test description",
+		EvmChainPrefix: "dummy",
+		EvmChainName:   "Dummy",
+	}
+
+	gk := input.GravityKeeper
+
+	err := gk.HandleAddEvmChainProposal(ctx, &addProposal)
+	require.NoError(t, err)
+
+	evmChain := gk.GetEvmChainData(ctx, "dummy")
+	require.NotNil(t, evmChain)
+
+	gk.setLastObservedEventNonce(ctx, "dummy", 1)
+
+	length := 10
+	msgs, anys, _ := createAttestations(t, ctx, gk, length, addProposal.EvmChainPrefix)
+
+	recentAttestations := gk.GetMostRecentAttestations(ctx, addProposal.EvmChainPrefix, uint64(length))
+	require.True(t, len(recentAttestations) == length,
+		"recentAttestations should have len %v but instead has %v", length, len(recentAttestations))
+	for n, attest := range recentAttestations {
+		require.Equal(t, attest.Claim.GetCachedValue(), anys[n].GetCachedValue(),
+			"The %vth claim does not match our message: claim %v\n message %v", n, attest.Claim, msgs[n])
+	}
+
+	removeProposal := types.RemoveEvmChainProposal{
+		Title:          "test tile",
+		Description:    "test description",
+		EvmChainPrefix: "dummy",
+	}
+	err = gk.HandleRemoveEvmChainProposal(ctx, &removeProposal)
+	require.NoError(t, err)
+
+	// now evmChain is empty
+	evmChain = gk.GetEvmChainData(ctx, "dummy")
+	require.Nil(t, evmChain)
+
+	// no attestation after removal
+	recentAttestations = gk.GetMostRecentAttestations(ctx, "Dummy", uint64(length))
+	require.Equal(t, len(recentAttestations), 0)
+
+	// also evm chain params
+	evmChainParam := gk.GetEvmChainParam(ctx, "dummy")
+	require.Nil(t, evmChainParam)
+
+	// when we try to re-add the chain, the list of attestations should be empty
+	err = gk.HandleAddEvmChainProposal(ctx, &addProposal)
+	require.NoError(t, err)
+
+	recentAttestations = gk.GetMostRecentAttestations(ctx, "Dummy", uint64(length))
+	require.Equal(t, len(recentAttestations), 0)
 }

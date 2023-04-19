@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"strings"
 
+	v3 "github.com/Gravity-Bridge/Gravity-Bridge/module/x/gravity/migrations/v3"
 	"github.com/Gravity-Bridge/Gravity-Bridge/module/x/gravity/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
@@ -41,6 +42,12 @@ func RegisterProposalTypes() {
 		govtypes.RegisterProposalType(types.ProposalTypeAddEvmChain)
 		govtypes.RegisterProposalTypeCodec(&types.AddEvmChainProposal{}, addEvmChain)
 	}
+
+	removeEvmChain := "gravity/RemoveEvmChain"
+	if !govtypes.IsValidProposalType(strings.TrimPrefix(removeEvmChain, prefix)) {
+		govtypes.RegisterProposalType(types.ProposalTypeRemoveEvmChain)
+		govtypes.RegisterProposalTypeCodec(&types.RemoveEvmChainProposal{}, removeEvmChain)
+	}
 }
 
 func NewGravityProposalHandler(k Keeper) govtypes.Handler {
@@ -54,7 +61,8 @@ func NewGravityProposalHandler(k Keeper) govtypes.Handler {
 			return k.HandleIBCMetadataProposal(ctx, c)
 		case *types.AddEvmChainProposal:
 			return k.HandleAddEvmChainProposal(ctx, c)
-
+		case *types.RemoveEvmChainProposal:
+			return k.HandleRemoveEvmChainProposal(ctx, c)
 		default:
 			return sdkerrors.Wrapf(sdkerrors.ErrUnknownRequest, "unrecognized Gravity proposal content type: %T", c)
 		}
@@ -74,17 +82,17 @@ func (k Keeper) HandleUnhaltBridgeProposal(ctx sdk.Context, p *types.UnhaltBridg
 // In the event we need to add new evm chains, we can create a new proposal
 func (k Keeper) HandleAddEvmChainProposal(ctx sdk.Context, p *types.AddEvmChainProposal) error {
 
-	isEvmChainExist := k.GetEvmChainData(ctx, p.EvmChainPrefix)
-	if isEvmChainExist != nil {
-		return sdkerrors.Wrap(types.ErrInvalid, "The proposed EVM Chain already exists on-chain. Cannot re-add it!")
-	}
+	// isEvmChainExist := k.GetEvmChainData(ctx, p.EvmChainPrefix)
+	// if isEvmChainExist != nil {
+	// 	return sdkerrors.Wrap(types.ErrInvalid, "The proposed EVM Chain already exists on-chain. Cannot re-add it!")
+	// }
 
-	evmChains := k.GetEvmChains(ctx)
-	for _, chain := range evmChains {
-		if chain.EvmChainNetVersion == p.EvmChainNetVersion {
-			return sdkerrors.Wrap(types.ErrInvalid, "The proposed EVM Chain net version already exists on-chain. Cannot add a new chain with the same net version")
-		}
-	}
+	// evmChains := k.GetEvmChains(ctx)
+	// for _, chain := range evmChains {
+	// 	if chain.EvmChainNetVersion == p.EvmChainNetVersion {
+	// 		return sdkerrors.Wrap(types.ErrInvalid, "The proposed EVM Chain net version already exists on-chain. Cannot add a new chain with the same net version")
+	// 	}
+	// }
 
 	ctx.Logger().Info("Gov vote passed: Adding new EVM chain", "evm chain prefix", p.EvmChainPrefix)
 	evmChain := types.EvmChainData{
@@ -112,7 +120,6 @@ func (k Keeper) HandleAddEvmChainProposal(ctx sdk.Context, p *types.AddEvmChainP
 	k.SetLastObservedEvmChainBlockHeight(ctx, chainPrefix, evmChain.GravityNonces.LastObservedEvmBlockHeight)
 	k.setID(ctx, evmChain.GravityNonces.LastTxPoolId, types.AppendChainPrefix(types.KeyLastTXPoolID, chainPrefix))
 	k.setID(ctx, evmChain.GravityNonces.LastBatchId, types.AppendChainPrefix(types.KeyLastOutgoingBatchID, chainPrefix))
-	k.SetEvmChainData(ctx, evmChain.EvmChain)
 
 	initBridgeDataFromGenesis(ctx, k, evmChain)
 
@@ -135,9 +142,43 @@ func (k Keeper) HandleAddEvmChainProposal(ctx sdk.Context, p *types.AddEvmChainP
 		BridgeActive:             true,
 		EthereumBlacklist:        []string{},
 	}
-	params.EvmChainParams = append(params.EvmChainParams, evmChainParam)
+
+	var evmChainParams []*types.EvmChainParam
+
+	exists := false
+	for _, param := range params.EvmChainParams {
+		if param.EvmChainPrefix == evmChainParam.EvmChainPrefix {
+			evmChainParams = append(evmChainParams, evmChainParam)
+			exists = true
+		} else {
+			evmChainParams = append(evmChainParams, param)
+		}
+	}
+	if !exists {
+		evmChainParams = append(evmChainParams, evmChainParam)
+	}
+	params.EvmChainParams = evmChainParams
 	k.SetParams(ctx, params)
 	return nil
+}
+
+// In the event we need to remove an evm chains, we can create a new proposal, but call remove evm chain method from store migration
+func (k Keeper) HandleRemoveEvmChainProposal(ctx sdk.Context, p *types.RemoveEvmChainProposal) error {
+	// remove params for current evm chain first
+	var evmChainParams []*types.EvmChainParam
+
+	params := k.GetParams(ctx)
+	for _, param := range params.EvmChainParams {
+		if param.EvmChainPrefix == p.EvmChainPrefix {
+			continue
+		}
+		evmChainParams = append(evmChainParams, param)
+
+	}
+
+	params.EvmChainParams = evmChainParams
+	k.SetParams(ctx, params)
+	return v3.RemoveEvmChainFromStore(ctx, k.storeKey, k.cdc, p.EvmChainPrefix)
 }
 
 // Iterate over all attestations currently being voted on in order of nonce
