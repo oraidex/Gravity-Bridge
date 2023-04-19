@@ -264,7 +264,7 @@ pub async fn send_to_cosmos_invalid(
             .eth_get_transaction_count(*MINER_ADDRESS)
             .await
             .unwrap();
-        let options = vec![SendTxOption::Nonce(nonce.clone())];
+        let options = vec![SendTxOption::Nonce(nonce)];
         approve_nonce = Some(nonce);
         let txid = web3
             .approve_erc20_transfers(erc20, *MINER_PRIVATE_KEY, gravity_contract, None, options)
@@ -306,7 +306,7 @@ pub async fn send_to_cosmos_invalid(
         .await
         .unwrap();
 
-    web3.wait_for_transaction(tx_hash.clone(), TOTAL_TIMEOUT, None)
+    web3.wait_for_transaction(tx_hash, TOTAL_TIMEOUT, None)
         .await
         .unwrap();
 }
@@ -348,7 +348,7 @@ async fn deploy_invalid_erc20(
         .unwrap();
 
     web30
-        .wait_for_transaction(tx_hash.clone(), TOTAL_TIMEOUT, None)
+        .wait_for_transaction(tx_hash, TOTAL_TIMEOUT, None)
         .await
         .unwrap();
 

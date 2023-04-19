@@ -265,7 +265,7 @@ pub async fn test_ibc_transfer(
             let amount_uint = Uint256::from_str(&coin.amount).unwrap();
             let pre_amt = Uint256::from_str(&pre.amount).unwrap();
             let post_amt = Uint256::from_str(&post.amount).unwrap();
-            if post_amt < pre_amt || post_amt - pre_amt.clone() != amount_uint {
+            if post_amt < pre_amt || post_amt - pre_amt != amount_uint {
                 error!(
                     "Incorrect ibc stake balance for user {}: actual {} != expected {}",
                     receiver,
@@ -494,7 +494,7 @@ pub async fn test_ibc_auto_forward_happy_path(
         dest,
         gravity_address,
         erc20_address,
-        amount.clone(),
+        amount,
     )
     .await?;
 
@@ -566,7 +566,7 @@ pub async fn test_ibc_auto_forward_happy_path(
         (Some(pre), Some(post)) => {
             let pre_amt = Uint256::from_str(&pre.amount).unwrap();
             let post_amt = Uint256::from_str(&post.amount).unwrap();
-            if post_amt < pre_amt || pre_amt.clone() - post_amt != amount.clone() {
+            if post_amt < pre_amt || pre_amt - post_amt != amount {
                 panic!(
                     "Incorrect ibc auto-forward balance for user {}: actual {} != expected {}",
                     dest,
@@ -674,7 +674,7 @@ pub async fn test_ibc_auto_forward_failure<
         input.cosmos_receiver,
         input.gravity_address,
         input.erc20_address,
-        input.amount.clone(),
+        input.amount,
     )
     .await?;
 
@@ -776,7 +776,7 @@ pub async fn test_ibc_auto_forward_native_hijack(
         .cosmos_key
         .to_address(&ADDRESS_PREFIX.clone())
         .unwrap();
-    let amt = amount.clone();
+    let amt = amount;
     let ibc_match = move |pre_balance: Option<Coin>, post_balance: Option<Coin>| {
         match (pre_balance, post_balance) {
             (None, None) => {
@@ -810,7 +810,7 @@ pub async fn test_ibc_auto_forward_native_hijack(
                         "User {}'s IBC balance unchanged after native hijack attemt, still need to check local balance",
                         ibc_dest,
                     )
-                } else if post_amt > pre_amt && post_amt - pre_amt.clone() == amt {
+                } else if post_amt > pre_amt && post_amt - pre_amt == amt {
                     panic!(
                         "Discovered native hijack with ibc user {}: actual {} != expected {}",
                         ibc_dest, post.amount, pre_amt
@@ -834,7 +834,7 @@ pub async fn test_ibc_auto_forward_native_hijack(
         };
     };
 
-    let amt = amount.clone();
+    let amt = amount;
     let gravity_match = move |pre_balance: Option<DSCoin>, post_balance: Option<DSCoin>| {
         match (pre_balance, post_balance) {
             (None, None) => {
@@ -859,13 +859,13 @@ pub async fn test_ibc_auto_forward_native_hijack(
                 }
             }
             (Some(pre), Some(post)) => {
-                match post.amount.cmp(&(pre.amount.clone() + amt.clone())) {
+                match post.amount.cmp(&(pre.amount + amt)) {
                     Ordering::Less => {
                         panic!( // At this point there's no explanation for the lack of funds
                            "Failed SendToCosmos native hijack: Discovered unexpected local balance with user {}: actual {} != expected {}",
                            gravity_prefixed_dest,
                            post.amount,
-                           (pre.amount + amt.clone())
+                           (pre.amount + amt)
                         );
                     }
                     Ordering::Equal => {
@@ -879,7 +879,7 @@ pub async fn test_ibc_auto_forward_native_hijack(
                         warn!( // Somehow the balance is less than we would expect
                             "Discovered unexpected native hijack local balance of amount {} != expected {} with user {}",
                             post.amount,
-                            (pre.amount + amt.clone()).to_string(),
+                            (pre.amount + amt).to_string(),
                             gravity_prefixed_dest
                         );
                     }
@@ -942,7 +942,7 @@ pub async fn test_ibc_auto_forward_unregistered_chain(
         .cosmos_key
         .to_address(&ADDRESS_PREFIX.clone())
         .unwrap();
-    let amt = amount.clone();
+    let amt = amount;
     // Ideally we do not see a balance change here
     let ibc_match = move |pre_balance: Option<Coin>, post_balance: Option<Coin>| {
         match (pre_balance, post_balance) {
@@ -973,7 +973,7 @@ pub async fn test_ibc_auto_forward_unregistered_chain(
                 let pre_amt = Uint256::from_str(&pre.amount).unwrap();
                 let post_amt = Uint256::from_str(&post.amount).unwrap();
 
-                if post_amt >= pre_amt && post_amt - pre_amt.clone() == amt {
+                if post_amt >= pre_amt && post_amt - pre_amt == amt {
                     panic!(
                         "Failed SendToCosmos unregistered chain: user {} actual balance {} != expected {}",
                         ibc_address,
@@ -998,7 +998,7 @@ pub async fn test_ibc_auto_forward_unregistered_chain(
         };
     };
 
-    let amt = amount.clone();
+    let amt = amount;
     // Ideally we see the balance increase by amount tokens
     let gravity_match = move |pre_balance: Option<DSCoin>, post_balance: Option<DSCoin>| {
         match (pre_balance, post_balance) {
@@ -1024,13 +1024,13 @@ pub async fn test_ibc_auto_forward_unregistered_chain(
                 }
             }
             (Some(pre), Some(post)) => {
-                match post.amount.cmp(&(pre.amount.clone() + amt.clone())) {
+                match post.amount.cmp(&(pre.amount + amt)) {
                     Ordering::Less => {
                         panic!( // At this point there's no explanation for the lack of funds
                             "Failed SendToCosmos unregistered chain: Discovered unexpected local balance with user {}: actual {} != expected {}",
                             gravity_prefixed_dest,
                             post.amount,
-                            (pre.amount + amt.clone())
+                            (pre.amount + amt)
                         );
                     }
                     Ordering::Equal => {
@@ -1045,7 +1045,7 @@ pub async fn test_ibc_auto_forward_unregistered_chain(
                             "Failed SendToCosmos unregistered chain: Discovered unexpected local balance with user {}: actual {} != expected {}",
                             gravity_prefixed_dest,
                             post.amount,
-                            (pre.amount + amt.clone())
+                            (pre.amount + amt)
                         );
                     }
                 }

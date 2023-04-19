@@ -410,6 +410,8 @@ pub struct AddEvmChainProposal {
     pub evm_chain_net_version: u64,
     #[prost(string, tag = "6")]
     pub gravity_id: ::prost::alloc::string::String,
+    #[prost(string, tag = "7")]
+    pub bridge_ethereum_address: ::prost::alloc::string::String,
 }
 /// PendingIbcAutoForward represents a SendToCosmos transaction with a foreign CosmosReceiver which will be added to the
 /// PendingIbcAutoForward queue in attestation_handler and sent over IBC on some submission of a MsgExecuteIbcAutoForwards
@@ -884,6 +886,16 @@ pub struct EventOutgoingTxId {
     pub message: ::prost::alloc::string::String,
     #[prost(string, tag = "2")]
     pub tx_id: ::prost::alloc::string::String,
+}
+#[allow(clippy::derive_partial_eq_without_eq)]
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct EventSendToEthFeeCollected {
+    #[prost(string, tag = "1")]
+    pub sender: ::prost::alloc::string::String,
+    #[prost(string, tag = "2")]
+    pub send_amount: ::prost::alloc::string::String,
+    #[prost(string, tag = "3")]
+    pub fee_amount: ::prost::alloc::string::String,
 }
 /// Generated client implementations.
 pub mod msg_client {

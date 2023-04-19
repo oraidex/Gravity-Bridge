@@ -51,7 +51,7 @@ pub async fn send_to_cosmos(
     if !approved {
         let mut options = options.clone();
         let nonce = web3.eth_get_transaction_count(sender_address).await?;
-        options.push(SendTxOption::Nonce(nonce.clone()));
+        options.push(SendTxOption::Nonce(nonce));
         approve_nonce = Some(nonce);
         let txid = web3
             .approve_erc20_transfers(erc20, sender_secret, gravity_contract, None, options)

@@ -1,5 +1,5 @@
 use clarity::Uint256;
-use num::ToPrimitive;
+use num_traits::ToPrimitive;
 
 const ONE_ETH: u128 = 1000000000000000000;
 const ONE_ETH_FLOAT: f64 = ONE_ETH as f64;

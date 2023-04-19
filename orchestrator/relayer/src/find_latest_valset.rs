@@ -53,7 +53,7 @@ pub async fn find_latest_valset(
 ) -> Result<Valset, GravityError> {
     let block_to_search = convert_block_to_search();
     let latest_block = web3.eth_block_number().await?;
-    let mut current_block: Uint256 = latest_block.clone();
+    let mut current_block: Uint256 = latest_block;
 
     let (previous_block, mut previous_valset) =
         get_latest_valset_info(evm_chain_prefix).unwrap_or((0u8.into(), None));
@@ -73,8 +73,8 @@ pub async fn find_latest_valset(
         };
         let mut all_valset_events = match web3
             .check_for_events(
-                end_search.clone(),
-                Some(current_block.clone()),
+                end_search,
+                Some(current_block),
                 vec![gravity_contract_address],
                 vec![VALSET_UPDATED_EVENT_SIG],
             )

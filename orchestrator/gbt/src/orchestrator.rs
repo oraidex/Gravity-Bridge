@@ -124,6 +124,8 @@ pub async fn orchestrator(
         .await
         .expect("Failed to get Gravity Bridge module parameters!");
 
+    
+
     if config.orchestrator.relayer_enabled {
         // setup and explain relayer settings
         if config.relayer.batch_request_mode != BatchRequestMode::None {
@@ -162,8 +164,8 @@ pub async fn orchestrator(
 
     // get the gravity contract address, if not provided
     // override if there is args gravity contract address
-    let contract_address = if args.gravity_contract_address.is_some() {
-        args.gravity_contract_address.unwrap()
+    let contract_address = if let Some(c) = args.gravity_contract_address {
+        c
     } else {
         parse_bridge_ethereum_address_with_exit(&evm_chain_params.bridge_ethereum_address)
     };

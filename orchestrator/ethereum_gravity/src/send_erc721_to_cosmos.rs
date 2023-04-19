@@ -37,14 +37,14 @@ pub async fn send_erc721_to_cosmos(
     }
 
     let mut address_approved = web3
-        .check_erc721_approved(erc721, sender_address, token_id.clone())
+        .check_erc721_approved(erc721, sender_address, token_id)
         .await;
     if let Some(w) = wait_timeout {
         let start = Instant::now();
         // keep trying while there's still time
         while address_approved.is_err() && Instant::now() - start < w {
             address_approved = web3
-                .check_erc721_approved(erc721, sender_address, token_id.clone())
+                .check_erc721_approved(erc721, sender_address, token_id)
                 .await;
         }
     }
@@ -56,7 +56,7 @@ pub async fn send_erc721_to_cosmos(
         );
         let mut options = options.clone();
         let nonce = web3.eth_get_transaction_count(sender_address).await?;
-        options.push(SendTxOption::Nonce(nonce.clone()));
+        options.push(SendTxOption::Nonce(nonce));
         approve_nonce = Some(nonce);
 
         let txid = web3
@@ -64,7 +64,7 @@ pub async fn send_erc721_to_cosmos(
                 erc721,
                 sender_secret,
                 gravityerc721_contract,
-                token_id.clone(),
+                token_id,
                 None,
                 options,
             )
