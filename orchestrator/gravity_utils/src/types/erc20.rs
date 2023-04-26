@@ -1,24 +1,8 @@
-use crate::error::GravityError;
-use num256::Uint256;
 use std::convert::TryFrom;
-use web30::EthAddress;
 
-pub use batches::*;
-pub use config::*;
-pub use ethereum_events::*;
-pub use logic_call::*;
-pub use signatures::*;
-pub use valsets::*;
-
-mod batches;
-mod config;
-pub mod cross_bridge_balances;
-pub mod erc20;
-mod ethereum_events;
-pub mod event_signatures;
-mod logic_call;
-mod signatures;
-mod valsets;
+use crate::error::GravityError;
+use clarity::Address as EthAddress;
+use clarity::Uint256;
 
 #[derive(Serialize, Deserialize, Debug, Default, Clone, Eq, PartialEq, Hash)]
 pub struct Erc20Token {
@@ -31,10 +15,7 @@ impl TryFrom<gravity_proto::gravity::Erc20Token> for Erc20Token {
     type Error = GravityError;
     fn try_from(input: gravity_proto::gravity::Erc20Token) -> Result<Erc20Token, GravityError> {
         Ok(Erc20Token {
-            amount: input
-                .amount
-                .parse()
-                .expect("Amount is not in correct format"),
+            amount: input.amount.parse()?,
             token_contract_address: input.contract.parse()?,
         })
     }
@@ -55,6 +36,32 @@ impl Into<gravity_proto::gravity::Erc20Token> for Erc20Token {
         gravity_proto::gravity::Erc20Token {
             amount: self.amount.to_string(),
             contract: self.token_contract_address.to_string(),
+        }
+    }
+}
+
+// First order by token address, then split ties by amount
+impl PartialOrd for Erc20Token {
+    fn partial_cmp(&self, other: &Self) -> Option<std::cmp::Ordering> {
+        match self
+            .token_contract_address
+            .partial_cmp(&other.token_contract_address)
+        {
+            Some(core::cmp::Ordering::Equal) => self.amount.partial_cmp(&other.amount),
+            ord => ord,
+        }
+    }
+}
+
+// First order by token address, then split ties by amount
+impl Ord for Erc20Token {
+    fn cmp(&self, other: &Self) -> std::cmp::Ordering {
+        match self
+            .token_contract_address
+            .cmp(&other.token_contract_address)
+        {
+            std::cmp::Ordering::Equal => self.amount.cmp(&other.amount),
+            ord => ord,
         }
     }
 }

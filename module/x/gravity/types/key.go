@@ -1,6 +1,8 @@
 package types
 
 import (
+	"encoding/hex"
+	"fmt"
 	"strings"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -164,6 +166,15 @@ var (
 	// EvmChainKey indexes EVM chains supported on cosmos
 	// [0x0a4fce7411f743f9198f56c8f706cd0d]
 	EvmChainKey = HashString("EvmChainKey")
+	// MonitoredERC20TokensKey indexes the list of ERC20 tokens which orchestrators are required to monitor
+	MonitoredERC20TokensKey = HashString("MonitoredERC20Tokens")
+
+	// BridgeBalanceSnapshotsKey indexes the x/bank supply of Ethereum originated tokens and
+	// Cosmos originated tokens which have been deployed on Ethereum for every
+	// Attestation application along with Attestation Eth block height and Cosmos application height
+	// The entries are indexed by Attestation Event Nonce
+	// [0xcd68f89bc0dc4b49109abf2f433e2321]
+	BridgeBalanceSnapshotsKey = HashString("BridgeBalanceSnapshots")
 )
 
 // GetOrchestratorAddressKey returns the following key format
@@ -353,4 +364,23 @@ func convertByteArrToString(value []byte) string {
 		ret.WriteString(string(value[i]))
 	}
 	return ret.String()
+}
+
+// GetBridgeBalanceSnapshotKey returns the following key format
+// prefix		EventNonce
+// [0xcd68f89bc0dc4b49109abf2f433e2321][0 0 0 0 0 0 0 1]
+func GetBridgeBalanceSnapshotKey(eventNonce uint64) []byte {
+	return AppendBytes(BridgeBalanceSnapshotsKey, UInt64Bytes(eventNonce))
+}
+
+// ExtractNonceFromBridgeBalanceSnapshotKey will return only the EventNonce portion of a
+// BridgeBalanceSnapshot's store key, see GetBridgeBalanceSnapshotKey() for more info
+func ExtractNonceFromBridgeBalanceSnapshotKey(key []byte) (uint64, error) {
+	prefixLen := len(BridgeBalanceSnapshotsKey) // the length of the index to these values
+
+	nonce := key[prefixLen:] // These keys only have a prefix and the nonce, so grab the end of the key
+	if len(nonce) > 8 {
+		return 0, fmt.Errorf("invalid uint64 event nonce bytes %v", hex.EncodeToString(nonce))
+	}
+	return UInt64FromBytesUnsafe(nonce), nil
 }

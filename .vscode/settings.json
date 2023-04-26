@@ -8,5 +8,6 @@
     "solidity.packageDefaultDependenciesDirectory": "solidity/node_modules",
     "files.associations": {
         "validator-eth-keys": "cpp"
-    }
+    },
+    "vue.features.codeActions.enable": false
 }

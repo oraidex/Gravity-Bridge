@@ -58,16 +58,15 @@ all: install
 install: go.sum
 		export GOFLAGS='-buildmode=pie'
 		export CGO_CPPFLAGS="-D_FORTIFY_SOURCE=2"
-		export CGO_LDFLAGS="-Wl,-z,relro,-z,now -fstack-protector"
-		export CGO_CFLAGS="-Wno-deprecated-declarations"
-		go install $(BUILD_FLAGS) ./cmd/gravity
+		export CGO_LDFLAGS="-Wl,-z,relro,-z,now -fstack-protector"		
+		CGO_CFLAGS="-Wno-deprecated-declarations" go install $(BUILD_FLAGS) ./cmd/gravity
 
 go.sum: go.mod
 		@echo "--> Ensure dependencies have not been modified"
 		GO111MODULE=on go mod verify
 
-test:
-	@go test -mod=readonly $(PACKAGES)
+test:	
+	CGO_CFLAGS="-Wno-deprecated-declarations" go test -mod=readonly $(PACKAGES)
 
 # look into .golangci.yml for enabling / disabling linters
 lint:

@@ -4,6 +4,7 @@ use deep_space::address::Address;
 use deep_space::error::CosmosGrpcError;
 use deep_space::Contact;
 use gravity_proto::gravity::query_client::QueryClient as GravityQueryClient;
+use gravity_proto::gravity::BridgeBalanceSnapshot;
 use gravity_proto::gravity::EvmChain;
 use gravity_proto::gravity::EvmChainParam;
 use gravity_proto::gravity::Params;
@@ -11,6 +12,7 @@ use gravity_proto::gravity::QueryAttestationsRequest;
 use gravity_proto::gravity::QueryBatchConfirmsRequest;
 use gravity_proto::gravity::QueryBatchFeeRequest;
 use gravity_proto::gravity::QueryBatchFeeResponse;
+use gravity_proto::gravity::QueryBridgeBalanceSnapshotByEventNonce;
 use gravity_proto::gravity::QueryCurrentValsetRequest;
 use gravity_proto::gravity::QueryDenomToErc20Request;
 use gravity_proto::gravity::QueryDenomToErc20Response;
@@ -92,12 +94,12 @@ pub async fn get_oldest_unsigned_valsets(
     client: &mut GravityQueryClient<Channel>,
     address: Address,
     prefix: String,
-    evm_chain_prefix: String,
+    evm_chain_prefix: &str,
 ) -> Result<Vec<Valset>, GravityError> {
     let request = client
         .last_pending_valset_request_by_addr(QueryLastPendingValsetRequestByAddrRequest {
             address: address.to_bech32(prefix).unwrap(),
-            evm_chain_prefix,
+            evm_chain_prefix: evm_chain_prefix.to_string(),
         })
         .await?;
     let valsets = request.into_inner().valsets;
@@ -461,4 +463,31 @@ pub async fn query_evm_chain_from_net_version(
         chain.evm_chain_net_version.eq(&net_version)
             && active_evm_chains[0].evm_chain_prefix == chain.evm_chain_prefix
     })
+}
+
+// Fetches a BridgeBalanceSnapshot from Gravity Bridge Chain for each nonce in `nonces`
+pub async fn get_snapshots_for_events(
+    grpc_client: GravityQueryClient<Channel>,
+    nonces: &[u64],
+) -> Result<Vec<BridgeBalanceSnapshot>, CosmosGrpcError> {
+    let mut grpc_client = grpc_client;
+    let mut results: Vec<BridgeBalanceSnapshot> = Vec::with_capacity(nonces.len());
+
+    for nonce in nonces {
+        let response = grpc_client
+            .get_bridge_balance_snapshot_by_event_nonce(QueryBridgeBalanceSnapshotByEventNonce {
+                nonce: *nonce,
+            })
+            .await;
+        match response {
+            Err(e) => return Err(CosmosGrpcError::BadResponse(e.to_string())),
+            Ok(v) => results.push(
+                v.into_inner()
+                    .snapshot
+                    .expect("received empty snapshot response"),
+            ),
+        };
+    }
+
+    Ok(results)
 }

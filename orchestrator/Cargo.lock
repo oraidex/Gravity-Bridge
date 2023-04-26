@@ -739,6 +739,7 @@ dependencies = [
  "clarity",
  "deep_space",
  "ethereum_gravity",
+ "futures",
  "gravity_proto",
  "gravity_utils",
  "log",
@@ -880,7 +881,7 @@ dependencies = [
 [[package]]
 name = "deep_space"
 version = "2.15.2"
-source = "git+https://github.com/oraichain/deep_space.git?rev=a2e1353#a2e135363083d2034613fdeceba1f612d2b19308"
+source = "git+https://github.com/oraichain/deep_space.git?rev=d2b2e56#d2b2e56cf712de9f6814d39cfd6ecaead6094122"
 dependencies = [
  "base64 0.13.1",
  "bech32",
@@ -1179,6 +1180,7 @@ dependencies = [
  "clarity",
  "deep_space",
  "ethabi",
+ "futures",
  "gravity_utils",
  "log",
  "num256",
@@ -1467,6 +1469,7 @@ version = "0.1.0"
 dependencies = [
  "clarity",
  "deep_space",
+ "futures",
  "gravity_proto",
  "lazy_static",
  "log",
@@ -2714,7 +2717,7 @@ dependencies = [
 [[package]]
 name = "prometheus_exporter"
 version = "0.8.4"
-source = "git+https://github.com/jkilpatr/prometheus_exporter?rev=c6a720a907db92a4d620d3fd54ac5bb656a1fad6#c6a720a907db92a4d620d3fd54ac5bb656a1fad6"
+source = "git+https://github.com/jkilpatr/prometheus_exporter?rev=c6a720a#c6a720a907db92a4d620d3fd54ac5bb656a1fad6"
 dependencies = [
  "ascii",
  "lazy_static",
@@ -3851,6 +3854,7 @@ dependencies = [
  "prost",
  "prost-types",
  "rand",
+ "relayer",
  "serde",
  "serde_derive",
  "serde_json",

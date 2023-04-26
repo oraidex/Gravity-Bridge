@@ -68,21 +68,23 @@ func (k Keeper) setCosmosOriginatedDenomToERC20(ctx sdk.Context, evmChainPrefix 
 // in an index of ERC20 contracts deployed on evm chain to serve as synthetic Cosmos assets.
 func (k Keeper) DenomToERC20Lookup(ctx sdk.Context, evmChainPrefix string, denom string) (bool, *types.EthAddress, error) {
 	// First try parsing the ERC20 out of the denom
-	tc1, err := types.GravityDenomToERC20(evmChainPrefix, denom)
+	erc20Address, err := types.GravityDenomToERC20(evmChainPrefix, denom)
 
 	if err != nil {
 		// Look up ERC20 contract in index and error if it's not in there.
-		tc2, exists := k.GetCosmosOriginatedERC20(ctx, evmChainPrefix, denom)
+		originatedErc20Address, exists := k.GetCosmosOriginatedERC20(ctx, evmChainPrefix, denom)
 		if !exists {
-			return false, nil,
-				sdkerrors.Wrap(types.ErrInvalid, fmt.Sprintf("denom not a gravity voucher coin: %s, and also not in cosmos-originated ERC20 index", err))
+			return false, nil, sdkerrors.Wrap(
+				types.ErrInvalid,
+				fmt.Sprintf("denom not a gravity voucher coin: %s, and also not in cosmos-originated ERC20 index", err),
+			)
 		}
 		// This is a cosmos-originated asset
-		return true, tc2, nil
+		return true, originatedErc20Address, nil
 	}
 
-	// This is an evmChain-originated asset
-	return false, tc1, nil
+	// This is an ethereum-originated asset
+	return false, erc20Address, nil
 }
 
 // RewardToERC20Lookup is a specialized function wrapping DenomToERC20Lookup designed to validate
@@ -111,10 +113,10 @@ func (k Keeper) RewardToERC20Lookup(ctx sdk.Context, evmChainPrefix string, coin
 // and get its corresponding denom
 func (k Keeper) ERC20ToDenomLookup(ctx sdk.Context, evmChainPrefix string, tokenContract types.EthAddress) (bool, string) {
 	// First try looking up tokenContract in index
-	dn1, exists := k.GetCosmosOriginatedDenom(ctx, evmChainPrefix, tokenContract)
+	denom, exists := k.GetCosmosOriginatedDenom(ctx, evmChainPrefix, tokenContract)
 	if exists {
-		// It is a cosmos originated asset
-		return true, dn1
+		// It is a cosmos originated asset, return the denom the bank module is aware of
+		return true, denom
 	}
 
 	// If it is not in there, it is not a cosmos originated token, turn the ERC20 into a gravity denom

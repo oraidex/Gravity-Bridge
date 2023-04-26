@@ -12,7 +12,6 @@ import (
 	"github.com/Gravity-Bridge/Gravity-Bridge/module/x/gravity/types"
 	bech32ibctypes "github.com/althea-net/bech32-ibc/x/bech32ibc/types"
 	codectypes "github.com/cosmos/cosmos-sdk/codec/types"
-	sdktypes "github.com/cosmos/cosmos-sdk/types"
 )
 
 func TestGetAndDeleteAttestation(t *testing.T) {
@@ -82,7 +81,7 @@ func TestGetMostRecentAttestations(t *testing.T) {
 	}
 }
 
-func createAttestations(t *testing.T, ctx sdktypes.Context, k Keeper, length int, evmChainPrefix string) ([]types.MsgSendToCosmosClaim, []codectypes.Any, [][]byte) {
+func createAttestations(t *testing.T, ctx sdk.Context, k Keeper, length int, evmChainPrefix string) ([]types.MsgSendToCosmosClaim, []codectypes.Any, [][]byte) {
 	msgs := make([]types.MsgSendToCosmosClaim, 0, length)
 	anys := make([]codectypes.Any, 0, length)
 	hashes := make([][]byte, 0, length)
@@ -91,13 +90,13 @@ func createAttestations(t *testing.T, ctx sdktypes.Context, k Keeper, length int
 
 		contract := common.BytesToAddress(bytes.Repeat([]byte{0x1}, 20)).String()
 		sender := common.BytesToAddress(bytes.Repeat([]byte{0x2}, 20)).String()
-		orch := sdktypes.AccAddress(bytes.Repeat([]byte{0x3}, 20)).String()
-		receiver := sdktypes.AccAddress(bytes.Repeat([]byte{0x4}, 20)).String()
+		orch := sdk.AccAddress(bytes.Repeat([]byte{0x3}, 20)).String()
+		receiver := sdk.AccAddress(bytes.Repeat([]byte{0x4}, 20)).String()
 		msg := types.MsgSendToCosmosClaim{
 			EventNonce:     nonce,
 			EthBlockHeight: 1,
 			TokenContract:  contract,
-			Amount:         sdktypes.NewInt(10000000000 + int64(i)),
+			Amount:         sdk.NewInt(10000000000 + int64(i)),
 			EthereumSender: sender,
 			CosmosReceiver: receiver,
 			Orchestrator:   orch,
@@ -167,7 +166,7 @@ func TestGetSetLastObservedValset(t *testing.T) {
 				EthereumAddress: "0x0000000000000003",
 			},
 		},
-		RewardAmount: sdktypes.NewInt(1000000000),
+		RewardAmount: sdk.NewInt(1000000000),
 		RewardToken:  "footoken",
 	}
 
@@ -185,7 +184,7 @@ func TestGetSetLastEventNonceByValidator(t *testing.T) {
 	ctx := input.Context
 
 	valAddrString := "gravity1ahx7f8wyertuus9r20284ej0asrs085ceqtfnm"
-	valAccAddress, _ := sdktypes.AccAddressFromBech32(valAddrString)
+	valAccAddress, _ := sdk.AccAddressFromBech32(valAddrString)
 	valAccount := k.accountKeeper.NewAccountWithAddress(ctx, valAccAddress)
 	require.NotNil(t, valAccount)
 
@@ -235,11 +234,11 @@ func TestInvalidHeight(t *testing.T) {
 			DestAddress: receiver.String(),
 			Erc20Token: types.ERC20Token{
 				Contract: tokenContract,
-				Amount:   sdktypes.NewInt(1),
+				Amount:   sdk.NewInt(1),
 			},
 			Erc20Fee: types.ERC20Token{
 				Contract: tokenContract,
-				Amount:   sdktypes.NewInt(1),
+				Amount:   sdk.NewInt(1),
 			},
 		}},
 		TokenContract:      tokenContract,
@@ -262,7 +261,7 @@ func TestInvalidHeight(t *testing.T) {
 	err = bad.ValidateBasic()
 	require.NoError(t, err)
 
-	context := sdktypes.WrapSDKContext(ctx)
+	context := sdk.WrapSDKContext(ctx)
 	log.Info("Submitting bad eth claim from orchestrator 0", "orch", orch0.String(), "val", val0.String())
 
 	// BatchSendToEthClaim is supposed to panic and fail the message execution, set up a defer recover to catch it
@@ -314,18 +313,16 @@ func TestSendCoinToCosmosAccount(t *testing.T) {
 	k := input.GravityKeeper
 	ctx := input.Context
 
-	ethEvmPrefix := "ethereum"
-
 	nonce := uint64(1)
 	claim := types.MsgSendToCosmosClaim{
 		EventNonce:     nonce,
 		EthBlockHeight: 1,
 		TokenContract:  "0xdafea492d9c6733ae3d56b7ed1adb60692c98bc5",
-		Amount:         sdktypes.NewInt(10000000000 + int64(1)),
+		Amount:         sdk.NewInt(10000000000 + int64(1)),
 		EthereumSender: "0x00000000000000000002",
 		CosmosReceiver: "0x993d06FC97F45f16e4805883b98a6c20BAb54964",
 		Orchestrator:   "0x00000000000000000004",
-		EvmChainPrefix: ethEvmPrefix,
+		EvmChainPrefix: EthChainPrefix,
 	}
 
 	attestationHandler := AttestationHandler{
@@ -413,4 +410,170 @@ func TestGetPrefixFromBech32(t *testing.T) {
 	accountPrefix, prefixErr = types.GetPrefixFromBech32(cosmosReceiver)
 	require.NoError(t, prefixErr)
 	require.Equal(t, "channel-0/oraib", accountPrefix)
+}
+
+func TestExpectedSupplyChange(t *testing.T) {
+	// Create one of each type of claim, make attestations for those claims, check that the value from
+	// pk.ExpectedSupplyChange() returns the value contained in the attestation and nothing else
+	input, ctx := SetupFiveValChain(t)
+	defer func() { input.Context.Logger().Info("Asserting invariants at test end"); input.AssertInvariants() }()
+	pk := input.GravityKeeper
+	transfers := []*types.InternalERC20Token{
+		{
+			Contract: TokenContracts[0],
+			Amount:   sdk.NewInt(1_000000),
+		},
+		{
+			Contract: TokenContracts[0],
+			Amount:   sdk.NewInt(2_000000),
+		},
+	}
+	fees := []*types.InternalERC20Token{
+		{
+			Contract: TokenContracts[0],
+			Amount:   sdk.NewInt(1_000000),
+		},
+		{
+			Contract: TokenContracts[0],
+			Amount:   sdk.NewInt(2_000000),
+		},
+	}
+	transfersTotal := types.InternalERC20Tokens(transfers).ToCoins(EthChainPrefix)
+	feesTotal := types.InternalERC20Tokens(fees).ToCoins(EthChainPrefix)
+	batchTotal := transfersTotal.Add(feesTotal...)
+	// setup claims which get fetched
+	batch := types.InternalOutgoingTxBatch{
+		BatchNonce:   1,
+		BatchTimeout: 0,
+		Transactions: []*types.InternalOutgoingTransferTx{
+			{
+				Id:          1,
+				Sender:      OrchAddrs[0],
+				DestAddress: types.EthAddressFromCommon(EthAddrs[0]),
+				Erc20Token:  transfers[0],
+				Erc20Fee:    fees[0],
+			},
+			{
+				Id:          2,
+				Sender:      OrchAddrs[0],
+				DestAddress: types.EthAddressFromCommon(EthAddrs[0]),
+				Erc20Token:  transfers[1],
+				Erc20Fee:    fees[1],
+			},
+		},
+		TokenContract:      TokenContracts[0],
+		CosmosBlockCreated: 0,
+	}
+	pk.StoreBatch(ctx, EthChainPrefix, batch)
+
+	logicCall := types.InternalOutgoingLogicCall{
+		Transfers:            transfers,
+		Fees:                 fees,
+		LogicContractAddress: *types.EthAddressFromCommon(EthAddrs[1]),
+		Payload:              []byte{0x0},
+		Timeout:              0,
+		InvalidationId:       []byte{0x0},
+		InvalidationNonce:    0,
+		CosmosBlockCreated:   0,
+	}
+	pk.SetOutgoingLogicCall(ctx, EthChainPrefix, logicCall.ToExternal())
+
+	tokenDenoms := make([]string, len(TokenContracts))
+	for i, c := range TokenContracts {
+		tokenDenoms[i] = types.GravityDenom(EthChainPrefix, c)
+	}
+	sendToCosmos := types.MsgSendToCosmosClaim{
+		EventNonce:     1,
+		EthBlockHeight: 123,
+		TokenContract:  TokenContractAddrs[0],
+		Amount:         sdk.NewInt(100),
+		EthereumSender: EthAddrs[1].String(),
+		CosmosReceiver: OrchAddrs[1].String(),
+		Orchestrator:   OrchAddrs[1].String(),
+	}
+	stcAny, err := codectypes.NewAnyWithValue(&sendToCosmos)
+	require.NoError(t, err)
+	sendToEth := types.MsgBatchSendToEthClaim{
+		EventNonce:     2,
+		EthBlockHeight: 456,
+		BatchNonce:     batch.BatchNonce,
+		TokenContract:  batch.TokenContract.GetAddress().String(),
+		Orchestrator:   OrchAddrs[2].String(),
+	}
+	steAny, err := codectypes.NewAnyWithValue(&sendToEth)
+	require.NoError(t, err)
+	erc20Deployed := types.MsgERC20DeployedClaim{
+		EventNonce:     3,
+		EthBlockHeight: 789,
+		CosmosDenom:    "foo",
+		TokenContract:  TokenContractAddrs[1],
+		Name:           "Foo",
+		Symbol:         "FOO",
+		Decimals:       6,
+		Orchestrator:   OrchAddrs[3].String(),
+	}
+	e2dAny, err := codectypes.NewAnyWithValue(&erc20Deployed)
+	require.NoError(t, err)
+	valsetUpdated := types.MsgValsetUpdatedClaim{
+		EventNonce:     4,
+		ValsetNonce:    1,
+		EthBlockHeight: 1011,
+		Members:        []types.BridgeValidator{},
+		RewardAmount:   sdk.NewIntFromUint64(123),
+		RewardToken:    TokenContractAddrs[2],
+		Orchestrator:   OrchAddrs[0].String(),
+	}
+	vuAny, err := codectypes.NewAnyWithValue(&valsetUpdated)
+	require.NoError(t, err)
+	logicCallExecuted := types.MsgLogicCallExecutedClaim{
+		EventNonce:        5,
+		EthBlockHeight:    1213,
+		InvalidationId:    []byte{0x0},
+		InvalidationNonce: 0,
+		Orchestrator:      OrchAddrs[1].String(),
+	}
+	lceAny, err := codectypes.NewAnyWithValue(&logicCallExecuted)
+	require.NoError(t, err)
+	testcases := []struct {
+		name      string
+		claim     codectypes.Any
+		expSupply sdk.Coins
+	}{
+		{
+			"Send to Cosmos",
+			*stcAny,
+			sdk.NewCoins(sdk.NewInt64Coin(tokenDenoms[0], 100)),
+		},
+		{
+			"Batch Send to Eth",
+			*steAny,
+			batchTotal,
+		},
+		{
+			"ERC20 Deployed",
+			*e2dAny,
+			sdk.Coins{},
+		},
+		{
+			"Valset Updated",
+			*vuAny,
+			sdk.Coins{},
+		},
+		{
+			"Logic Call Executed",
+			*lceAny,
+			batchTotal,
+		},
+	}
+	for _, testcase := range testcases {
+		var claim types.EthereumClaim
+		input.GravityKeeper.cdc.UnpackAny(&testcase.claim, &claim)
+		output, err := pk.ExpectedSupplyChange(ctx, claim)
+		require.NoError(t, err)
+		if output == nil {
+			require.Empty(t, testcase.expSupply, "Test case %v, got nil response but expected %v", testcase.name, testcase.expSupply)
+		} else {
+			require.ElementsMatchf(t, *output, testcase.expSupply, "Test case %v, expected %v but got %v", testcase.name, testcase.expSupply, output)
+		}
+	}
 }

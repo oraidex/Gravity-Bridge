@@ -39,7 +39,8 @@ func AllInvariants(k Keeper) sdk.Invariant {
 	}
 }
 
-// ModuleBalanceInvariant checks that the module account's balance is equal to the balance of unbatched transactions and unobserved batches
+// ModuleBalanceInvariant checks that the module account's balance is equal to the balance of unbatched transactions, unobserved batches,
+// and pending IBC auto-forwards
 // Note that the returned bool should be true if there is an error, e.g. an unexpected module balance
 func ModuleBalanceInvariant(k Keeper) sdk.Invariant {
 	return func(ctx sdk.Context) (string, bool) {
@@ -463,6 +464,25 @@ func ValidateStore(ctx sdk.Context, evmChainPrefix string, k Keeper) error {
 	})
 	if err != nil {
 		return err
+	}
+
+	// BridgeBalanceSnapshotsKey
+	k.IterateBridgeBalanceSnapshots(ctx, false, func(key []byte, snapshot types.BridgeBalanceSnapshot) (stop bool) {
+		var expNonce uint64
+		expNonce, err = types.ExtractNonceFromBridgeBalanceSnapshotKey(key)
+		if err != nil || expNonce != snapshot.EventNonce {
+			err = fmt.Errorf("Key (%v) encodes nonce (%v) but extracting nonce results in (%v, %v)", key, expNonce, snapshot.EventNonce, err)
+			return true
+		}
+		err = snapshot.ValidateBasic()
+		if err != nil {
+			err = fmt.Errorf("ValidateBasic() failed: Key (%v) nonce (%v): %v", key, snapshot.EventNonce, err)
+			return true
+		}
+		return false
+	})
+	if err != nil {
+		return fmt.Errorf("Discovered invalid BridgeBalanceSnapshot: %v", err)
 	}
 
 	// Finally the params, which are not placed in the store

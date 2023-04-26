@@ -280,6 +280,12 @@ pub struct EventOutgoingBatch {
     #[prost(string, tag = "4")]
     pub nonce: ::prost::alloc::string::String,
 }
+#[allow(clippy::derive_partial_eq_without_eq)]
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct MonitoredErc20Addresses {
+    #[prost(bytes = "vec", repeated, tag = "1")]
+    pub addresses: ::prost::alloc::vec::Vec<::prost::alloc::vec::Vec<u8>>,
+}
 /// BridgeValidator represents a validator's ETH address and its power
 #[allow(clippy::derive_partial_eq_without_eq)]
 #[derive(Clone, PartialEq, ::prost::Message)]
@@ -413,21 +419,70 @@ pub struct AddEvmChainProposal {
     #[prost(string, tag = "7")]
     pub bridge_ethereum_address: ::prost::alloc::string::String,
 }
-/// PendingIbcAutoForward represents a SendToCosmos transaction with a foreign CosmosReceiver which will be added to the
-/// PendingIbcAutoForward queue in attestation_handler and sent over IBC on some submission of a MsgExecuteIbcAutoForwards
+/// MonitoredERC20TokensProposal defines a custom governance proposal type to set
+/// the list of ERC20 tokens which orchestrators must monitor the balance of. If
+/// the balance on Ethereum does not match the Cosmos supply of these tokens,
+/// then the bridge will stop functioning.
+#[allow(clippy::derive_partial_eq_without_eq)]
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct MonitoredErc20TokensProposal {
+    #[prost(string, tag = "1")]
+    pub title: ::prost::alloc::string::String,
+    #[prost(string, tag = "2")]
+    pub description: ::prost::alloc::string::String,
+    #[prost(string, tag = "3")]
+    pub evm_chain_prefix: ::prost::alloc::string::String,
+    #[prost(string, repeated, tag = "4")]
+    pub tokens: ::prost::alloc::vec::Vec<::prost::alloc::string::String>,
+}
+/// RemoveEvmChainProposal
+/// this types allows users to remove an EVM chain through gov proposal
+#[allow(clippy::derive_partial_eq_without_eq)]
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct RemoveEvmChainProposal {
+    #[prost(string, tag = "1")]
+    pub title: ::prost::alloc::string::String,
+    #[prost(string, tag = "2")]
+    pub description: ::prost::alloc::string::String,
+    #[prost(string, tag = "3")]
+    pub evm_chain_prefix: ::prost::alloc::string::String,
+}
+/// PendingIbcAutoForward represents a SendToCosmos transaction with a foreign
+/// CosmosReceiver which will be added to the PendingIbcAutoForward queue in
+/// attestation_handler and sent over IBC on some submission of a
+/// MsgExecuteIbcAutoForwards
 #[allow(clippy::derive_partial_eq_without_eq)]
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct PendingIbcAutoForward {
-    /// the destination address. sdk.AccAddress does not preserve foreign prefixes
+    /// the destination address. sdk.AccAddress does
     #[prost(string, tag = "1")]
     pub foreign_receiver: ::prost::alloc::string::String,
-    /// the token sent from ethereum to the ibc-enabled chain over `IbcChannel`
+    /// not preserve foreign prefixes
+    ///
+    /// the token sent from ethereum to the
     #[prost(message, optional, tag = "2")]
     pub token: ::core::option::Option<cosmos_sdk_proto::cosmos::base::v1beta1::Coin>,
+    /// ibc-enabled chain over `IbcChannel`
+    ///
     /// the IBC channel to send `Amount` over via ibc-transfer module
     #[prost(string, tag = "3")]
     pub ibc_channel: ::prost::alloc::string::String,
-    /// the EventNonce from the MsgSendToCosmosClaim, used for ordering the queue
+    /// the EventNonce from the MsgSendToCosmosClaim, used
+    #[prost(uint64, tag = "4")]
+    pub event_nonce: u64,
+}
+/// BridgeBalanceSnapshot records the total bank supply of the Monitored ERC20
+/// Tokens immediately after applying each Attestation, plus the Cosmos and Eth
+/// Block Heights associated with the Attestation
+#[allow(clippy::derive_partial_eq_without_eq)]
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct BridgeBalanceSnapshot {
+    #[prost(uint64, tag = "1")]
+    pub cosmos_block_height: u64,
+    #[prost(uint64, tag = "2")]
+    pub ethereum_block_height: u64,
+    #[prost(message, repeated, tag = "3")]
+    pub balances: ::prost::alloc::vec::Vec<Erc20Token>,
     #[prost(uint64, tag = "4")]
     pub event_nonce: u64,
 }
@@ -1869,6 +1924,45 @@ pub struct QueryListEvmChainsResponse {
     #[prost(message, repeated, tag = "1")]
     pub evm_chains: ::prost::alloc::vec::Vec<EvmChain>,
 }
+#[allow(clippy::derive_partial_eq_without_eq)]
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct QueryMonitoredErc20Addresses {}
+#[allow(clippy::derive_partial_eq_without_eq)]
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct QueryMonitoredErc20AddressesResponse {
+    #[prost(string, repeated, tag = "1")]
+    pub addresses: ::prost::alloc::vec::Vec<::prost::alloc::string::String>,
+}
+/// Query params for GetBridgeBalanceSnapshots, with a limit (0 for unlimited),
+/// and boolean newest_first (true for descending by event nonce)
+#[allow(clippy::derive_partial_eq_without_eq)]
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct QueryBridgeBalanceSnapshots {
+    #[prost(uint64, tag = "1")]
+    pub limit: u64,
+    #[prost(bool, tag = "2")]
+    pub newest_first: bool,
+}
+#[allow(clippy::derive_partial_eq_without_eq)]
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct QueryBridgeBalanceSnapshotsResponse {
+    #[prost(message, repeated, tag = "1")]
+    pub snapshots: ::prost::alloc::vec::Vec<BridgeBalanceSnapshot>,
+}
+/// Query params for GetBridgeBalanceSnapshots, with a limit (0 for unlimited),
+/// and boolean newest_first (true for descending by event nonce)
+#[allow(clippy::derive_partial_eq_without_eq)]
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct QueryBridgeBalanceSnapshotByEventNonce {
+    #[prost(uint64, tag = "1")]
+    pub nonce: u64,
+}
+#[allow(clippy::derive_partial_eq_without_eq)]
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct QueryBridgeBalanceSnapshotByEventNonceResponse {
+    #[prost(message, optional, tag = "1")]
+    pub snapshot: ::core::option::Option<BridgeBalanceSnapshot>,
+}
 /// Generated client implementations.
 pub mod query_client {
     #![allow(unused_variables, dead_code, missing_docs, clippy::let_unit_value)]
@@ -2504,6 +2598,74 @@ pub mod query_client {
             let codec = tonic::codec::ProstCodec::default();
             let path = http::uri::PathAndQuery::from_static(
                 "/gravity.v1.Query/GetListEvmChains",
+            );
+            self.inner.unary(request.into_request(), path, codec).await
+        }
+        pub async fn get_monitored_erc20_addresses(
+            &mut self,
+            request: impl tonic::IntoRequest<super::QueryMonitoredErc20Addresses>,
+        ) -> Result<
+            tonic::Response<super::QueryMonitoredErc20AddressesResponse>,
+            tonic::Status,
+        > {
+            self.inner
+                .ready()
+                .await
+                .map_err(|e| {
+                    tonic::Status::new(
+                        tonic::Code::Unknown,
+                        format!("Service was not ready: {}", e.into()),
+                    )
+                })?;
+            let codec = tonic::codec::ProstCodec::default();
+            let path = http::uri::PathAndQuery::from_static(
+                "/gravity.v1.Query/GetMonitoredERC20Addresses",
+            );
+            self.inner.unary(request.into_request(), path, codec).await
+        }
+        pub async fn get_bridge_balance_snapshots(
+            &mut self,
+            request: impl tonic::IntoRequest<super::QueryBridgeBalanceSnapshots>,
+        ) -> Result<
+            tonic::Response<super::QueryBridgeBalanceSnapshotsResponse>,
+            tonic::Status,
+        > {
+            self.inner
+                .ready()
+                .await
+                .map_err(|e| {
+                    tonic::Status::new(
+                        tonic::Code::Unknown,
+                        format!("Service was not ready: {}", e.into()),
+                    )
+                })?;
+            let codec = tonic::codec::ProstCodec::default();
+            let path = http::uri::PathAndQuery::from_static(
+                "/gravity.v1.Query/GetBridgeBalanceSnapshots",
+            );
+            self.inner.unary(request.into_request(), path, codec).await
+        }
+        pub async fn get_bridge_balance_snapshot_by_event_nonce(
+            &mut self,
+            request: impl tonic::IntoRequest<
+                super::QueryBridgeBalanceSnapshotByEventNonce,
+            >,
+        ) -> Result<
+            tonic::Response<super::QueryBridgeBalanceSnapshotByEventNonceResponse>,
+            tonic::Status,
+        > {
+            self.inner
+                .ready()
+                .await
+                .map_err(|e| {
+                    tonic::Status::new(
+                        tonic::Code::Unknown,
+                        format!("Service was not ready: {}", e.into()),
+                    )
+                })?;
+            let codec = tonic::codec::ProstCodec::default();
+            let path = http::uri::PathAndQuery::from_static(
+                "/gravity.v1.Query/GetBridgeBalanceSnapshotByEventNonce",
             );
             self.inner.unary(request.into_request(), path, codec).await
         }

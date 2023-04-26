@@ -10,28 +10,28 @@ path = "src/lib.rs"
 
 
 [dependencies]
-relayer = {path = "../relayer/"}
-ethereum_gravity = {path = "../ethereum_gravity"}
-cosmos_gravity = {path = "../cosmos_gravity"}
-gravity_utils = {path = "../gravity_utils"}
-gravity_proto = {path = "../gravity_proto/"}
-metrics_exporter = {path = "../metrics_exporter/"}
+relayer = { workspace = true }
+ethereum_gravity = { workspace = true }
+cosmos_gravity = { workspace = true }
+gravity_utils = { workspace = true }
+gravity_proto = { workspace = true }
+metrics_exporter = { workspace = true }
 num = "0.4.0"
-deep_space = {git ="https://github.com/oraichain/deep_space.git", rev = "a2e1353"}
+deep_space = { workspace = true }
 serde_derive = "1.0"
-clarity = "0.7"
+clarity = { workspace = true }
 docopt = "1"
 serde = "1.0"
 actix-rt = "2.2"
 lazy_static = "1"
-web30 = {git = "https://github.com/oraichain/web30.git", rev = "5fc5815"}
-num256 = "0.5"
+web30 = { workspace = true }
+num256 = { workspace = true }
 num-traits = "0.2"
 log = "0.4"
 serde_json = "1.0"
 tokio = "1.4.0"
 rand = "0.8"
-tonic = "0.8"
+tonic = { workspace = true }
 futures = "0.3"
 openssl-probe = "0.1"
 

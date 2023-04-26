@@ -13,6 +13,7 @@ import (
 	upgradekeeper "github.com/cosmos/cosmos-sdk/x/upgrade/keeper"
 	ibctransferkeeper "github.com/cosmos/ibc-go/v3/modules/apps/transfer/keeper"
 
+	"github.com/Gravity-Bridge/Gravity-Bridge/module/app/upgrades/orion"
 	"github.com/Gravity-Bridge/Gravity-Bridge/module/app/upgrades/singlestep"
 )
 
@@ -70,5 +71,10 @@ func RegisterUpgradeHandlers(
 	upgradeKeeper.SetUpgradeHandler(
 		singlestep.PlanName,
 		singlestep.GetUpgradeHandler(mm, configurator, crisisKeeper),
+	)
+
+	upgradeKeeper.SetUpgradeHandler(
+		orion.PleiadesPart2ToOrionPlanName,
+		orion.GetOrionUpgradeHandler(mm, configurator, crisisKeeper),
 	)
 }

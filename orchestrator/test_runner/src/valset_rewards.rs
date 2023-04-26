@@ -1,6 +1,7 @@
 //! This is a test for validator set relaying rewards
 
 use crate::airdrop_proposal::wait_for_proposals_to_execute;
+use crate::cross_bridge_balances::submit_and_pass_monitored_erc20s_proposal;
 use crate::get_fee;
 use crate::happy_path::test_valset_update;
 use crate::happy_path_v2::deploy_cosmos_representing_erc20_and_check_adoption;
@@ -24,6 +25,7 @@ pub async fn valset_rewards_test(
     contact: &Contact,
     keys: Vec<ValidatorKeys>,
     gravity_address: EthAddress,
+    erc20_addresses: Vec<EthAddress>,
 ) {
     let mut grpc_client = grpc_client;
     let token_to_send_to_eth = footoken_metadata(contact).await.base;
@@ -39,6 +41,8 @@ pub async fn valset_rewards_test(
         footoken_metadata(contact).await,
     )
     .await;
+    let mut erc20s_to_monitor = erc20_addresses.clone();
+    erc20s_to_monitor.push(erc20_contract);
 
     // reward of 1 mfootoken
     let valset_reward = Coin {
@@ -82,6 +86,13 @@ pub async fn valset_rewards_test(
 
     // wait for the voting period to pass
     wait_for_proposals_to_execute(contact).await;
+    submit_and_pass_monitored_erc20s_proposal(
+        evm_chain_prefix,
+        contact,
+        keys.clone(),
+        erc20s_to_monitor,
+    )
+    .await;
 
     let params = get_gravity_params(&mut grpc_client).await.unwrap();
     let evm_chain_params = params

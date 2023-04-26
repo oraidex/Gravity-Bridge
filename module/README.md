@@ -2,7 +2,7 @@
 
 On first run:
 
-```
+```bash
 sudo dnf install make automake gcc gcc-c++ kernel-devel
 
 make
@@ -16,14 +16,14 @@ sudo make proto-tools
 
 Following builds and test:
 
-```
+```bash
 make
 make test
 ```
 
 To update protos after editing .proto files
 
-```
+```bash
 make proto-gen
 ```
 

@@ -27,6 +27,50 @@ var _ = math.Inf
 // proto package needs to be updated.
 const _ = proto.GoGoProtoPackageIsVersion3 // please upgrade the proto package
 
+type MonitoredERC20Addresses struct {
+	Addresses [][]byte `protobuf:"bytes,1,rep,name=addresses,proto3" json:"addresses,omitempty"`
+}
+
+func (m *MonitoredERC20Addresses) Reset()         { *m = MonitoredERC20Addresses{} }
+func (m *MonitoredERC20Addresses) String() string { return proto.CompactTextString(m) }
+func (*MonitoredERC20Addresses) ProtoMessage()    {}
+func (*MonitoredERC20Addresses) Descriptor() ([]byte, []int) {
+	return fileDescriptor_163831c23fcc179f, []int{0}
+}
+func (m *MonitoredERC20Addresses) XXX_Unmarshal(b []byte) error {
+	return m.Unmarshal(b)
+}
+func (m *MonitoredERC20Addresses) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	if deterministic {
+		return xxx_messageInfo_MonitoredERC20Addresses.Marshal(b, m, deterministic)
+	} else {
+		b = b[:cap(b)]
+		n, err := m.MarshalToSizedBuffer(b)
+		if err != nil {
+			return nil, err
+		}
+		return b[:n], nil
+	}
+}
+func (m *MonitoredERC20Addresses) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_MonitoredERC20Addresses.Merge(m, src)
+}
+func (m *MonitoredERC20Addresses) XXX_Size() int {
+	return m.Size()
+}
+func (m *MonitoredERC20Addresses) XXX_DiscardUnknown() {
+	xxx_messageInfo_MonitoredERC20Addresses.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_MonitoredERC20Addresses proto.InternalMessageInfo
+
+func (m *MonitoredERC20Addresses) GetAddresses() [][]byte {
+	if m != nil {
+		return m.Addresses
+	}
+	return nil
+}
+
 // BridgeValidator represents a validator's ETH address and its power
 type BridgeValidator struct {
 	Power           uint64 `protobuf:"varint,1,opt,name=power,proto3" json:"power,omitempty"`
@@ -37,7 +81,7 @@ func (m *BridgeValidator) Reset()         { *m = BridgeValidator{} }
 func (m *BridgeValidator) String() string { return proto.CompactTextString(m) }
 func (*BridgeValidator) ProtoMessage()    {}
 func (*BridgeValidator) Descriptor() ([]byte, []int) {
-	return fileDescriptor_163831c23fcc179f, []int{0}
+	return fileDescriptor_163831c23fcc179f, []int{1}
 }
 func (m *BridgeValidator) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
@@ -96,7 +140,7 @@ func (m *Valset) Reset()         { *m = Valset{} }
 func (m *Valset) String() string { return proto.CompactTextString(m) }
 func (*Valset) ProtoMessage()    {}
 func (*Valset) Descriptor() ([]byte, []int) {
-	return fileDescriptor_163831c23fcc179f, []int{1}
+	return fileDescriptor_163831c23fcc179f, []int{2}
 }
 func (m *Valset) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
@@ -167,7 +211,7 @@ func (m *LastObservedEthereumBlockHeight) Reset()         { *m = LastObservedEth
 func (m *LastObservedEthereumBlockHeight) String() string { return proto.CompactTextString(m) }
 func (*LastObservedEthereumBlockHeight) ProtoMessage()    {}
 func (*LastObservedEthereumBlockHeight) Descriptor() ([]byte, []int) {
-	return fileDescriptor_163831c23fcc179f, []int{2}
+	return fileDescriptor_163831c23fcc179f, []int{3}
 }
 func (m *LastObservedEthereumBlockHeight) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
@@ -221,7 +265,7 @@ func (m *ERC20ToDenom) Reset()         { *m = ERC20ToDenom{} }
 func (m *ERC20ToDenom) String() string { return proto.CompactTextString(m) }
 func (*ERC20ToDenom) ProtoMessage()    {}
 func (*ERC20ToDenom) Descriptor() ([]byte, []int) {
-	return fileDescriptor_163831c23fcc179f, []int{3}
+	return fileDescriptor_163831c23fcc179f, []int{4}
 }
 func (m *ERC20ToDenom) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
@@ -283,7 +327,7 @@ type UnhaltBridgeProposal struct {
 func (m *UnhaltBridgeProposal) Reset()      { *m = UnhaltBridgeProposal{} }
 func (*UnhaltBridgeProposal) ProtoMessage() {}
 func (*UnhaltBridgeProposal) Descriptor() ([]byte, []int) {
-	return fileDescriptor_163831c23fcc179f, []int{4}
+	return fileDescriptor_163831c23fcc179f, []int{5}
 }
 func (m *UnhaltBridgeProposal) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
@@ -329,7 +373,7 @@ type AirdropProposal struct {
 func (m *AirdropProposal) Reset()      { *m = AirdropProposal{} }
 func (*AirdropProposal) ProtoMessage() {}
 func (*AirdropProposal) Descriptor() ([]byte, []int) {
-	return fileDescriptor_163831c23fcc179f, []int{5}
+	return fileDescriptor_163831c23fcc179f, []int{6}
 }
 func (m *AirdropProposal) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
@@ -377,7 +421,7 @@ type IBCMetadataProposal struct {
 func (m *IBCMetadataProposal) Reset()      { *m = IBCMetadataProposal{} }
 func (*IBCMetadataProposal) ProtoMessage() {}
 func (*IBCMetadataProposal) Descriptor() ([]byte, []int) {
-	return fileDescriptor_163831c23fcc179f, []int{6}
+	return fileDescriptor_163831c23fcc179f, []int{7}
 }
 func (m *IBCMetadataProposal) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
@@ -421,7 +465,7 @@ type AddEvmChainProposal struct {
 func (m *AddEvmChainProposal) Reset()      { *m = AddEvmChainProposal{} }
 func (*AddEvmChainProposal) ProtoMessage() {}
 func (*AddEvmChainProposal) Descriptor() ([]byte, []int) {
-	return fileDescriptor_163831c23fcc179f, []int{7}
+	return fileDescriptor_163831c23fcc179f, []int{8}
 }
 func (m *AddEvmChainProposal) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
@@ -450,6 +494,49 @@ func (m *AddEvmChainProposal) XXX_DiscardUnknown() {
 
 var xxx_messageInfo_AddEvmChainProposal proto.InternalMessageInfo
 
+// MonitoredERC20TokensProposal defines a custom governance proposal type to set
+// the list of ERC20 tokens which orchestrators must monitor the balance of. If
+// the balance on Ethereum does not match the Cosmos supply of these tokens,
+// then the bridge will stop functioning.
+type MonitoredERC20TokensProposal struct {
+	Title          string   `protobuf:"bytes,1,opt,name=title,proto3" json:"title,omitempty"`
+	Description    string   `protobuf:"bytes,2,opt,name=description,proto3" json:"description,omitempty"`
+	EvmChainPrefix string   `protobuf:"bytes,3,opt,name=evm_chain_prefix,json=evmChainPrefix,proto3" json:"evm_chain_prefix,omitempty"`
+	Tokens         []string `protobuf:"bytes,4,rep,name=tokens,proto3" json:"tokens,omitempty"`
+}
+
+func (m *MonitoredERC20TokensProposal) Reset()      { *m = MonitoredERC20TokensProposal{} }
+func (*MonitoredERC20TokensProposal) ProtoMessage() {}
+func (*MonitoredERC20TokensProposal) Descriptor() ([]byte, []int) {
+	return fileDescriptor_163831c23fcc179f, []int{9}
+}
+func (m *MonitoredERC20TokensProposal) XXX_Unmarshal(b []byte) error {
+	return m.Unmarshal(b)
+}
+func (m *MonitoredERC20TokensProposal) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	if deterministic {
+		return xxx_messageInfo_MonitoredERC20TokensProposal.Marshal(b, m, deterministic)
+	} else {
+		b = b[:cap(b)]
+		n, err := m.MarshalToSizedBuffer(b)
+		if err != nil {
+			return nil, err
+		}
+		return b[:n], nil
+	}
+}
+func (m *MonitoredERC20TokensProposal) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_MonitoredERC20TokensProposal.Merge(m, src)
+}
+func (m *MonitoredERC20TokensProposal) XXX_Size() int {
+	return m.Size()
+}
+func (m *MonitoredERC20TokensProposal) XXX_DiscardUnknown() {
+	xxx_messageInfo_MonitoredERC20TokensProposal.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_MonitoredERC20TokensProposal proto.InternalMessageInfo
+
 // RemoveEvmChainProposal
 // this types allows users to remove an EVM chain through gov proposal
 type RemoveEvmChainProposal struct {
@@ -461,7 +548,7 @@ type RemoveEvmChainProposal struct {
 func (m *RemoveEvmChainProposal) Reset()      { *m = RemoveEvmChainProposal{} }
 func (*RemoveEvmChainProposal) ProtoMessage() {}
 func (*RemoveEvmChainProposal) Descriptor() ([]byte, []int) {
-	return fileDescriptor_163831c23fcc179f, []int{8}
+	return fileDescriptor_163831c23fcc179f, []int{10}
 }
 func (m *RemoveEvmChainProposal) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
@@ -507,7 +594,7 @@ func (m *PendingIbcAutoForward) Reset()         { *m = PendingIbcAutoForward{} }
 func (m *PendingIbcAutoForward) String() string { return proto.CompactTextString(m) }
 func (*PendingIbcAutoForward) ProtoMessage()    {}
 func (*PendingIbcAutoForward) Descriptor() ([]byte, []int) {
-	return fileDescriptor_163831c23fcc179f, []int{9}
+	return fileDescriptor_163831c23fcc179f, []int{11}
 }
 func (m *PendingIbcAutoForward) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
@@ -564,7 +651,79 @@ func (m *PendingIbcAutoForward) GetEventNonce() uint64 {
 	return 0
 }
 
+// BridgeBalanceSnapshot records the total bank supply of the Monitored ERC20
+// Tokens immediately after applying each Attestation, plus the Cosmos and Eth
+// Block Heights associated with the Attestation
+type BridgeBalanceSnapshot struct {
+	CosmosBlockHeight   uint64        `protobuf:"varint,1,opt,name=cosmos_block_height,json=cosmosBlockHeight,proto3" json:"cosmos_block_height,omitempty"`
+	EthereumBlockHeight uint64        `protobuf:"varint,2,opt,name=ethereum_block_height,json=ethereumBlockHeight,proto3" json:"ethereum_block_height,omitempty"`
+	Balances            []*ERC20Token `protobuf:"bytes,3,rep,name=balances,proto3" json:"balances,omitempty"`
+	EventNonce          uint64        `protobuf:"varint,4,opt,name=event_nonce,json=eventNonce,proto3" json:"event_nonce,omitempty"`
+}
+
+func (m *BridgeBalanceSnapshot) Reset()         { *m = BridgeBalanceSnapshot{} }
+func (m *BridgeBalanceSnapshot) String() string { return proto.CompactTextString(m) }
+func (*BridgeBalanceSnapshot) ProtoMessage()    {}
+func (*BridgeBalanceSnapshot) Descriptor() ([]byte, []int) {
+	return fileDescriptor_163831c23fcc179f, []int{12}
+}
+func (m *BridgeBalanceSnapshot) XXX_Unmarshal(b []byte) error {
+	return m.Unmarshal(b)
+}
+func (m *BridgeBalanceSnapshot) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	if deterministic {
+		return xxx_messageInfo_BridgeBalanceSnapshot.Marshal(b, m, deterministic)
+	} else {
+		b = b[:cap(b)]
+		n, err := m.MarshalToSizedBuffer(b)
+		if err != nil {
+			return nil, err
+		}
+		return b[:n], nil
+	}
+}
+func (m *BridgeBalanceSnapshot) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_BridgeBalanceSnapshot.Merge(m, src)
+}
+func (m *BridgeBalanceSnapshot) XXX_Size() int {
+	return m.Size()
+}
+func (m *BridgeBalanceSnapshot) XXX_DiscardUnknown() {
+	xxx_messageInfo_BridgeBalanceSnapshot.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_BridgeBalanceSnapshot proto.InternalMessageInfo
+
+func (m *BridgeBalanceSnapshot) GetCosmosBlockHeight() uint64 {
+	if m != nil {
+		return m.CosmosBlockHeight
+	}
+	return 0
+}
+
+func (m *BridgeBalanceSnapshot) GetEthereumBlockHeight() uint64 {
+	if m != nil {
+		return m.EthereumBlockHeight
+	}
+	return 0
+}
+
+func (m *BridgeBalanceSnapshot) GetBalances() []*ERC20Token {
+	if m != nil {
+		return m.Balances
+	}
+	return nil
+}
+
+func (m *BridgeBalanceSnapshot) GetEventNonce() uint64 {
+	if m != nil {
+		return m.EventNonce
+	}
+	return 0
+}
+
 func init() {
+	proto.RegisterType((*MonitoredERC20Addresses)(nil), "gravity.v1.MonitoredERC20Addresses")
 	proto.RegisterType((*BridgeValidator)(nil), "gravity.v1.BridgeValidator")
 	proto.RegisterType((*Valset)(nil), "gravity.v1.Valset")
 	proto.RegisterType((*LastObservedEthereumBlockHeight)(nil), "gravity.v1.LastObservedEthereumBlockHeight")
@@ -573,70 +732,79 @@ func init() {
 	proto.RegisterType((*AirdropProposal)(nil), "gravity.v1.AirdropProposal")
 	proto.RegisterType((*IBCMetadataProposal)(nil), "gravity.v1.IBCMetadataProposal")
 	proto.RegisterType((*AddEvmChainProposal)(nil), "gravity.v1.AddEvmChainProposal")
+	proto.RegisterType((*MonitoredERC20TokensProposal)(nil), "gravity.v1.MonitoredERC20TokensProposal")
 	proto.RegisterType((*RemoveEvmChainProposal)(nil), "gravity.v1.RemoveEvmChainProposal")
 	proto.RegisterType((*PendingIbcAutoForward)(nil), "gravity.v1.PendingIbcAutoForward")
+	proto.RegisterType((*BridgeBalanceSnapshot)(nil), "gravity.v1.BridgeBalanceSnapshot")
 }
 
 func init() { proto.RegisterFile("gravity/v1/types.proto", fileDescriptor_163831c23fcc179f) }
 
 var fileDescriptor_163831c23fcc179f = []byte{
-	// 889 bytes of a gzipped FileDescriptorProto
-	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0xac, 0x55, 0x4f, 0x6f, 0x1b, 0x45,
-	0x14, 0xf7, 0xc6, 0x76, 0x52, 0x3f, 0x9b, 0xa6, 0x6c, 0xfe, 0x60, 0xa8, 0x6a, 0x07, 0x0b, 0x21,
-	0x73, 0xe8, 0x6e, 0x6d, 0x24, 0x0e, 0xe5, 0x50, 0xd9, 0x26, 0x40, 0x24, 0x28, 0xd1, 0x52, 0x22,
-	0xc1, 0x65, 0x35, 0xbb, 0xfb, 0xba, 0x1e, 0xc5, 0x3b, 0x63, 0xcd, 0x8e, 0xb7, 0xed, 0x07, 0x40,
-	0xea, 0x91, 0x23, 0xc7, 0xdc, 0x10, 0x1f, 0xa0, 0xdf, 0xa1, 0xc7, 0x1e, 0x11, 0x87, 0x0a, 0x25,
-	0x17, 0x24, 0xbe, 0x04, 0x9a, 0x3f, 0xeb, 0x38, 0x69, 0x0e, 0x88, 0xf4, 0xb4, 0xfb, 0x7e, 0xef,
-	0xcd, 0x9b, 0xdf, 0xfc, 0xe6, 0xbd, 0x37, 0xb0, 0x9b, 0x0a, 0x52, 0x50, 0xf9, 0xcc, 0x2f, 0x06,
-	0xbe, 0x7c, 0x36, 0xc7, 0xdc, 0x9b, 0x0b, 0x2e, 0xb9, 0x0b, 0x16, 0xf7, 0x8a, 0xc1, 0x07, 0x9d,
-	0x98, 0xe7, 0x19, 0xcf, 0xfd, 0x88, 0xe4, 0xe8, 0x17, 0x83, 0x08, 0x25, 0x19, 0xf8, 0x31, 0xa7,
-	0xcc, 0xc4, 0xae, 0xf8, 0xd9, 0xf1, 0xd2, 0xaf, 0x0c, 0xeb, 0xdf, 0x4e, 0x79, 0xca, 0xf5, 0xaf,
-	0xaf, 0xfe, 0x0c, 0xda, 0x0b, 0x60, 0x73, 0x2c, 0x68, 0x92, 0xe2, 0x11, 0x99, 0xd1, 0x84, 0x48,
-	0x2e, 0xdc, 0x6d, 0xa8, 0xcf, 0xf9, 0x13, 0x14, 0x6d, 0x67, 0xcf, 0xe9, 0xd7, 0x02, 0x63, 0xb8,
-	0x9f, 0xc0, 0x2d, 0x94, 0x53, 0x14, 0xb8, 0xc8, 0x42, 0x92, 0x24, 0x02, 0xf3, 0xbc, 0xbd, 0xb6,
-	0xe7, 0xf4, 0x1b, 0xc1, 0x66, 0x89, 0x8f, 0x0c, 0xdc, 0xfb, 0xc7, 0x81, 0xf5, 0x23, 0x32, 0xcb,
-	0x51, 0xaa, 0x5c, 0x8c, 0xb3, 0x18, 0xcb, 0x5c, 0xda, 0x70, 0x3f, 0x87, 0x8d, 0x0c, 0xb3, 0x08,
-	0x85, 0x4a, 0x51, 0xed, 0x37, 0x87, 0xb7, 0xbd, 0xf3, 0x83, 0x7a, 0x97, 0xf8, 0x8c, 0x6b, 0x2f,
-	0x5f, 0x77, 0x2b, 0x41, 0xb9, 0xc2, 0xdd, 0x85, 0xf5, 0x29, 0xd2, 0x74, 0x2a, 0xdb, 0x55, 0x9d,
-	0xd3, 0x5a, 0xee, 0xf7, 0xf0, 0x8e, 0xc0, 0x27, 0x44, 0x24, 0x21, 0xc9, 0xf8, 0x82, 0xc9, 0x76,
-	0x4d, 0xb1, 0x1b, 0x7b, 0x6a, 0xf5, 0x9f, 0xaf, 0xbb, 0x1f, 0xa7, 0x54, 0x4e, 0x17, 0x91, 0x17,
-	0xf3, 0xcc, 0xb7, 0x4a, 0x99, 0xcf, 0xdd, 0x3c, 0x39, 0xb6, 0xa2, 0x1f, 0x30, 0x19, 0xb4, 0x4c,
-	0x92, 0x91, 0xce, 0xe1, 0x7e, 0x08, 0xd6, 0x0e, 0x25, 0x3f, 0x46, 0xd6, 0xae, 0xeb, 0x13, 0x37,
-	0x0d, 0xf6, 0x48, 0x41, 0xbd, 0x9f, 0x1d, 0xe8, 0x7e, 0x43, 0x72, 0xf9, 0x5d, 0x94, 0xa3, 0x28,
-	0x30, 0xd9, 0xb7, 0x6a, 0x8c, 0x67, 0x3c, 0x3e, 0xfe, 0xda, 0x70, 0xf3, 0x60, 0xcb, 0x6c, 0x16,
-	0x46, 0x0a, 0x0d, 0xed, 0x01, 0x8c, 0x28, 0xef, 0x1a, 0xd7, 0x6a, 0xfc, 0x10, 0x76, 0x96, 0x62,
-	0x5f, 0x58, 0xb1, 0xa6, 0x57, 0x6c, 0xe1, 0x9b, 0x7b, 0xf4, 0xee, 0x43, 0x6b, 0x3f, 0x98, 0x0c,
-	0xef, 0x3d, 0xe2, 0x5f, 0x20, 0xe3, 0x99, 0x92, 0x1e, 0x45, 0x3c, 0xbc, 0xa7, 0x77, 0x69, 0x04,
-	0xc6, 0x50, 0x68, 0xa2, 0xdc, 0xf6, 0xee, 0x8c, 0xd1, 0xfb, 0xdd, 0x81, 0xed, 0x1f, 0xd8, 0x94,
-	0xcc, 0xa4, 0x11, 0xff, 0x50, 0xf0, 0x39, 0xcf, 0xc9, 0x4c, 0x85, 0x4b, 0x2a, 0x67, 0x58, 0x26,
-	0xd1, 0x86, 0xbb, 0x07, 0xcd, 0x04, 0xf3, 0x58, 0xd0, 0xb9, 0xa4, 0x9c, 0xd9, 0x54, 0xab, 0x90,
-	0xd2, 0x4d, 0x12, 0x91, 0xa2, 0x0c, 0xcd, 0xf5, 0xd7, 0x34, 0xef, 0xa6, 0xc1, 0x1e, 0xea, 0x22,
-	0xe8, 0xc3, 0x2d, 0x2c, 0xb2, 0x30, 0x9e, 0x12, 0xca, 0xc2, 0xb9, 0xc0, 0xc7, 0xf4, 0xa9, 0x95,
-	0xf7, 0x26, 0x16, 0xd9, 0x44, 0xc1, 0x87, 0x1a, 0xbd, 0xdf, 0x7a, 0x7e, 0xd2, 0xad, 0xfc, 0x7a,
-	0xd2, 0xad, 0xfc, 0x7d, 0xd2, 0x75, 0x7a, 0xbf, 0x39, 0xb0, 0x39, 0xa2, 0x22, 0x11, 0x7c, 0x7e,
-	0x6d, 0x9a, 0x4b, 0x35, 0xaa, 0x2b, 0x6a, 0xb8, 0x1d, 0x00, 0x81, 0x31, 0x9d, 0x53, 0x64, 0x32,
-	0xd7, 0xd4, 0x5b, 0xc1, 0x0a, 0xe2, 0xb6, 0x61, 0xc3, 0x94, 0x58, 0xde, 0xae, 0xef, 0x55, 0xfb,
-	0xb5, 0xa0, 0x34, 0x2f, 0x31, 0x3d, 0x73, 0x60, 0xeb, 0x60, 0x3c, 0xf9, 0x16, 0x25, 0x49, 0x88,
-	0x24, 0xd7, 0x66, 0xfb, 0x00, 0x6e, 0x64, 0x36, 0x97, 0x26, 0xdc, 0x1c, 0xde, 0xf1, 0x4c, 0xed,
-	0x78, 0xba, 0xcf, 0x6d, 0xd3, 0x7b, 0xe5, 0x86, 0xb6, 0x73, 0x96, 0x8b, 0xdc, 0xdb, 0xd0, 0xa0,
-	0x51, 0x1c, 0x9a, 0x23, 0xeb, 0xf6, 0x08, 0x6e, 0xd0, 0x28, 0x36, 0xf5, 0xf2, 0xff, 0xee, 0xa3,
-	0xd2, 0x7b, 0xb1, 0x06, 0x5b, 0xa3, 0x24, 0xd9, 0x5f, 0xc6, 0x5c, 0xf3, 0x94, 0x1f, 0xc1, 0xcd,
-	0x73, 0x1e, 0x8c, 0x64, 0x68, 0x2f, 0xa7, 0x55, 0xb2, 0x78, 0x48, 0xb2, 0xab, 0xab, 0xa7, 0x76,
-	0x15, 0x5b, 0x77, 0x00, 0x3b, 0x2b, 0xf9, 0x50, 0x86, 0x05, 0x8a, 0x5c, 0xed, 0x5d, 0xd7, 0x35,
-	0xe9, 0x2e, 0xd3, 0xa2, 0x3c, 0x32, 0x1e, 0xf7, 0x0e, 0x94, 0x83, 0x37, 0xa4, 0x49, 0x7b, 0x5d,
-	0xa7, 0x6d, 0x58, 0xe4, 0x20, 0x71, 0x3f, 0x83, 0xf7, 0x22, 0xdd, 0x26, 0xe1, 0x1b, 0x13, 0x71,
-	0x43, 0xc7, 0xee, 0x18, 0xf7, 0xfe, 0xc5, 0xb9, 0x78, 0xa9, 0x3a, 0x9e, 0x3b, 0xb0, 0x1b, 0x60,
-	0xc6, 0x0b, 0x7c, 0x6b, 0xd2, 0x5d, 0x25, 0x4a, 0xf5, 0x3f, 0xb4, 0xd4, 0x0b, 0x07, 0x76, 0x0e,
-	0x91, 0x25, 0x94, 0xa5, 0x07, 0x51, 0x3c, 0x5a, 0x48, 0xfe, 0x25, 0x17, 0x6a, 0xc2, 0xa9, 0xa9,
-	0xff, 0x98, 0x0b, 0xa4, 0x29, 0x0b, 0x05, 0xc6, 0x48, 0x0b, 0xfb, 0x2c, 0x34, 0x82, 0x4d, 0x8b,
-	0x07, 0x16, 0x76, 0x7d, 0xa8, 0x9b, 0x19, 0xb9, 0xa6, 0x4b, 0xf3, 0xfd, 0xf3, 0xd2, 0xcc, 0x71,
-	0x59, 0x9a, 0x13, 0x4e, 0x59, 0x60, 0xe2, 0xdc, 0x2e, 0x34, 0x55, 0x35, 0xc6, 0x53, 0xc2, 0x18,
-	0xce, 0x2c, 0x51, 0xa0, 0x51, 0x3c, 0x31, 0x88, 0x0a, 0xc0, 0x02, 0xd9, 0xc5, 0x19, 0x02, 0x1a,
-	0xd2, 0x23, 0x64, 0xfc, 0xe3, 0xcb, 0xd3, 0x8e, 0xf3, 0xea, 0xb4, 0xe3, 0xfc, 0x75, 0xda, 0x71,
-	0x7e, 0x39, 0xeb, 0x54, 0x5e, 0x9d, 0x75, 0x2a, 0x7f, 0x9c, 0x75, 0x2a, 0x3f, 0x3d, 0x58, 0x99,
-	0xf6, 0x5f, 0x99, 0x8b, 0xbb, 0x6b, 0x46, 0xdb, 0x65, 0x33, 0xe3, 0xc9, 0x62, 0x86, 0xfe, 0x53,
-	0xbf, 0x7c, 0x82, 0xf5, 0x53, 0x10, 0xad, 0xeb, 0xe7, 0xf1, 0xd3, 0x7f, 0x03, 0x00, 0x00, 0xff,
-	0xff, 0x6f, 0x92, 0xa8, 0x36, 0x9a, 0x07, 0x00, 0x00,
+	// 1002 bytes of a gzipped FileDescriptorProto
+	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0xbc, 0x56, 0x4f, 0x6f, 0x1b, 0x45,
+	0x14, 0xf7, 0xc6, 0x4e, 0x1a, 0x3f, 0x9b, 0xa6, 0x6c, 0xfe, 0xd4, 0xd0, 0xd4, 0x0e, 0x16, 0x42,
+	0xe6, 0x50, 0x6f, 0x63, 0x24, 0x90, 0xca, 0xa1, 0x8a, 0x43, 0x80, 0x48, 0xb4, 0x44, 0xdb, 0x12,
+	0x09, 0x2e, 0xab, 0xd9, 0xdd, 0x57, 0x7b, 0x14, 0xef, 0x8c, 0x35, 0x33, 0xd9, 0xb6, 0x1f, 0x00,
+	0xa9, 0x47, 0x8e, 0x1c, 0x73, 0x02, 0xf1, 0x01, 0xfa, 0x1d, 0x7a, 0xcc, 0x11, 0x71, 0xa8, 0x50,
+	0x72, 0x41, 0xe2, 0x4b, 0xa0, 0xf9, 0xb3, 0xb6, 0xe3, 0x46, 0x02, 0x11, 0xc4, 0xc9, 0x7e, 0xbf,
+	0x79, 0xf3, 0xde, 0x6f, 0xde, 0xdf, 0x85, 0x8d, 0x81, 0x20, 0x39, 0x55, 0xcf, 0x83, 0x7c, 0x3b,
+	0x50, 0xcf, 0xc7, 0x28, 0xbb, 0x63, 0xc1, 0x15, 0xf7, 0xc1, 0xe1, 0xdd, 0x7c, 0xfb, 0xdd, 0x66,
+	0xc2, 0x65, 0xc6, 0x65, 0x10, 0x13, 0x89, 0x41, 0xbe, 0x1d, 0xa3, 0x22, 0xdb, 0x41, 0xc2, 0x29,
+	0xb3, 0xba, 0x33, 0xe7, 0xec, 0x68, 0x72, 0xae, 0x05, 0x77, 0xbe, 0x36, 0xe0, 0x03, 0x6e, 0xfe,
+	0x06, 0xfa, 0x9f, 0x43, 0x37, 0x67, 0x3c, 0x13, 0xa5, 0x50, 0x2a, 0xa2, 0x28, 0x77, 0x36, 0xdb,
+	0x9f, 0xc0, 0xcd, 0x07, 0x9c, 0x51, 0xc5, 0x05, 0xa6, 0x7b, 0xe1, 0x6e, 0xef, 0xee, 0x4e, 0x9a,
+	0x0a, 0x94, 0x12, 0xa5, 0xbf, 0x09, 0x55, 0x52, 0x08, 0x0d, 0x6f, 0xab, 0xdc, 0xa9, 0x87, 0x53,
+	0xa0, 0x1d, 0xc2, 0x4a, 0x5f, 0xd0, 0x74, 0x80, 0x87, 0x64, 0x44, 0x53, 0xa2, 0xb8, 0xf0, 0xd7,
+	0x60, 0x71, 0xcc, 0x9f, 0xa2, 0x68, 0x78, 0x5b, 0x5e, 0xa7, 0x12, 0x5a, 0xc1, 0xff, 0x10, 0x6e,
+	0xa0, 0x1a, 0xa2, 0xc0, 0xe3, 0x2c, 0x72, 0xd7, 0x1b, 0x0b, 0x5b, 0x5e, 0xa7, 0x1a, 0xae, 0x14,
+	0xb8, 0xf3, 0xd9, 0xfe, 0xd3, 0x83, 0xa5, 0x43, 0x32, 0x92, 0xa8, 0xb4, 0x2d, 0xc6, 0x59, 0x82,
+	0x85, 0x2d, 0x23, 0xf8, 0x9f, 0xc2, 0xb5, 0x0c, 0xb3, 0x18, 0x85, 0x36, 0x51, 0xee, 0xd4, 0x7a,
+	0xb7, 0xba, 0xd3, 0xf8, 0x75, 0xe7, 0xf8, 0xf4, 0x2b, 0xaf, 0x5e, 0xb7, 0x4a, 0x61, 0x71, 0xc3,
+	0xdf, 0x80, 0xa5, 0x21, 0xd2, 0xc1, 0x50, 0x35, 0xca, 0xc6, 0xa6, 0x93, 0xfc, 0x47, 0xf0, 0x96,
+	0xc0, 0xa7, 0x44, 0xa4, 0x11, 0xc9, 0xf8, 0x31, 0x53, 0x8d, 0x8a, 0x66, 0xd7, 0xef, 0xea, 0xdb,
+	0xbf, 0xbd, 0x6e, 0x7d, 0x30, 0xa0, 0x6a, 0x78, 0x1c, 0x77, 0x13, 0x9e, 0x05, 0x2e, 0x01, 0xf6,
+	0xe7, 0x8e, 0x4c, 0x8f, 0x5c, 0x2e, 0xf7, 0x99, 0x0a, 0xeb, 0xd6, 0xc8, 0x8e, 0xb1, 0xe1, 0xbf,
+	0x07, 0x4e, 0x8e, 0x14, 0x3f, 0x42, 0xd6, 0x58, 0x34, 0x2f, 0xae, 0x59, 0xec, 0xb1, 0x86, 0xda,
+	0xdf, 0x7b, 0xd0, 0xfa, 0x8a, 0x48, 0xf5, 0x75, 0x2c, 0x51, 0xe4, 0x98, 0xee, 0xb9, 0x68, 0xf4,
+	0x47, 0x3c, 0x39, 0xfa, 0xd2, 0x72, 0xeb, 0xc2, 0xaa, 0x75, 0x16, 0xc5, 0x1a, 0x8d, 0xdc, 0x03,
+	0x6c, 0x50, 0xde, 0xb6, 0x47, 0xb3, 0xfa, 0x3d, 0x58, 0x9f, 0x04, 0xfb, 0xc2, 0x8d, 0x05, 0x73,
+	0x63, 0x15, 0xdf, 0xf4, 0xd1, 0xbe, 0x07, 0x75, 0x93, 0xf9, 0xc7, 0xfc, 0x33, 0x64, 0x3c, 0xd3,
+	0xa1, 0x47, 0x91, 0xf4, 0xee, 0x1a, 0x2f, 0xd5, 0xd0, 0x0a, 0x1a, 0x4d, 0xf5, 0xb1, 0xcb, 0x9d,
+	0x15, 0xda, 0xbf, 0x78, 0xb0, 0xf6, 0x0d, 0x1b, 0x92, 0x91, 0xb2, 0xc1, 0x3f, 0x10, 0x7c, 0xcc,
+	0x25, 0x19, 0x69, 0x75, 0x45, 0xd5, 0x08, 0x0b, 0x23, 0x46, 0xf0, 0xb7, 0xa0, 0x96, 0xa2, 0x4c,
+	0x04, 0x1d, 0xeb, 0x12, 0x74, 0xa6, 0x66, 0x21, 0x1d, 0x37, 0x45, 0xc4, 0x00, 0x55, 0x64, 0xd3,
+	0x5f, 0x31, 0xbc, 0x6b, 0x16, 0x7b, 0x68, 0x8a, 0xa0, 0x03, 0x37, 0x30, 0xcf, 0xa2, 0x64, 0x48,
+	0x28, 0x8b, 0xc6, 0x02, 0x9f, 0xd0, 0x67, 0x2e, 0xbc, 0xd7, 0x31, 0xcf, 0x76, 0x35, 0x7c, 0x60,
+	0xd0, 0x7b, 0xf5, 0x17, 0x27, 0xad, 0xd2, 0x8f, 0x27, 0xad, 0xd2, 0x1f, 0x27, 0x2d, 0xaf, 0xfd,
+	0xb3, 0x07, 0x2b, 0x3b, 0x54, 0xa4, 0x82, 0x8f, 0xaf, 0x4c, 0x73, 0x12, 0x8d, 0xf2, 0x4c, 0x34,
+	0xfc, 0x26, 0x80, 0xc0, 0x84, 0x8e, 0x29, 0x32, 0x25, 0x0d, 0xf5, 0x7a, 0x38, 0x83, 0xf8, 0x0d,
+	0xb8, 0x66, 0x4b, 0x4c, 0x36, 0x16, 0xb7, 0xca, 0x9d, 0x4a, 0x58, 0x88, 0x73, 0x4c, 0xcf, 0x3d,
+	0x58, 0xdd, 0xef, 0xef, 0x3e, 0x40, 0x45, 0x52, 0xa2, 0xc8, 0x95, 0xd9, 0xde, 0x87, 0xe5, 0xcc,
+	0xd9, 0x32, 0x84, 0x6b, 0xbd, 0xdb, 0x5d, 0x5b, 0x3b, 0x5d, 0x33, 0x3e, 0xdc, 0x2c, 0xe9, 0x16,
+	0x0e, 0x5d, 0xe7, 0x4c, 0x2e, 0xf9, 0xb7, 0xa0, 0x4a, 0xe3, 0x24, 0xb2, 0x4f, 0x36, 0xed, 0x11,
+	0x2e, 0xd3, 0x38, 0xb1, 0xf5, 0xf2, 0xef, 0xf2, 0x51, 0x6a, 0xbf, 0x5c, 0x80, 0xd5, 0x9d, 0x34,
+	0xdd, 0x9b, 0xe8, 0x5c, 0xf1, 0x95, 0xef, 0xc3, 0xf5, 0x29, 0x0f, 0x46, 0x32, 0x74, 0xc9, 0xa9,
+	0x17, 0x2c, 0x1e, 0x92, 0xec, 0xf2, 0xea, 0xa9, 0x5c, 0xc6, 0xd6, 0xdf, 0x86, 0xf5, 0x19, 0x7b,
+	0xa8, 0xa2, 0x1c, 0x85, 0xd4, 0xbe, 0x17, 0x4d, 0x4d, 0xfa, 0x13, 0xb3, 0xa8, 0x0e, 0xed, 0x89,
+	0x7f, 0x1b, 0x8a, 0x79, 0x1e, 0xd1, 0xb4, 0xb1, 0x64, 0xcc, 0x56, 0x1d, 0xb2, 0x9f, 0xfa, 0x1f,
+	0xc3, 0xcd, 0xd8, 0xb4, 0x49, 0xf4, 0xc6, 0x44, 0xbc, 0x66, 0x74, 0xd7, 0xed, 0xf1, 0xde, 0xc5,
+	0xb9, 0x38, 0x57, 0x1d, 0x3f, 0x79, 0xb0, 0x79, 0x71, 0x66, 0x9b, 0x79, 0x22, 0xaf, 0x1c, 0xc0,
+	0xcb, 0x42, 0x53, 0xbe, 0x34, 0x34, 0x1b, 0xb0, 0x64, 0xc6, 0x9a, 0x2e, 0xf2, 0x72, 0xa7, 0x1a,
+	0x3a, 0x69, 0x8e, 0xe8, 0x0b, 0x0f, 0x36, 0x42, 0xcc, 0x78, 0x8e, 0xff, 0x59, 0x8e, 0xff, 0x31,
+	0xc5, 0x39, 0x2a, 0x2f, 0x3d, 0x58, 0x3f, 0x40, 0x96, 0x52, 0x36, 0xd8, 0x8f, 0x93, 0x9d, 0x63,
+	0xc5, 0x3f, 0xe7, 0x42, 0x8f, 0x62, 0xbd, 0x9e, 0x9e, 0x70, 0x81, 0x74, 0xc0, 0x22, 0x81, 0x09,
+	0xd2, 0xdc, 0xed, 0xaf, 0x6a, 0xb8, 0xe2, 0xf0, 0xd0, 0xc1, 0x7e, 0x00, 0x8b, 0x76, 0x98, 0x2f,
+	0x98, 0x1e, 0x7a, 0x67, 0xda, 0x43, 0x12, 0x27, 0x3d, 0xb4, 0xcb, 0x29, 0x0b, 0xad, 0x9e, 0xdf,
+	0x82, 0x9a, 0x6e, 0x9b, 0x64, 0x48, 0x18, 0xc3, 0x91, 0x23, 0x0a, 0x34, 0x4e, 0x76, 0x2d, 0xa2,
+	0x15, 0x30, 0x47, 0x76, 0x71, 0xd8, 0x81, 0x81, 0xcc, 0xac, 0x6b, 0x9f, 0x7a, 0xb0, 0x6e, 0x27,
+	0x6b, 0x9f, 0x8c, 0x08, 0x4b, 0xf0, 0x11, 0x23, 0x63, 0x39, 0xe4, 0xff, 0xcb, 0x66, 0xf0, 0x7b,
+	0xb0, 0x1c, 0x5b, 0xb7, 0xb2, 0x51, 0x36, 0xfb, 0x76, 0x63, 0x76, 0xdf, 0x4e, 0x6b, 0x2f, 0x9c,
+	0xe8, 0xfd, 0xed, 0x93, 0xfa, 0xdf, 0xbe, 0x3a, 0x6b, 0x7a, 0xa7, 0x67, 0x4d, 0xef, 0xf7, 0xb3,
+	0xa6, 0xf7, 0xc3, 0x79, 0xb3, 0x74, 0x7a, 0xde, 0x2c, 0xfd, 0x7a, 0xde, 0x2c, 0x7d, 0x77, 0x7f,
+	0x66, 0xd3, 0x7e, 0x61, 0xdd, 0xdc, 0xb1, 0x8f, 0x9f, 0x17, 0x33, 0x9e, 0x1e, 0x8f, 0x30, 0x78,
+	0x16, 0x14, 0xdf, 0x36, 0x66, 0x0d, 0xc7, 0x4b, 0xe6, 0x9b, 0xe6, 0xa3, 0xbf, 0x02, 0x00, 0x00,
+	0xff, 0xff, 0x81, 0xef, 0xb1, 0x02, 0x6d, 0x09, 0x00, 0x00,
 }
 
 func (this *UnhaltBridgeProposal) Equal(that interface{}) bool {
@@ -755,6 +923,44 @@ func (this *AddEvmChainProposal) Equal(that interface{}) bool {
 	}
 	return true
 }
+func (this *MonitoredERC20TokensProposal) Equal(that interface{}) bool {
+	if that == nil {
+		return this == nil
+	}
+
+	that1, ok := that.(*MonitoredERC20TokensProposal)
+	if !ok {
+		that2, ok := that.(MonitoredERC20TokensProposal)
+		if ok {
+			that1 = &that2
+		} else {
+			return false
+		}
+	}
+	if that1 == nil {
+		return this == nil
+	} else if this == nil {
+		return false
+	}
+	if this.Title != that1.Title {
+		return false
+	}
+	if this.Description != that1.Description {
+		return false
+	}
+	if this.EvmChainPrefix != that1.EvmChainPrefix {
+		return false
+	}
+	if len(this.Tokens) != len(that1.Tokens) {
+		return false
+	}
+	for i := range this.Tokens {
+		if this.Tokens[i] != that1.Tokens[i] {
+			return false
+		}
+	}
+	return true
+}
 func (this *RemoveEvmChainProposal) Equal(that interface{}) bool {
 	if that == nil {
 		return this == nil
@@ -785,6 +991,38 @@ func (this *RemoveEvmChainProposal) Equal(that interface{}) bool {
 	}
 	return true
 }
+func (m *MonitoredERC20Addresses) Marshal() (dAtA []byte, err error) {
+	size := m.Size()
+	dAtA = make([]byte, size)
+	n, err := m.MarshalToSizedBuffer(dAtA[:size])
+	if err != nil {
+		return nil, err
+	}
+	return dAtA[:n], nil
+}
+
+func (m *MonitoredERC20Addresses) MarshalTo(dAtA []byte) (int, error) {
+	size := m.Size()
+	return m.MarshalToSizedBuffer(dAtA[:size])
+}
+
+func (m *MonitoredERC20Addresses) MarshalToSizedBuffer(dAtA []byte) (int, error) {
+	i := len(dAtA)
+	_ = i
+	var l int
+	_ = l
+	if len(m.Addresses) > 0 {
+		for iNdEx := len(m.Addresses) - 1; iNdEx >= 0; iNdEx-- {
+			i -= len(m.Addresses[iNdEx])
+			copy(dAtA[i:], m.Addresses[iNdEx])
+			i = encodeVarintTypes(dAtA, i, uint64(len(m.Addresses[iNdEx])))
+			i--
+			dAtA[i] = 0xa
+		}
+	}
+	return len(dAtA) - i, nil
+}
+
 func (m *BridgeValidator) Marshal() (dAtA []byte, err error) {
 	size := m.Size()
 	dAtA = make([]byte, size)
@@ -1203,6 +1441,59 @@ func (m *AddEvmChainProposal) MarshalToSizedBuffer(dAtA []byte) (int, error) {
 	return len(dAtA) - i, nil
 }
 
+func (m *MonitoredERC20TokensProposal) Marshal() (dAtA []byte, err error) {
+	size := m.Size()
+	dAtA = make([]byte, size)
+	n, err := m.MarshalToSizedBuffer(dAtA[:size])
+	if err != nil {
+		return nil, err
+	}
+	return dAtA[:n], nil
+}
+
+func (m *MonitoredERC20TokensProposal) MarshalTo(dAtA []byte) (int, error) {
+	size := m.Size()
+	return m.MarshalToSizedBuffer(dAtA[:size])
+}
+
+func (m *MonitoredERC20TokensProposal) MarshalToSizedBuffer(dAtA []byte) (int, error) {
+	i := len(dAtA)
+	_ = i
+	var l int
+	_ = l
+	if len(m.Tokens) > 0 {
+		for iNdEx := len(m.Tokens) - 1; iNdEx >= 0; iNdEx-- {
+			i -= len(m.Tokens[iNdEx])
+			copy(dAtA[i:], m.Tokens[iNdEx])
+			i = encodeVarintTypes(dAtA, i, uint64(len(m.Tokens[iNdEx])))
+			i--
+			dAtA[i] = 0x22
+		}
+	}
+	if len(m.EvmChainPrefix) > 0 {
+		i -= len(m.EvmChainPrefix)
+		copy(dAtA[i:], m.EvmChainPrefix)
+		i = encodeVarintTypes(dAtA, i, uint64(len(m.EvmChainPrefix)))
+		i--
+		dAtA[i] = 0x1a
+	}
+	if len(m.Description) > 0 {
+		i -= len(m.Description)
+		copy(dAtA[i:], m.Description)
+		i = encodeVarintTypes(dAtA, i, uint64(len(m.Description)))
+		i--
+		dAtA[i] = 0x12
+	}
+	if len(m.Title) > 0 {
+		i -= len(m.Title)
+		copy(dAtA[i:], m.Title)
+		i = encodeVarintTypes(dAtA, i, uint64(len(m.Title)))
+		i--
+		dAtA[i] = 0xa
+	}
+	return len(dAtA) - i, nil
+}
+
 func (m *RemoveEvmChainProposal) Marshal() (dAtA []byte, err error) {
 	size := m.Size()
 	dAtA = make([]byte, size)
@@ -1301,6 +1592,58 @@ func (m *PendingIbcAutoForward) MarshalToSizedBuffer(dAtA []byte) (int, error) {
 	return len(dAtA) - i, nil
 }
 
+func (m *BridgeBalanceSnapshot) Marshal() (dAtA []byte, err error) {
+	size := m.Size()
+	dAtA = make([]byte, size)
+	n, err := m.MarshalToSizedBuffer(dAtA[:size])
+	if err != nil {
+		return nil, err
+	}
+	return dAtA[:n], nil
+}
+
+func (m *BridgeBalanceSnapshot) MarshalTo(dAtA []byte) (int, error) {
+	size := m.Size()
+	return m.MarshalToSizedBuffer(dAtA[:size])
+}
+
+func (m *BridgeBalanceSnapshot) MarshalToSizedBuffer(dAtA []byte) (int, error) {
+	i := len(dAtA)
+	_ = i
+	var l int
+	_ = l
+	if m.EventNonce != 0 {
+		i = encodeVarintTypes(dAtA, i, uint64(m.EventNonce))
+		i--
+		dAtA[i] = 0x20
+	}
+	if len(m.Balances) > 0 {
+		for iNdEx := len(m.Balances) - 1; iNdEx >= 0; iNdEx-- {
+			{
+				size, err := m.Balances[iNdEx].MarshalToSizedBuffer(dAtA[:i])
+				if err != nil {
+					return 0, err
+				}
+				i -= size
+				i = encodeVarintTypes(dAtA, i, uint64(size))
+			}
+			i--
+			dAtA[i] = 0x1a
+		}
+	}
+	if m.EthereumBlockHeight != 0 {
+		i = encodeVarintTypes(dAtA, i, uint64(m.EthereumBlockHeight))
+		i--
+		dAtA[i] = 0x10
+	}
+	if m.CosmosBlockHeight != 0 {
+		i = encodeVarintTypes(dAtA, i, uint64(m.CosmosBlockHeight))
+		i--
+		dAtA[i] = 0x8
+	}
+	return len(dAtA) - i, nil
+}
+
 func encodeVarintTypes(dAtA []byte, offset int, v uint64) int {
 	offset -= sovTypes(v)
 	base := offset
@@ -1312,6 +1655,21 @@ func encodeVarintTypes(dAtA []byte, offset int, v uint64) int {
 	dAtA[offset] = uint8(v)
 	return base
 }
+func (m *MonitoredERC20Addresses) Size() (n int) {
+	if m == nil {
+		return 0
+	}
+	var l int
+	_ = l
+	if len(m.Addresses) > 0 {
+		for _, b := range m.Addresses {
+			l = len(b)
+			n += 1 + l + sovTypes(uint64(l))
+		}
+	}
+	return n
+}
+
 func (m *BridgeValidator) Size() (n int) {
 	if m == nil {
 		return 0
@@ -1506,6 +1864,33 @@ func (m *AddEvmChainProposal) Size() (n int) {
 	return n
 }
 
+func (m *MonitoredERC20TokensProposal) Size() (n int) {
+	if m == nil {
+		return 0
+	}
+	var l int
+	_ = l
+	l = len(m.Title)
+	if l > 0 {
+		n += 1 + l + sovTypes(uint64(l))
+	}
+	l = len(m.Description)
+	if l > 0 {
+		n += 1 + l + sovTypes(uint64(l))
+	}
+	l = len(m.EvmChainPrefix)
+	if l > 0 {
+		n += 1 + l + sovTypes(uint64(l))
+	}
+	if len(m.Tokens) > 0 {
+		for _, s := range m.Tokens {
+			l = len(s)
+			n += 1 + l + sovTypes(uint64(l))
+		}
+	}
+	return n
+}
+
 func (m *RemoveEvmChainProposal) Size() (n int) {
 	if m == nil {
 		return 0
@@ -1551,11 +1936,117 @@ func (m *PendingIbcAutoForward) Size() (n int) {
 	return n
 }
 
+func (m *BridgeBalanceSnapshot) Size() (n int) {
+	if m == nil {
+		return 0
+	}
+	var l int
+	_ = l
+	if m.CosmosBlockHeight != 0 {
+		n += 1 + sovTypes(uint64(m.CosmosBlockHeight))
+	}
+	if m.EthereumBlockHeight != 0 {
+		n += 1 + sovTypes(uint64(m.EthereumBlockHeight))
+	}
+	if len(m.Balances) > 0 {
+		for _, e := range m.Balances {
+			l = e.Size()
+			n += 1 + l + sovTypes(uint64(l))
+		}
+	}
+	if m.EventNonce != 0 {
+		n += 1 + sovTypes(uint64(m.EventNonce))
+	}
+	return n
+}
+
 func sovTypes(x uint64) (n int) {
 	return (math_bits.Len64(x|1) + 6) / 7
 }
 func sozTypes(x uint64) (n int) {
 	return sovTypes(uint64((x << 1) ^ uint64((int64(x) >> 63))))
+}
+func (m *MonitoredERC20Addresses) Unmarshal(dAtA []byte) error {
+	l := len(dAtA)
+	iNdEx := 0
+	for iNdEx < l {
+		preIndex := iNdEx
+		var wire uint64
+		for shift := uint(0); ; shift += 7 {
+			if shift >= 64 {
+				return ErrIntOverflowTypes
+			}
+			if iNdEx >= l {
+				return io.ErrUnexpectedEOF
+			}
+			b := dAtA[iNdEx]
+			iNdEx++
+			wire |= uint64(b&0x7F) << shift
+			if b < 0x80 {
+				break
+			}
+		}
+		fieldNum := int32(wire >> 3)
+		wireType := int(wire & 0x7)
+		if wireType == 4 {
+			return fmt.Errorf("proto: MonitoredERC20Addresses: wiretype end group for non-group")
+		}
+		if fieldNum <= 0 {
+			return fmt.Errorf("proto: MonitoredERC20Addresses: illegal tag %d (wire type %d)", fieldNum, wire)
+		}
+		switch fieldNum {
+		case 1:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Addresses", wireType)
+			}
+			var byteLen int
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowTypes
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				byteLen |= int(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			if byteLen < 0 {
+				return ErrInvalidLengthTypes
+			}
+			postIndex := iNdEx + byteLen
+			if postIndex < 0 {
+				return ErrInvalidLengthTypes
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.Addresses = append(m.Addresses, make([]byte, postIndex-iNdEx))
+			copy(m.Addresses[len(m.Addresses)-1], dAtA[iNdEx:postIndex])
+			iNdEx = postIndex
+		default:
+			iNdEx = preIndex
+			skippy, err := skipTypes(dAtA[iNdEx:])
+			if err != nil {
+				return err
+			}
+			if (skippy < 0) || (iNdEx+skippy) < 0 {
+				return ErrInvalidLengthTypes
+			}
+			if (iNdEx + skippy) > l {
+				return io.ErrUnexpectedEOF
+			}
+			iNdEx += skippy
+		}
+	}
+
+	if iNdEx > l {
+		return io.ErrUnexpectedEOF
+	}
+	return nil
 }
 func (m *BridgeValidator) Unmarshal(dAtA []byte) error {
 	l := len(dAtA)
@@ -2941,6 +3432,184 @@ func (m *AddEvmChainProposal) Unmarshal(dAtA []byte) error {
 	}
 	return nil
 }
+func (m *MonitoredERC20TokensProposal) Unmarshal(dAtA []byte) error {
+	l := len(dAtA)
+	iNdEx := 0
+	for iNdEx < l {
+		preIndex := iNdEx
+		var wire uint64
+		for shift := uint(0); ; shift += 7 {
+			if shift >= 64 {
+				return ErrIntOverflowTypes
+			}
+			if iNdEx >= l {
+				return io.ErrUnexpectedEOF
+			}
+			b := dAtA[iNdEx]
+			iNdEx++
+			wire |= uint64(b&0x7F) << shift
+			if b < 0x80 {
+				break
+			}
+		}
+		fieldNum := int32(wire >> 3)
+		wireType := int(wire & 0x7)
+		if wireType == 4 {
+			return fmt.Errorf("proto: MonitoredERC20TokensProposal: wiretype end group for non-group")
+		}
+		if fieldNum <= 0 {
+			return fmt.Errorf("proto: MonitoredERC20TokensProposal: illegal tag %d (wire type %d)", fieldNum, wire)
+		}
+		switch fieldNum {
+		case 1:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Title", wireType)
+			}
+			var stringLen uint64
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowTypes
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				stringLen |= uint64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			intStringLen := int(stringLen)
+			if intStringLen < 0 {
+				return ErrInvalidLengthTypes
+			}
+			postIndex := iNdEx + intStringLen
+			if postIndex < 0 {
+				return ErrInvalidLengthTypes
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.Title = string(dAtA[iNdEx:postIndex])
+			iNdEx = postIndex
+		case 2:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Description", wireType)
+			}
+			var stringLen uint64
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowTypes
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				stringLen |= uint64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			intStringLen := int(stringLen)
+			if intStringLen < 0 {
+				return ErrInvalidLengthTypes
+			}
+			postIndex := iNdEx + intStringLen
+			if postIndex < 0 {
+				return ErrInvalidLengthTypes
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.Description = string(dAtA[iNdEx:postIndex])
+			iNdEx = postIndex
+		case 3:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field EvmChainPrefix", wireType)
+			}
+			var stringLen uint64
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowTypes
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				stringLen |= uint64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			intStringLen := int(stringLen)
+			if intStringLen < 0 {
+				return ErrInvalidLengthTypes
+			}
+			postIndex := iNdEx + intStringLen
+			if postIndex < 0 {
+				return ErrInvalidLengthTypes
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.EvmChainPrefix = string(dAtA[iNdEx:postIndex])
+			iNdEx = postIndex
+		case 4:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Tokens", wireType)
+			}
+			var stringLen uint64
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowTypes
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				stringLen |= uint64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			intStringLen := int(stringLen)
+			if intStringLen < 0 {
+				return ErrInvalidLengthTypes
+			}
+			postIndex := iNdEx + intStringLen
+			if postIndex < 0 {
+				return ErrInvalidLengthTypes
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.Tokens = append(m.Tokens, string(dAtA[iNdEx:postIndex]))
+			iNdEx = postIndex
+		default:
+			iNdEx = preIndex
+			skippy, err := skipTypes(dAtA[iNdEx:])
+			if err != nil {
+				return err
+			}
+			if (skippy < 0) || (iNdEx+skippy) < 0 {
+				return ErrInvalidLengthTypes
+			}
+			if (iNdEx + skippy) > l {
+				return io.ErrUnexpectedEOF
+			}
+			iNdEx += skippy
+		}
+	}
+
+	if iNdEx > l {
+		return io.ErrUnexpectedEOF
+	}
+	return nil
+}
 func (m *RemoveEvmChainProposal) Unmarshal(dAtA []byte) error {
 	l := len(dAtA)
 	iNdEx := 0
@@ -3215,6 +3884,147 @@ func (m *PendingIbcAutoForward) Unmarshal(dAtA []byte) error {
 				return io.ErrUnexpectedEOF
 			}
 			m.IbcChannel = string(dAtA[iNdEx:postIndex])
+			iNdEx = postIndex
+		case 4:
+			if wireType != 0 {
+				return fmt.Errorf("proto: wrong wireType = %d for field EventNonce", wireType)
+			}
+			m.EventNonce = 0
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowTypes
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				m.EventNonce |= uint64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+		default:
+			iNdEx = preIndex
+			skippy, err := skipTypes(dAtA[iNdEx:])
+			if err != nil {
+				return err
+			}
+			if (skippy < 0) || (iNdEx+skippy) < 0 {
+				return ErrInvalidLengthTypes
+			}
+			if (iNdEx + skippy) > l {
+				return io.ErrUnexpectedEOF
+			}
+			iNdEx += skippy
+		}
+	}
+
+	if iNdEx > l {
+		return io.ErrUnexpectedEOF
+	}
+	return nil
+}
+func (m *BridgeBalanceSnapshot) Unmarshal(dAtA []byte) error {
+	l := len(dAtA)
+	iNdEx := 0
+	for iNdEx < l {
+		preIndex := iNdEx
+		var wire uint64
+		for shift := uint(0); ; shift += 7 {
+			if shift >= 64 {
+				return ErrIntOverflowTypes
+			}
+			if iNdEx >= l {
+				return io.ErrUnexpectedEOF
+			}
+			b := dAtA[iNdEx]
+			iNdEx++
+			wire |= uint64(b&0x7F) << shift
+			if b < 0x80 {
+				break
+			}
+		}
+		fieldNum := int32(wire >> 3)
+		wireType := int(wire & 0x7)
+		if wireType == 4 {
+			return fmt.Errorf("proto: BridgeBalanceSnapshot: wiretype end group for non-group")
+		}
+		if fieldNum <= 0 {
+			return fmt.Errorf("proto: BridgeBalanceSnapshot: illegal tag %d (wire type %d)", fieldNum, wire)
+		}
+		switch fieldNum {
+		case 1:
+			if wireType != 0 {
+				return fmt.Errorf("proto: wrong wireType = %d for field CosmosBlockHeight", wireType)
+			}
+			m.CosmosBlockHeight = 0
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowTypes
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				m.CosmosBlockHeight |= uint64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+		case 2:
+			if wireType != 0 {
+				return fmt.Errorf("proto: wrong wireType = %d for field EthereumBlockHeight", wireType)
+			}
+			m.EthereumBlockHeight = 0
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowTypes
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				m.EthereumBlockHeight |= uint64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+		case 3:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Balances", wireType)
+			}
+			var msglen int
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowTypes
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				msglen |= int(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			if msglen < 0 {
+				return ErrInvalidLengthTypes
+			}
+			postIndex := iNdEx + msglen
+			if postIndex < 0 {
+				return ErrInvalidLengthTypes
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.Balances = append(m.Balances, &ERC20Token{})
+			if err := m.Balances[len(m.Balances)-1].Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
+				return err
+			}
 			iNdEx = postIndex
 		case 4:
 			if wireType != 0 {

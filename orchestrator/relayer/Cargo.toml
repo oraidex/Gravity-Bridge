@@ -9,22 +9,22 @@ name = "relayer"
 path = "src/lib.rs"
 
 [dependencies]
-ethereum_gravity = {path = "../ethereum_gravity"}
-cosmos_gravity = {path = "../cosmos_gravity"}
-gravity_utils = {path = "../gravity_utils"}
-gravity_proto = {path = "../gravity_proto/"}
+ethereum_gravity = { workspace = true }
+cosmos_gravity = { workspace = true }
+gravity_utils = { workspace = true }
+gravity_proto = { workspace = true }
 
-deep_space = {git ="https://github.com/oraichain/deep_space.git", rev = "a2e1353"}
+deep_space = { workspace = true }
 serde_derive = "1.0"
-clarity = "0.7"
+clarity = { workspace = true }
 docopt = "1"
 serde = "1.0"
 actix-rt = "2"
 lazy_static = "1"
-web30 = {git = "https://github.com/oraichain/web30.git", rev = "5fc5815"}
+web30 = { workspace = true }
 log = "0.4"
-tokio = "1.21"
-tonic = "0.8"
+tokio = { workspace = true }
+tonic = { workspace = true }
 openssl-probe = "0.1"
 futures = "0.3"
 serde_json = "1.0"
