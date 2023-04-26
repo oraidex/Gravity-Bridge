@@ -485,6 +485,7 @@ func TestExpectedSupplyChange(t *testing.T) {
 	sendToCosmos := types.MsgSendToCosmosClaim{
 		EventNonce:     1,
 		EthBlockHeight: 123,
+		EvmChainPrefix: EthChainPrefix,
 		TokenContract:  TokenContractAddrs[0],
 		Amount:         sdk.NewInt(100),
 		EthereumSender: EthAddrs[1].String(),
@@ -496,6 +497,7 @@ func TestExpectedSupplyChange(t *testing.T) {
 	sendToEth := types.MsgBatchSendToEthClaim{
 		EventNonce:     2,
 		EthBlockHeight: 456,
+		EvmChainPrefix: EthChainPrefix,
 		BatchNonce:     batch.BatchNonce,
 		TokenContract:  batch.TokenContract.GetAddress().String(),
 		Orchestrator:   OrchAddrs[2].String(),
@@ -506,6 +508,7 @@ func TestExpectedSupplyChange(t *testing.T) {
 		EventNonce:     3,
 		EthBlockHeight: 789,
 		CosmosDenom:    "foo",
+		EvmChainPrefix: EthChainPrefix,
 		TokenContract:  TokenContractAddrs[1],
 		Name:           "Foo",
 		Symbol:         "FOO",
@@ -518,6 +521,7 @@ func TestExpectedSupplyChange(t *testing.T) {
 		EventNonce:     4,
 		ValsetNonce:    1,
 		EthBlockHeight: 1011,
+		EvmChainPrefix: EthChainPrefix,
 		Members:        []types.BridgeValidator{},
 		RewardAmount:   sdk.NewIntFromUint64(123),
 		RewardToken:    TokenContractAddrs[2],
@@ -528,6 +532,7 @@ func TestExpectedSupplyChange(t *testing.T) {
 	logicCallExecuted := types.MsgLogicCallExecutedClaim{
 		EventNonce:        5,
 		EthBlockHeight:    1213,
+		EvmChainPrefix:    EthChainPrefix,
 		InvalidationId:    []byte{0x0},
 		InvalidationNonce: 0,
 		Orchestrator:      OrchAddrs[1].String(),

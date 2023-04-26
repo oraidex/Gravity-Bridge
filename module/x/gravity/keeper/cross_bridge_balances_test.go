@@ -101,6 +101,7 @@ func Test_fetchAndStoreBridgeBalanceSnapshot(t *testing.T) {
 	claim := types.MsgBatchSendToEthClaim{
 		EventNonce:     1,
 		EthBlockHeight: 12345,
+		EvmChainPrefix: EthChainPrefix,
 		BatchNonce:     1,
 		TokenContract:  tokens[0].GetAddress().String(),
 		Orchestrator:   OrchAddrs[0].String(),

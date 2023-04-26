@@ -239,6 +239,7 @@ func TestMsgSendToCosmosClaim(t *testing.T) {
 	for _, v := range keeper.OrchAddrs {
 		// Test to finally accept consecutive nonce
 		ethClaim := types.MsgSendToCosmosClaim{
+			EthBlockHeight: 1234567,
 			EventNonce:     uint64(3),
 			Amount:         amountA,
 			TokenContract:  tokenETHAddr,
