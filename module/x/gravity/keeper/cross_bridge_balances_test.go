@@ -50,7 +50,7 @@ func TestGetBridgeBalanceSnapshots(t *testing.T) {
 	// Iterate in ascending order
 	pk.IterateBridgeBalanceSnapshots(ctx, false,
 		func(key []byte, snapshot types.BridgeBalanceSnapshot) (stop bool) {
-			n, err := types.ExtractNonceFromBridgeBalanceSnapshotKey(key)
+			n, _, err := types.ExtractNonceFromBridgeBalanceSnapshotKey(key)
 			if err != nil || n != snapshot.EventNonce {
 				panic(fmt.Sprintf("bad key (%v) snap (%v) nonce (%v): err %v", key, snapshot, snapshot.EventNonce, err))
 			}

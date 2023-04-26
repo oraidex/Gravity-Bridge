@@ -469,7 +469,7 @@ func ValidateStore(ctx sdk.Context, evmChainPrefix string, k Keeper) error {
 	// BridgeBalanceSnapshotsKey
 	k.IterateBridgeBalanceSnapshots(ctx, false, func(key []byte, snapshot types.BridgeBalanceSnapshot) (stop bool) {
 		var expNonce uint64
-		expNonce, err = types.ExtractNonceFromBridgeBalanceSnapshotKey(key)
+		expNonce, _, err = types.ExtractNonceFromBridgeBalanceSnapshotKey(key)
 		if err != nil || expNonce != snapshot.EventNonce {
 			err = fmt.Errorf("Key (%v) encodes nonce (%v) but extracting nonce results in (%v, %v)", key, expNonce, snapshot.EventNonce, err)
 			return true

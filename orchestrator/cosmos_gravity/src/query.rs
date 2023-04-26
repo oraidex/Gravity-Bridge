@@ -468,6 +468,7 @@ pub async fn query_evm_chain_from_net_version(
 // Fetches a BridgeBalanceSnapshot from Gravity Bridge Chain for each nonce in `nonces`
 pub async fn get_snapshots_for_events(
     grpc_client: GravityQueryClient<Channel>,
+    evm_chain_prefix: &str,
     nonces: &[u64],
 ) -> Result<Vec<BridgeBalanceSnapshot>, CosmosGrpcError> {
     let mut grpc_client = grpc_client;
@@ -476,6 +477,7 @@ pub async fn get_snapshots_for_events(
     for nonce in nonces {
         let response = grpc_client
             .get_bridge_balance_snapshot_by_event_nonce(QueryBridgeBalanceSnapshotByEventNonce {
+                evm_chain_prefix: evm_chain_prefix.to_string(),
                 nonce: *nonce,
             })
             .await;

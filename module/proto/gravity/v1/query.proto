@@ -407,7 +407,7 @@ message QueryBridgeBalanceSnapshotsResponse {
 
 // Query params for GetBridgeBalanceSnapshots, with a limit (0 for unlimited),
 // and boolean newest_first (true for descending by event nonce)
-message QueryBridgeBalanceSnapshotByEventNonce { uint64 nonce = 1; }
+message QueryBridgeBalanceSnapshotByEventNonce { uint64 nonce = 1;string evm_chain_prefix = 2; }
 
 message QueryBridgeBalanceSnapshotByEventNonceResponse {
   BridgeBalanceSnapshot snapshot = 1;

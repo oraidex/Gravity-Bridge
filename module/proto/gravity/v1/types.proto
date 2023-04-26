@@ -156,8 +156,7 @@ message PendingIbcAutoForward {
                                // not preserve foreign prefixes
   cosmos.base.v1beta1.Coin token = 2; // the token sent from ethereum to the
                                       // ibc-enabled chain over `IbcChannel`
-  string ibc_channel =
-      3; // the IBC channel to send `Amount` over via ibc-transfer module
+  string ibc_channel = 3; // the IBC channel to send `Amount` over via ibc-transfer module
   uint64 event_nonce = 4; // the EventNonce from the MsgSendToCosmosClaim, used
                           // for ordering the queue
 }
@@ -168,6 +167,7 @@ message PendingIbcAutoForward {
 message BridgeBalanceSnapshot {
   uint64 cosmos_block_height = 1;
   uint64 ethereum_block_height = 2;
-  repeated ERC20Token balances = 3;
-  uint64 event_nonce = 4;
+  string evm_chain_prefix = 3;
+  repeated ERC20Token balances = 4;
+  uint64 event_nonce = 5;
 }

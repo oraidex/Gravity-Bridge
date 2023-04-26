@@ -369,18 +369,19 @@ func convertByteArrToString(value []byte) string {
 // GetBridgeBalanceSnapshotKey returns the following key format
 // prefix		EventNonce
 // [0xcd68f89bc0dc4b49109abf2f433e2321][0 0 0 0 0 0 0 1]
-func GetBridgeBalanceSnapshotKey(eventNonce uint64) []byte {
-	return AppendBytes(BridgeBalanceSnapshotsKey, UInt64Bytes(eventNonce))
+func GetBridgeBalanceSnapshotKey(eventNonce uint64, evmChainPrefix string) []byte {
+	return AppendBytes(BridgeBalanceSnapshotsKey, UInt64Bytes(eventNonce), []byte(evmChainPrefix))
 }
 
 // ExtractNonceFromBridgeBalanceSnapshotKey will return only the EventNonce portion of a
 // BridgeBalanceSnapshot's store key, see GetBridgeBalanceSnapshotKey() for more info
-func ExtractNonceFromBridgeBalanceSnapshotKey(key []byte) (uint64, error) {
+func ExtractNonceFromBridgeBalanceSnapshotKey(key []byte) (uint64, string, error) {
 	prefixLen := len(BridgeBalanceSnapshotsKey) // the length of the index to these values
 
-	nonce := key[prefixLen:] // These keys only have a prefix and the nonce, so grab the end of the key
-	if len(nonce) > 8 {
-		return 0, fmt.Errorf("invalid uint64 event nonce bytes %v", hex.EncodeToString(nonce))
+	nonce := key[prefixLen : prefixLen+8] // These keys only have a prefix and the nonce, so grab the end of the key
+	if len(nonce) < 8 {
+		return 0, "", fmt.Errorf("invalid uint64 event nonce bytes %v", hex.EncodeToString(nonce))
 	}
-	return UInt64FromBytesUnsafe(nonce), nil
+	evmChainPrefix := string(key[prefixLen+8:])
+	return UInt64FromBytesUnsafe(nonce), evmChainPrefix, nil
 }

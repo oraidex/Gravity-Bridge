@@ -583,7 +583,7 @@ func pruneBridgeBalanceSnapshots(ctx sdk.Context, k keeper.Keeper, evmChainPrefi
 		false,
 		func(key []byte, snapshot types.BridgeBalanceSnapshot) (stop bool) {
 			if snapshot.EventNonce <= cutoff {
-				if err := k.DeleteBridgeBalanceSnapshot(ctx, snapshot.EventNonce); err != nil {
+				if err := k.DeleteBridgeBalanceSnapshot(ctx, snapshot.EventNonce, snapshot.EvmChainPrefix); err != nil {
 					errMsg := fmt.Sprintf("Discovered nonexistent snapshot with nonce %v while iterating: %v", snapshot.EventNonce, snapshot)
 					ctx.Logger().Error(errMsg)
 					panic(errMsg)

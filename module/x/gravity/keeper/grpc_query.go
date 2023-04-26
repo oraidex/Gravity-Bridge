@@ -638,7 +638,7 @@ func (k Keeper) GetBridgeBalanceSnapshotByEventNonce(
 
 	store := ctx.KVStore(k.storeKey)
 	nonce := req.Nonce
-	key := types.GetBridgeBalanceSnapshotKey(nonce)
+	key := types.GetBridgeBalanceSnapshotKey(nonce, req.EvmChainPrefix)
 	if !store.Has(key) {
 		return nil, fmt.Errorf("no snapshot with nonce %v exists", nonce)
 	}

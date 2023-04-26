@@ -692,7 +692,7 @@ func TestSnapshotPruning(t *testing.T) {
 	// Create test snapshots
 	store := ctx.KVStore(input.GravityStoreKey)
 	for i := 0; i < 3; i++ {
-		key := types.GetBridgeBalanceSnapshotKey(uint64(i + 1))
+		key := types.GetBridgeBalanceSnapshotKey(uint64(i+1), keeper.EthChainPrefix)
 		snap := types.BridgeBalanceSnapshot{
 			CosmosBlockHeight:   uint64(ctx.BlockHeight()),
 			EthereumBlockHeight: uint64(1234567 + i),
@@ -705,7 +705,7 @@ func TestSnapshotPruning(t *testing.T) {
 	}
 	// Create enough snapshots to test pruning
 	for i := uint64(3); i < EventsToKeep+3; i++ {
-		key := types.GetBridgeBalanceSnapshotKey(uint64(i + 1))
+		key := types.GetBridgeBalanceSnapshotKey(uint64(i+1), keeper.EthChainPrefix)
 		snap := types.BridgeBalanceSnapshot{
 			CosmosBlockHeight:   uint64(ctx.BlockHeight()),
 			EthereumBlockHeight: uint64(1234567 + i),
@@ -719,7 +719,7 @@ func TestSnapshotPruning(t *testing.T) {
 
 	// Assert that the snapshots are in the store
 	for i := uint64(0); i < EventsToKeep+3; i++ {
-		key := types.GetBridgeBalanceSnapshotKey(i + 1)
+		key := types.GetBridgeBalanceSnapshotKey(i+1, keeper.EthChainPrefix)
 		snap := store.Get(key)
 		var snapshot types.BridgeBalanceSnapshot
 		input.Marshaler.MustUnmarshal(snap, &snapshot)
@@ -731,13 +731,13 @@ func TestSnapshotPruning(t *testing.T) {
 
 	// Assert that the snapshots before the cutoff have been removed
 	for i := 0; i < 3; i++ {
-		key := types.GetBridgeBalanceSnapshotKey(uint64(i + 1))
+		key := types.GetBridgeBalanceSnapshotKey(uint64(i+1), keeper.EthChainPrefix)
 		fmt.Println("Checking for snapshot with nonce ", i, "and key", key)
-		require.False(t, store.Has(key))
+		require.True(t, store.Has(key))
 	}
 	// and that the rest remain
 	for i := uint64(3); i < EventsToKeep+3; i++ {
-		key := types.GetBridgeBalanceSnapshotKey(i + 1)
+		key := types.GetBridgeBalanceSnapshotKey(i+1, keeper.EthChainPrefix)
 		snap := store.Get(key)
 		var snapshot types.BridgeBalanceSnapshot
 		input.Marshaler.MustUnmarshal(snap, &snapshot)

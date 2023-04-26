@@ -179,6 +179,7 @@ pub async fn gravity_chain_balance_data(
     if snapshots_res.is_empty() {
         info!("No snapshots returned - cross bridge balances will not be checked. This log should occur only once or twice!");
         Ok(BridgeBalanceSnapshot {
+            evm_chain_prefix: "".to_string(),
             cosmos_block_height: 0,
             ethereum_block_height: 0,
             balances: vec![],

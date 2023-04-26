@@ -175,7 +175,7 @@ func (k Keeper) FetchBridgedTokenBalances(ctx sdk.Context, evmChainPrefix string
 // StoreBridgeBalanceSnapshot stores the given snapshot at its appropriate key
 func (k Keeper) storeBridgeBalanceSnapshot(ctx sdk.Context, snapshot types.BridgeBalanceSnapshot) {
 	store := ctx.KVStore(k.storeKey)
-	key := types.GetBridgeBalanceSnapshotKey(snapshot.EventNonce)
+	key := types.GetBridgeBalanceSnapshotKey(snapshot.EventNonce, snapshot.EvmChainPrefix)
 
 	// Sort the balances by contract address for consistency
 	slices.SortFunc(snapshot.Balances, func(a, b *types.ERC20Token) bool {
@@ -189,9 +189,9 @@ func (k Keeper) storeBridgeBalanceSnapshot(ctx sdk.Context, snapshot types.Bridg
 }
 
 // deleteBridgeBalanceSnapshot deletes the snapshot with the given eventNonce, returning an error if no such entry exists
-func (k Keeper) DeleteBridgeBalanceSnapshot(ctx sdk.Context, eventNonce uint64) error {
+func (k Keeper) DeleteBridgeBalanceSnapshot(ctx sdk.Context, eventNonce uint64, evmChainPrefix string) error {
 	store := ctx.KVStore(k.storeKey)
-	key := types.GetBridgeBalanceSnapshotKey(eventNonce)
+	key := types.GetBridgeBalanceSnapshotKey(eventNonce, evmChainPrefix)
 
 	if !store.Has(key) {
 		return fmt.Errorf("snapshot with key %v does not exist in store", hex.EncodeToString(key))

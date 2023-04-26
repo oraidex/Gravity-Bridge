@@ -481,9 +481,11 @@ pub struct BridgeBalanceSnapshot {
     pub cosmos_block_height: u64,
     #[prost(uint64, tag = "2")]
     pub ethereum_block_height: u64,
-    #[prost(message, repeated, tag = "3")]
+    #[prost(string, tag = "3")]
+    pub evm_chain_prefix: ::prost::alloc::string::String,
+    #[prost(message, repeated, tag = "4")]
     pub balances: ::prost::alloc::vec::Vec<Erc20Token>,
-    #[prost(uint64, tag = "4")]
+    #[prost(uint64, tag = "5")]
     pub event_nonce: u64,
 }
 /// MsgSetOrchestratorAddress
@@ -1956,6 +1958,8 @@ pub struct QueryBridgeBalanceSnapshotsResponse {
 pub struct QueryBridgeBalanceSnapshotByEventNonce {
     #[prost(uint64, tag = "1")]
     pub nonce: u64,
+    #[prost(string, tag = "2")]
+    pub evm_chain_prefix: ::prost::alloc::string::String,
 }
 #[allow(clippy::derive_partial_eq_without_eq)]
 #[derive(Clone, PartialEq, ::prost::Message)]
