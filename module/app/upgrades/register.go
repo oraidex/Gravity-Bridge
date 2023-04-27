@@ -77,4 +77,9 @@ func RegisterUpgradeHandlers(
 		orion.PleiadesPart2ToOrionPlanName,
 		orion.GetOrionUpgradeHandler(mm, configurator, crisisKeeper),
 	)
+
+	upgradeKeeper.SetUpgradeHandler(
+		orion.PleiadesPart2ToOrionPlanName,
+		orion.GetOrionUpgradeHandler(mm, configurator, crisisKeeper),
+	)
 }
