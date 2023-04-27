@@ -8,9 +8,9 @@
 // we assume a system bit width of at least 32
 
 use super::ValsetMember;
-use crate::error::GravityError;
 use crate::num_conversion::downcast_uint256;
 use clarity::constants::zero_address;
+use clarity::utils::hex_str_to_bytes;
 use deep_space::utils::bytes_to_hex_str;
 use deep_space::{Address as CosmosAddress, Address, Msg};
 use gravity_proto::gravity::{
@@ -18,9 +18,12 @@ use gravity_proto::gravity::{
     MsgValsetUpdatedClaim,
 };
 use num256::Uint256;
+use std::iter::zip;
+use std::str::FromStr;
 use std::unimplemented;
+use web30::jsonrpc::error::Web3Error;
 use web30::types::Log;
-use web30::EthAddress;
+use web30::{ContractEvent, EthAddress, EventData, Web3Event};
 
 // gravity msg type urls
 pub const MSG_BATCH_SEND_TO_ETH_TYPE_URL: &str = "/gravity.v1.MsgBatchSendToEthClaim";
@@ -42,9 +45,9 @@ where
     fn get_block_height(&self) -> u64;
     fn get_event_nonce(&self) -> u64;
     /// Parses an event out of an Ethereum Log
-    fn from_log(input: &Log) -> Result<Self, GravityError>;
+    fn from_log(input: &Log) -> Result<Self, Web3Error>;
     /// Parses multiple events of the same type out of an Ethereum Log
-    fn from_logs(input: &[Log]) -> Result<Vec<Self>, GravityError>;
+    fn from_logs(input: &[Log]) -> Result<Vec<Self>, Web3Error>;
     /// Pares down a list of events to ones after the given `event_nonce`
     fn filter_by_event_nonce(event_nonce: u64, input: &[Self]) -> Vec<Self>;
     /// If the event with the given `event_nonce` is in `input`, returns the block that occurred on
@@ -76,9 +79,9 @@ struct ValsetDataBytes {
 
 impl ValsetUpdatedEvent {
     /// Decodes the data bytes of a valset log event, separated for easy testing
-    fn decode_data_bytes(input: &[u8]) -> Result<ValsetDataBytes, GravityError> {
+    fn decode_data_bytes(input: &[u8]) -> Result<ValsetDataBytes, Web3Error> {
         if input.len() < 6 * 32 {
-            return Err(GravityError::InvalidEventLogError(
+            return Err(Web3Error::InvalidEventLog(
                 "too short for ValsetUpdatedEventData".to_string(),
             ));
         }
@@ -91,7 +94,7 @@ impl ValsetUpdatedEvent {
         let nonce_data = &input[index_start..index_end];
         let event_nonce = Uint256::from_be_bytes(nonce_data);
         if event_nonce > u64::MAX.into() {
-            return Err(GravityError::InvalidEventLogError(
+            return Err(Web3Error::InvalidEventLog(
                 "Nonce overflow, probably incorrect parsing".to_string(),
             ));
         }
@@ -110,7 +113,7 @@ impl ValsetUpdatedEvent {
         // addresses are 12 bytes shorter than the 32 byte field they are stored in
         let reward_token = EthAddress::from_slice(&reward_token_data[12..]);
         if let Err(e) = reward_token {
-            return Err(GravityError::InvalidEventLogError(format!(
+            return Err(Web3Error::InvalidEventLog(format!(
                 "Bad reward address, must be incorrect parsing {:?}",
                 e
             )));
@@ -129,14 +132,14 @@ impl ValsetUpdatedEvent {
         let index_end = index_start + 32;
         let eth_addresses_offset = index_end;
         if input.len() < eth_addresses_offset {
-            return Err(GravityError::InvalidEventLogError(
+            return Err(Web3Error::InvalidEventLog(
                 "too short for dynamic data".to_string(),
             ));
         }
 
         let len_eth_addresses = Uint256::from_be_bytes(&input[index_start..index_end]);
         if len_eth_addresses > usize::MAX.into() {
-            return Err(GravityError::InvalidEventLogError(
+            return Err(Web3Error::InvalidEventLog(
                 "Ethereum array len overflow, probably incorrect parsing".to_string(),
             ));
         }
@@ -145,20 +148,20 @@ impl ValsetUpdatedEvent {
         let index_end = index_start + 32;
         let powers_offset = index_end;
         if input.len() < powers_offset {
-            return Err(GravityError::InvalidEventLogError(
+            return Err(Web3Error::InvalidEventLog(
                 "too short for dynamic data".to_string(),
             ));
         }
 
         let len_powers = Uint256::from_be_bytes(&input[index_start..index_end]);
         if len_powers > usize::MAX.into() {
-            return Err(GravityError::InvalidEventLogError(
+            return Err(Web3Error::InvalidEventLog(
                 "Powers array len overflow, probably incorrect parsing".to_string(),
             ));
         }
         let len_powers: usize = len_eth_addresses.to_string().parse().unwrap();
         if len_powers != len_eth_addresses {
-            return Err(GravityError::InvalidEventLogError(
+            return Err(Web3Error::InvalidEventLog(
                 "Array len mismatch, probably incorrect parsing".to_string(),
             ));
         }
@@ -171,7 +174,7 @@ impl ValsetUpdatedEvent {
             let address_end = address_start + 32;
 
             if input.len() < address_end || input.len() < power_end {
-                return Err(GravityError::InvalidEventLogError(
+                return Err(Web3Error::InvalidEventLog(
                     "too short for dynamic data".to_string(),
                 ));
             }
@@ -180,13 +183,13 @@ impl ValsetUpdatedEvent {
             // an eth address at 20 bytes is 12 bytes shorter than the Uint256 it's stored in.
             let eth_address = EthAddress::from_slice(&input[address_start + 12..address_end]);
             if eth_address.is_err() {
-                return Err(GravityError::InvalidEventLogError(
+                return Err(Web3Error::InvalidEventLog(
                     "Ethereum Address parsing error, probably incorrect parsing".to_string(),
                 ));
             }
             let eth_address = eth_address.unwrap();
             if power > u64::MAX.into() {
-                return Err(GravityError::InvalidEventLogError(
+                return Err(Web3Error::InvalidEventLog(
                     "Power greater than u64::MAX, probably incorrect parsing".to_string(),
                 ));
             }
@@ -224,18 +227,16 @@ impl EthereumEvent for ValsetUpdatedEvent {
 
     /// This function is not an abi compatible bytes parser, but it's actually
     /// not hard at all to extract data like this by hand.
-    fn from_log(input: &Log) -> Result<ValsetUpdatedEvent, GravityError> {
+    fn from_log(input: &Log) -> Result<ValsetUpdatedEvent, Web3Error> {
         // we have one indexed event so we should find two indexes, one the event itself
         // and one the indexed nonce
         if input.topics.get(1).is_none() {
-            return Err(GravityError::InvalidEventLogError(
-                "Too few topics".to_string(),
-            ));
+            return Err(Web3Error::InvalidEventLog("Too few topics".to_string()));
         }
         let valset_nonce_data = &input.topics[1];
         let valset_nonce = Uint256::from_be_bytes(valset_nonce_data);
         if valset_nonce > u64::MAX.into() {
-            return Err(GravityError::InvalidEventLogError(
+            return Err(Web3Error::InvalidEventLog(
                 "Nonce overflow, probably incorrect parsing".to_string(),
             ));
         }
@@ -243,14 +244,14 @@ impl EthereumEvent for ValsetUpdatedEvent {
 
         let block_height = if let Some(bn) = input.block_number {
             if bn > u64::MAX.into() {
-                return Err(GravityError::InvalidEventLogError(
+                return Err(Web3Error::InvalidEventLog(
                     "Event nonce overflow! probably incorrect parsing".to_string(),
                 ));
             } else {
                 bn
             }
         } else {
-            return Err(GravityError::InvalidEventLogError(
+            return Err(Web3Error::InvalidEventLog(
                 "Log does not have block number, we only search logs already in blocks?"
                     .to_string(),
             ));
@@ -268,7 +269,7 @@ impl EthereumEvent for ValsetUpdatedEvent {
         })
     }
 
-    fn from_logs(input: &[Log]) -> Result<Vec<ValsetUpdatedEvent>, GravityError> {
+    fn from_logs(input: &[Log]) -> Result<Vec<ValsetUpdatedEvent>, Web3Error> {
         let mut res = Vec::new();
         for item in input {
             res.push(ValsetUpdatedEvent::from_log(item)?);
@@ -311,6 +312,54 @@ impl EthereumEvent for ValsetUpdatedEvent {
     }
 }
 
+impl ContractEvent for ValsetUpdatedEvent {
+    fn from_event(event_data: &EventData) -> Result<Self, Web3Error> {
+        let EventData {
+            block_number,
+            result,
+            ..
+        } = event_data;
+
+        let powers: Vec<&str> = result["_powers"].as_str().unwrap().split("\n").collect();
+
+        let validators: Vec<&str> = result["_validators"]
+            .as_str()
+            .unwrap()
+            .split("\n")
+            .collect();
+
+        let mut members = vec![];
+        for (power, validator) in zip(powers, validators) {
+            members.push(ValsetMember {
+                power: power.parse::<u64>().unwrap(),
+                eth_address: validator.parse().unwrap(),
+            })
+        }
+
+        Ok(Self {
+            valset_nonce: result["_newValsetNonce"].as_str().unwrap().parse().unwrap(),
+            event_nonce: result["_eventNonce"].as_str().unwrap().parse().unwrap(),
+            block_height: block_number.to_owned().into(),
+            reward_amount: Uint256::from_str(result["_rewardAmount"].as_str().unwrap()).unwrap(),
+            reward_token: result["_rewardToken"].as_str().unwrap().parse().ok(),
+            members,
+        })
+    }
+
+    fn from_events(input: &Web3Event) -> Result<Vec<Self>, Web3Error> {
+        match input {
+            Web3Event::Logs(logs) => Self::from_logs(logs),
+            Web3Event::Events(events) => {
+                let mut res = Vec::new();
+                for item in events {
+                    res.push(Self::from_event(item)?);
+                }
+                Ok(res)
+            }
+        }
+    }
+}
+
 /// A parsed struct representing the Ethereum event fired by the Gravity contract when
 /// a transaction batch is executed.
 #[derive(Serialize, Deserialize, Debug, Default, Clone, Eq, PartialEq, Hash)]
@@ -338,7 +387,7 @@ impl EthereumEvent for TransactionBatchExecutedEvent {
         self.event_nonce
     }
 
-    fn from_log(input: &Log) -> Result<TransactionBatchExecutedEvent, GravityError> {
+    fn from_log(input: &Log) -> Result<TransactionBatchExecutedEvent, Web3Error> {
         if let (Some(batch_nonce_data), Some(erc20_data)) =
             (input.topics.get(1), input.topics.get(2))
         {
@@ -347,14 +396,14 @@ impl EthereumEvent for TransactionBatchExecutedEvent {
             let event_nonce = Uint256::from_be_bytes(&input.data);
             let block_height = if let Some(bn) = input.block_number {
                 if bn > u64::MAX.into() {
-                    return Err(GravityError::InvalidEventLogError(
+                    return Err(Web3Error::InvalidEventLog(
                         "Block height overflow! probably incorrect parsing".to_string(),
                     ));
                 } else {
                     bn
                 }
             } else {
-                return Err(GravityError::InvalidEventLogError(
+                return Err(Web3Error::InvalidEventLog(
                     "Log does not have block number, we only search logs already in blocks?"
                         .to_string(),
                 ));
@@ -363,7 +412,7 @@ impl EthereumEvent for TransactionBatchExecutedEvent {
                 || batch_nonce > u64::MAX.into()
                 || block_height > u64::MAX.into()
             {
-                Err(GravityError::InvalidEventLogError(
+                Err(Web3Error::InvalidEventLog(
                     "Event nonce overflow, probably incorrect parsing".to_string(),
                 ))
             } else {
@@ -377,12 +426,10 @@ impl EthereumEvent for TransactionBatchExecutedEvent {
                 })
             }
         } else {
-            Err(GravityError::InvalidEventLogError(
-                "Too few topics".to_string(),
-            ))
+            Err(Web3Error::InvalidEventLog("Too few topics".to_string()))
         }
     }
-    fn from_logs(input: &[Log]) -> Result<Vec<TransactionBatchExecutedEvent>, GravityError> {
+    fn from_logs(input: &[Log]) -> Result<Vec<TransactionBatchExecutedEvent>, Web3Error> {
         let mut res = Vec::new();
         for item in input {
             res.push(TransactionBatchExecutedEvent::from_log(item)?);
@@ -424,6 +471,37 @@ impl EthereumEvent for TransactionBatchExecutedEvent {
     }
 }
 
+impl ContractEvent for TransactionBatchExecutedEvent {
+    fn from_event(event_data: &EventData) -> Result<Self, Web3Error> {
+        let EventData {
+            block_number,
+            result,
+            ..
+        } = event_data;
+
+        // based on abi
+        Ok(Self {
+            block_height: block_number.to_owned().into(),
+            event_nonce: result["_eventNonce"].as_str().unwrap().parse().unwrap(),
+            erc20: result["_token"].as_str().unwrap().parse().unwrap(),
+            batch_nonce: result["_batchNonce"].as_str().unwrap().parse().unwrap(),
+        })
+    }
+
+    fn from_events(input: &Web3Event) -> Result<Vec<Self>, Web3Error> {
+        match input {
+            Web3Event::Logs(logs) => Self::from_logs(logs),
+            Web3Event::Events(events) => {
+                let mut res = Vec::new();
+                for item in events {
+                    res.push(Self::from_event(item)?);
+                }
+                Ok(res)
+            }
+        }
+    }
+}
+
 /// A parsed struct representing the Ethereum event fired when someone makes a deposit
 /// on the Gravity contract
 #[derive(Serialize, Deserialize, Debug, Clone, Eq, PartialEq, Hash)]
@@ -462,9 +540,9 @@ struct SendToCosmosEventData {
 }
 
 impl SendToCosmosEvent {
-    fn decode_data_bytes(data: &[u8]) -> Result<SendToCosmosEventData, GravityError> {
+    fn decode_data_bytes(data: &[u8]) -> Result<SendToCosmosEventData, Web3Error> {
         if data.len() < 4 * 32 {
-            return Err(GravityError::InvalidEventLogError(
+            return Err(Web3Error::InvalidEventLog(
                 "too short for SendToCosmosEventData".to_string(),
             ));
         }
@@ -479,7 +557,7 @@ impl SendToCosmosEvent {
             Uint256::from_be_bytes(&data[destination_str_len_start..destination_str_len_end]);
 
         if destination_str_len > u32::MAX.into() {
-            return Err(GravityError::InvalidEventLogError(
+            return Err(Web3Error::InvalidEventLog(
                 "denom length overflow, probably incorrect parsing".to_string(),
             ));
         }
@@ -489,7 +567,7 @@ impl SendToCosmosEvent {
         let destination_str_end = destination_str_start + destination_str_len;
 
         if data.len() < destination_str_end {
-            return Err(GravityError::InvalidEventLogError(
+            return Err(Web3Error::InvalidEventLog(
                 "Incorrect length for dynamic data".to_string(),
             ));
         }
@@ -537,21 +615,21 @@ impl EthereumEvent for SendToCosmosEvent {
         self.event_nonce
     }
 
-    fn from_log(input: &Log) -> Result<SendToCosmosEvent, GravityError> {
+    fn from_log(input: &Log) -> Result<SendToCosmosEvent, Web3Error> {
         let topics = (input.topics.get(1), input.topics.get(2));
         if let (Some(erc20_data), Some(sender_data)) = topics {
             let erc20 = EthAddress::from_slice(&erc20_data[12..32])?;
             let sender = EthAddress::from_slice(&sender_data[12..32])?;
             let block_height = if let Some(bn) = input.block_number {
                 if bn > u64::MAX.into() {
-                    return Err(GravityError::InvalidEventLogError(
+                    return Err(Web3Error::InvalidEventLog(
                         "Block height overflow! probably incorrect parsing".to_string(),
                     ));
                 } else {
                     bn
                 }
             } else {
-                return Err(GravityError::InvalidEventLogError(
+                return Err(Web3Error::InvalidEventLog(
                     "Log does not have block number, we only search logs already in blocks?"
                         .to_string(),
                 ));
@@ -559,7 +637,7 @@ impl EthereumEvent for SendToCosmosEvent {
 
             let data = SendToCosmosEvent::decode_data_bytes(&input.data)?;
             if data.event_nonce > u64::MAX.into() || block_height > u64::MAX.into() {
-                Err(GravityError::InvalidEventLogError(
+                Err(Web3Error::InvalidEventLog(
                     "Event nonce overflow, probably incorrect parsing".to_string(),
                 ))
             } else {
@@ -592,13 +670,11 @@ impl EthereumEvent for SendToCosmosEvent {
                 })
             }
         } else {
-            Err(GravityError::InvalidEventLogError(
-                "Too few topics".to_string(),
-            ))
+            Err(Web3Error::InvalidEventLog("Too few topics".to_string()))
         }
     }
 
-    fn from_logs(input: &[Log]) -> Result<Vec<SendToCosmosEvent>, GravityError> {
+    fn from_logs(input: &[Log]) -> Result<Vec<SendToCosmosEvent>, Web3Error> {
         let mut res = Vec::new();
         for item in input {
             res.push(SendToCosmosEvent::from_log(item)?);
@@ -642,6 +718,41 @@ impl EthereumEvent for SendToCosmosEvent {
     }
 }
 
+impl ContractEvent for SendToCosmosEvent {
+    fn from_event(event_data: &EventData) -> Result<Self, Web3Error> {
+        let EventData {
+            block_number,
+            result,
+            ..
+        } = event_data;
+
+        let destination = result["_destination"].as_str().unwrap();
+
+        Ok(Self {
+            block_height: block_number.to_owned().into(),
+            event_nonce: result["_eventNonce"].as_str().unwrap().parse().unwrap(),
+            erc20: result["_tokenContract"].as_str().unwrap().parse().unwrap(),
+            sender: result["_sender"].as_str().unwrap().parse().unwrap(),
+            destination: destination.to_string(),
+            validated_destination: destination.split('/').last().unwrap().parse().ok(),
+            amount: result["_amount"].as_str().unwrap().parse().unwrap(),
+        })
+    }
+
+    fn from_events(input: &Web3Event) -> Result<Vec<Self>, Web3Error> {
+        match input {
+            Web3Event::Logs(logs) => Self::from_logs(logs),
+            Web3Event::Events(events) => {
+                let mut res = Vec::new();
+                for item in events {
+                    res.push(Self::from_event(item)?);
+                }
+                Ok(res)
+            }
+        }
+    }
+}
+
 /// A parsed struct representing the Ethereum event fired when someone uses the Gravity
 /// contract to deploy a new ERC20 contract representing a Cosmos asset
 #[derive(Serialize, Deserialize, Debug, Default, Clone, Eq, PartialEq, Hash)]
@@ -678,9 +789,9 @@ struct Erc20DeployedEventData {
     pub event_nonce: u64,
 }
 impl Erc20DeployedEvent {
-    fn decode_data_bytes(data: &[u8]) -> Result<Erc20DeployedEventData, GravityError> {
+    fn decode_data_bytes(data: &[u8]) -> Result<Erc20DeployedEventData, Web3Error> {
         if data.len() < 6 * 32 {
-            return Err(GravityError::InvalidEventLogError(
+            return Err(Web3Error::InvalidEventLog(
                 "too short for Erc20DeployedEventData".to_string(),
             ));
         }
@@ -691,7 +802,7 @@ impl Erc20DeployedEvent {
 
         let decimals = Uint256::from_be_bytes(&data[index_start..index_end]);
         if decimals > u8::MAX.into() {
-            return Err(GravityError::InvalidEventLogError(
+            return Err(Web3Error::InvalidEventLog(
                 "Decimals overflow, probably incorrect parsing".to_string(),
             ));
         }
@@ -701,7 +812,7 @@ impl Erc20DeployedEvent {
         let index_end = index_start + 32;
         let nonce = Uint256::from_be_bytes(&data[index_start..index_end]);
         if nonce > u64::MAX.into() {
-            return Err(GravityError::InvalidEventLogError(
+            return Err(Web3Error::InvalidEventLog(
                 "Nonce overflow, probably incorrect parsing".to_string(),
             ));
         }
@@ -712,7 +823,7 @@ impl Erc20DeployedEvent {
         let denom_len = Uint256::from_be_bytes(&data[index_start..index_end]);
         // it's not probable that we have 4+ gigabytes of event data
         if denom_len > u32::MAX.into() {
-            return Err(GravityError::InvalidEventLogError(
+            return Err(Web3Error::InvalidEventLog(
                 "denom length overflow, probably incorrect parsing".to_string(),
             ));
         }
@@ -757,7 +868,7 @@ impl Erc20DeployedEvent {
         let index_end = index_start + 32;
 
         if data.len() < index_end {
-            return Err(GravityError::InvalidEventLogError(
+            return Err(Web3Error::InvalidEventLog(
                 "Erc20DeployedEvent dynamic data too short".to_string(),
             ));
         }
@@ -765,7 +876,7 @@ impl Erc20DeployedEvent {
         let erc20_name_len = Uint256::from_be_bytes(&data[index_start..index_end]);
         // it's not probable that we have 4+ gigabytes of event data
         if erc20_name_len > u32::MAX.into() {
-            return Err(GravityError::InvalidEventLogError(
+            return Err(Web3Error::InvalidEventLog(
                 "ERC20 Name length overflow, probably incorrect parsing".to_string(),
             ));
         }
@@ -774,7 +885,7 @@ impl Erc20DeployedEvent {
         let index_end = index_start + erc20_name_len;
 
         if data.len() < index_end {
-            return Err(GravityError::InvalidEventLogError(
+            return Err(Web3Error::InvalidEventLog(
                 "Erc20DeployedEvent dynamic data too short".to_string(),
             ));
         }
@@ -811,7 +922,7 @@ impl Erc20DeployedEvent {
         let index_end = index_start + 32;
 
         if data.len() < index_end {
-            return Err(GravityError::InvalidEventLogError(
+            return Err(Web3Error::InvalidEventLog(
                 "Erc20DeployedEvent dynamic data too short".to_string(),
             ));
         }
@@ -819,7 +930,7 @@ impl Erc20DeployedEvent {
         let symbol_len = Uint256::from_be_bytes(&data[index_start..index_end]);
         // it's not probable that we have 4+ gigabytes of event data
         if symbol_len > u32::MAX.into() {
-            return Err(GravityError::InvalidEventLogError(
+            return Err(Web3Error::InvalidEventLog(
                 "Symbol length overflow, probably incorrect parsing".to_string(),
             ));
         }
@@ -828,7 +939,7 @@ impl Erc20DeployedEvent {
         let index_end = index_start + symbol_len;
 
         if data.len() < index_end {
-            return Err(GravityError::InvalidEventLogError(
+            return Err(Web3Error::InvalidEventLog(
                 "Erc20DeployedEvent dynamic data too short".to_string(),
             ));
         }
@@ -880,21 +991,21 @@ impl EthereumEvent for Erc20DeployedEvent {
         self.event_nonce
     }
 
-    fn from_log(input: &Log) -> Result<Erc20DeployedEvent, GravityError> {
+    fn from_log(input: &Log) -> Result<Erc20DeployedEvent, Web3Error> {
         let token_contract = input.topics.get(1);
         if let Some(new_token_contract_data) = token_contract {
             let erc20 = EthAddress::from_slice(&new_token_contract_data[12..32])?;
 
             let block_height = if let Some(bn) = input.block_number {
                 if bn > u64::MAX.into() {
-                    return Err(GravityError::InvalidEventLogError(
+                    return Err(Web3Error::InvalidEventLog(
                         "Event nonce overflow! probably incorrect parsing".to_string(),
                     ));
                 } else {
                     bn
                 }
             } else {
-                return Err(GravityError::InvalidEventLogError(
+                return Err(Web3Error::InvalidEventLog(
                     "Log does not have block number, we only search logs already in blocks?"
                         .to_string(),
                 ));
@@ -912,13 +1023,11 @@ impl EthereumEvent for Erc20DeployedEvent {
                 block_height,
             })
         } else {
-            Err(GravityError::InvalidEventLogError(
-                "Too few topics".to_string(),
-            ))
+            Err(Web3Error::InvalidEventLog("Too few topics".to_string()))
         }
     }
 
-    fn from_logs(input: &[Log]) -> Result<Vec<Erc20DeployedEvent>, GravityError> {
+    fn from_logs(input: &[Log]) -> Result<Vec<Erc20DeployedEvent>, Web3Error> {
         let mut res = Vec::new();
         for item in input {
             res.push(Erc20DeployedEvent::from_log(item)?);
@@ -962,6 +1071,40 @@ impl EthereumEvent for Erc20DeployedEvent {
         Msg::new(MSG_ERC20_DEPLOYED_CLAIM_TYPE_URL, claim)
     }
 }
+
+impl ContractEvent for Erc20DeployedEvent {
+    fn from_event(event_data: &EventData) -> Result<Self, Web3Error> {
+        let EventData {
+            block_number,
+            result,
+            ..
+        } = event_data;
+
+        Ok(Self {
+            block_height: block_number.to_owned().into(),
+            event_nonce: result["_eventNonce"].as_str().unwrap().parse().unwrap(),
+            erc20_address: result["_tokenContract"].as_str().unwrap().parse().unwrap(),
+            cosmos_denom: result["_cosmosDenom"].as_str().unwrap().to_string(),
+            name: result["_name"].as_str().unwrap().to_string(),
+            symbol: result["_symbol"].as_str().unwrap().to_string(),
+            decimals: result["_decimals"].as_u64().unwrap() as u8,
+        })
+    }
+
+    fn from_events(input: &Web3Event) -> Result<Vec<Self>, Web3Error> {
+        match input {
+            Web3Event::Logs(logs) => Self::from_logs(logs),
+            Web3Event::Events(events) => {
+                let mut res = Vec::new();
+                for item in events {
+                    res.push(Self::from_event(item)?);
+                }
+                Ok(res)
+            }
+        }
+    }
+}
+
 /// A parsed struct representing the Ethereum event fired when someone uses the Gravity
 /// contract to deploy a new ERC20 contract representing a Cosmos asset
 #[derive(Serialize, Deserialize, Debug, Default, Clone, Eq, PartialEq, Hash)]
@@ -982,10 +1125,10 @@ impl EthereumEvent for LogicCallExecutedEvent {
         self.event_nonce
     }
 
-    fn from_log(_input: &Log) -> Result<LogicCallExecutedEvent, GravityError> {
+    fn from_log(_input: &Log) -> Result<LogicCallExecutedEvent, Web3Error> {
         unimplemented!()
     }
-    fn from_logs(input: &[Log]) -> Result<Vec<LogicCallExecutedEvent>, GravityError> {
+    fn from_logs(input: &[Log]) -> Result<Vec<LogicCallExecutedEvent>, Web3Error> {
         let mut res = Vec::new();
         for item in input {
             res.push(LogicCallExecutedEvent::from_log(item)?);
@@ -1024,6 +1167,42 @@ impl EthereumEvent for LogicCallExecutedEvent {
             evm_chain_prefix,
         };
         Msg::new(MSG_LOGIC_CALL_EXECUTED_CLAIM_TYPE_URL, claim)
+    }
+}
+
+impl ContractEvent for LogicCallExecutedEvent {
+    fn from_event(event_data: &EventData) -> Result<Self, Web3Error> {
+        let EventData {
+            block_number,
+            result,
+            ..
+        } = event_data;
+
+        // bytes are shown as hex string
+        Ok(Self {
+            block_height: block_number.to_owned().into(),
+            event_nonce: result["_eventNonce"].as_str().unwrap().parse().unwrap(),
+            invalidation_id: hex_str_to_bytes(result["_invalidationId"].as_str().unwrap()).unwrap(),
+            invalidation_nonce: result["_invalidationNonce"]
+                .as_str()
+                .unwrap()
+                .parse()
+                .unwrap(),
+            return_data: hex_str_to_bytes(result["_returnData"].as_str().unwrap()).unwrap(),
+        })
+    }
+
+    fn from_events(input: &Web3Event) -> Result<Vec<Self>, Web3Error> {
+        match input {
+            Web3Event::Logs(logs) => Self::from_logs(logs),
+            Web3Event::Events(events) => {
+                let mut res = Vec::new();
+                for item in events {
+                    res.push(Self::from_event(item)?);
+                }
+                Ok(res)
+            }
+        }
     }
 }
 
