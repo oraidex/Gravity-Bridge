@@ -4,6 +4,7 @@
 use clap::Parser;
 use clarity::Address as EthAddress;
 use clarity::PrivateKey as EthPrivateKey;
+use clarity::Uint256;
 use deep_space::{address::Address as CosmosAddress, Coin};
 use deep_space::{CosmosPrivateKey, EthermintPrivateKey};
 use std::path::PathBuf;
@@ -103,7 +104,8 @@ pub struct ClientOpts {
 #[derive(Parser)]
 pub enum ClientSubcommand {
     CosmosToEth(CosmosToEthOpts),
-    EthToCosmos(EthToCosmosOpts),
+    Erc20ToCosmos(Erc20ToCosmosOpts),
+    Erc721ToCosmos(Erc721ToCosmosOpts),
     DeployErc20Representation(DeployErc20RepresentationOpts),
 }
 
@@ -138,7 +140,7 @@ pub struct CosmosToEthOpts {
 
 /// Send an Ethereum ERC20 token to Cosmos
 #[derive(Parser)]
-pub struct EthToCosmosOpts {
+pub struct Erc20ToCosmosOpts {
     /// The Ethereum private key to use for sending tokens
     #[clap(long, parse(try_from_str))]
     pub ethereum_key: EthPrivateKey,
@@ -154,6 +156,32 @@ pub struct EthToCosmosOpts {
     /// The amount of tokens you are sending eg. 1.2
     #[clap(short, long, parse(try_from_str))]
     pub amount: f64,
+    /// The destination address on the Cosmos blockchain
+    #[clap(short, long, parse(try_from_str))]
+    pub destination: CosmosAddress,
+}
+
+/// Send an Ethereum ERC721 (NFT) token to Cosmos
+#[derive(Parser)]
+pub struct Erc721ToCosmosOpts {
+    /// The Ethereum private key to use for sending tokens
+    #[clap(long, parse(try_from_str))]
+    pub ethereum_key: EthPrivateKey,
+    /// (Optional) The Ethereum RPC server that will be used to submit the transaction
+    #[clap(long, default_value = "http://localhost:8545")]
+    pub ethereum_rpc: String,
+    /// The address fo the Gravity contract on Ethereum
+    #[clap(short, long, parse(try_from_str))]
+    pub gravity_contract_address: EthAddress,
+    /// The address fo the GravityERC721 contract on Ethereum
+    #[clap(long, parse(try_from_str))]
+    pub gravityerc721_contract_address: EthAddress,
+    /// The ERC721 contract address of the ERC721 you are sending
+    #[clap(long, parse(try_from_str))]
+    pub token_contract_address: EthAddress,
+    /// The id of token you are sending, eg. 1
+    #[clap(short, long, parse(try_from_str))]
+    pub token_id: Uint256,
     /// The destination address on the Cosmos blockchain
     #[clap(short, long, parse(try_from_str))]
     pub destination: CosmosAddress,
