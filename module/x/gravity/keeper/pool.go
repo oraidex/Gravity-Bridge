@@ -82,7 +82,7 @@ func (k Keeper) AddToOutgoingPool(
 	// todo: add second index for sender so that we can easily query: give pending Tx by sender
 	// todo: what about a second index for receiver?
 
-	ctx.EventManager().EmitTypedEvent(
+	return nextID, ctx.EventManager().EmitTypedEvent(
 		&types.EventWithdrawalReceived{
 			BridgeContract: k.GetBridgeContractAddress(ctx, evmChainPrefix).GetAddress().Hex(),
 			BridgeChainId:  strconv.Itoa(int(k.GetBridgeChainID(ctx, evmChainPrefix))),
@@ -90,7 +90,6 @@ func (k Keeper) AddToOutgoingPool(
 			Nonce:          fmt.Sprint(nextID),
 		},
 	)
-	return nextID, nil
 }
 
 // RemoveFromOutgoingPoolAndRefund performs the cancel function for pending Sends To Ethereum
@@ -141,7 +140,7 @@ func (k Keeper) RemoveFromOutgoingPoolAndRefund(ctx sdk.Context, evmChainPrefix 
 		return sdkerrors.Wrap(err, "transfer vouchers")
 	}
 
-	ctx.EventManager().EmitTypedEvent(
+	return ctx.EventManager().EmitTypedEvent(
 		&types.EventWithdrawCanceled{
 			Sender:         sender.String(),
 			TxId:           fmt.Sprint(txId),
@@ -149,7 +148,6 @@ func (k Keeper) RemoveFromOutgoingPoolAndRefund(ctx sdk.Context, evmChainPrefix 
 			BridgeChainId:  strconv.Itoa(int(k.GetBridgeChainID(ctx, evmChainPrefix))),
 		},
 	)
-	return nil
 }
 
 // addUnbatchedTx creates a new transaction in the pool

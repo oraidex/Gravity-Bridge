@@ -77,7 +77,7 @@ func (k Keeper) BuildOutgoingTxBatch(
 	checkpoint := batch.GetCheckpoint(k.GetGravityID(ctx, evmChainPrefix))
 	k.SetPastEthSignatureCheckpoint(ctx, evmChainPrefix, checkpoint)
 
-	ctx.EventManager().EmitTypedEvent(
+	return batch, ctx.EventManager().EmitTypedEvent(
 		&types.EventOutgoingBatch{
 			BridgeContract: k.GetBridgeContractAddress(ctx, evmChainPrefix).GetAddress().Hex(),
 			BridgeChainId:  strconv.Itoa(int(k.GetBridgeChainID(ctx, evmChainPrefix))),
@@ -85,7 +85,6 @@ func (k Keeper) BuildOutgoingTxBatch(
 			Nonce:          fmt.Sprint(nextID),
 		},
 	)
-	return batch, nil
 }
 
 // This gets the batch timeout height in evm chain blocks.
@@ -270,7 +269,7 @@ func (k Keeper) CancelOutgoingTxBatch(ctx sdk.Context, evmChainPrefix string, to
 	// Delete it's confirmations as well
 	k.DeleteBatchConfirms(ctx, evmChainPrefix, *batch)
 
-	ctx.EventManager().EmitTypedEvent(
+	return ctx.EventManager().EmitTypedEvent(
 		&types.EventOutgoingBatchCanceled{
 			BridgeContract: k.GetBridgeContractAddress(ctx, evmChainPrefix).GetAddress().Hex(),
 			BridgeChainId:  strconv.Itoa(int(k.GetBridgeChainID(ctx, evmChainPrefix))),
@@ -278,7 +277,6 @@ func (k Keeper) CancelOutgoingTxBatch(ctx sdk.Context, evmChainPrefix string, to
 			Nonce:          fmt.Sprint(nonce),
 		},
 	)
-	return nil
 }
 
 // IterateOutgoingTxBatches iterates through all outgoing batches in DESC order.

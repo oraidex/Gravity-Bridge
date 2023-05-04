@@ -64,7 +64,11 @@ func (a AttestationHandler) handleSendToCosmos(ctx sdk.Context, claim types.MsgS
 
 	if err != nil {
 		invalidAddress = true
-		hash, _ := claim.ClaimHash()
+		hash, er := claim.ClaimHash()
+		if er != nil {
+			return sdkerrors.Wrapf(er, "Could not compute ClaimHash for claim %v: %v", claim, er)
+		}
+
 		a.keeper.logger(ctx).Error("Invalid SendToCosmos receiver",
 			"address", sdk.AccAddress(receiverAddress).String(),
 			"cause", err.Error(),
@@ -79,7 +83,10 @@ func (a AttestationHandler) handleSendToCosmos(ctx sdk.Context, claim types.MsgS
 	// a bogus event, this would create lost tokens stuck in the bridge
 	// and not accessible to anyone
 	if errTokenAddress != nil {
-		hash, _ := claim.ClaimHash()
+		hash, er := claim.ClaimHash()
+		if er != nil {
+			return sdkerrors.Wrapf(er, "Unable to log error %v, could not compute ClaimHash for claim %v: %v", errTokenAddress, claim, er)
+		}
 		a.keeper.logger(ctx).Error("Invalid token contract",
 			"cause", errTokenAddress.Error(),
 			"claim type", claim.GetType(),
@@ -90,7 +97,10 @@ func (a AttestationHandler) handleSendToCosmos(ctx sdk.Context, claim types.MsgS
 	}
 	// likewise nil sender would have to be caused by a bogus event
 	if errEvmChainSender != nil {
-		hash, _ := claim.ClaimHash()
+		hash, er := claim.ClaimHash()
+		if er != nil {
+			return sdkerrors.Wrapf(er, "Unable to log error %v, could not compute ClaimHash for claim %v: %v", errEvmChainSender, claim, er)
+		}
 		a.keeper.logger(ctx).Error("Invalid evm chain sender",
 			"cause", errEvmChainSender.Error(),
 			"claim type", claim.GetType(),
@@ -103,7 +113,10 @@ func (a AttestationHandler) handleSendToCosmos(ctx sdk.Context, claim types.MsgS
 	// Block blacklisted asset transfers
 	// (these funds are unrecoverable for the blacklisted sender, they will instead be sent to community pool)
 	if a.keeper.IsOnBlacklist(ctx, claim.EvmChainPrefix, *evmChainSender) {
-		hash, _ := claim.ClaimHash()
+		hash, er := claim.ClaimHash()
+		if er != nil {
+			return sdkerrors.Wrapf(er, "Unable to log blacklisted error, could not compute ClaimHash for claim %v: %v", claim, er)
+		}
 		a.keeper.logger(ctx).Error("Invalid SendToCosmos: receiver is blacklisted",
 			"address", sdk.AccAddress(receiverAddress).String(),
 			"claim type", claim.GetType(),
@@ -149,7 +162,10 @@ func (a AttestationHandler) handleSendToCosmos(ctx sdk.Context, claim types.MsgS
 	// so we deposit the tokens into the community pool for later use via governance vote
 	if invalidAddress {
 		if err := a.keeper.SendToCommunityPool(ctx, coins); err != nil {
-			hash, _ := claim.ClaimHash()
+			hash, er := claim.ClaimHash()
+			if er != nil {
+				return sdkerrors.Wrapf(er, "Unable to log error %v, could not compute ClaimHash for claim %v: %v", err, claim, er)
+			}
 			a.keeper.logger(ctx).Error("Failed community pool send",
 				"cause", err.Error(),
 				"claim type", claim.GetType(),
@@ -412,7 +428,11 @@ func (a AttestationHandler) mintEthereumOriginatedVouchers(
 		// in this case we have lost tokens! They are in the bridge, but not
 		// in the community pool or out in some users balance, every instance of this
 		// error needs to be detected and resolved
-		hash, _ := claim.ClaimHash()
+		hash, er := claim.ClaimHash()
+		if er != nil {
+			return sdkerrors.Wrapf(er, "Unable to log error %v, could not compute ClaimHash for claim %v: %v", err, claim, er)
+		}
+
 		a.keeper.logger(ctx).Error("Failed minting",
 			"cause", err.Error(),
 			"claim type", claim.GetType(),
@@ -457,7 +477,11 @@ func (a AttestationHandler) sendCoinToCosmosAccount(
 	if len(sourceChannel) == 0 && len(accountPrefix) > 0 {
 		hrpIbcRecord, err := a.keeper.bech32IbcKeeper.GetHrpIbcRecord(ctx, accountPrefix)
 		if err != nil {
-			hash, _ := claim.ClaimHash()
+			hash, er := claim.ClaimHash()
+			if er != nil {
+				return false, sdkerrors.Wrapf(er, "Unable to log error %v, could not compute ClaimHash for claim %v: %v", err, claim, er)
+			}
+
 			a.keeper.logger(ctx).Error("Unregistered foreign prefix",
 				"cause", err.Error(), "address", receiver,
 				"claim type", claim.GetType(),
@@ -498,8 +522,11 @@ func (a AttestationHandler) sendCoinToLocalAddress(
 
 	err = a.keeper.bankKeeper.SendCoinsFromModuleToAccount(ctx, types.ModuleName, receiver, sdk.NewCoins(coin))
 	if err != nil {
-		// someone attempted to send tokens to a blacklisted user from evm chain, log and send to Community pool
-		hash, _ := claim.ClaimHash()
+		// someone attempted to send tokens to a blacklisted user from Ethereum, log and send to Community pool
+		hash, er := claim.ClaimHash()
+		if er != nil {
+			return sdkerrors.Wrapf(er, "Unable to log error %v, could not compute ClaimHash for claim %v: %v", err, claim, er)
+		}
 		a.keeper.logger(ctx).Error("Blacklisted deposit",
 			"cause", err.Error(),
 			"claim type", claim.GetType(),

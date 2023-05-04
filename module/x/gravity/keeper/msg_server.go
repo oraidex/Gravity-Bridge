@@ -76,15 +76,12 @@ func (k msgServer) SetOrchestratorAddress(c context.Context, msg *types.MsgSetOr
 	// set the evm address
 	k.SetEvmAddressForValidator(ctx, val, *ethAddr)
 
-	ctx.EventManager().EmitTypedEvent(
+	return &types.MsgSetOrchestratorAddressResponse{}, ctx.EventManager().EmitTypedEvent(
 		&types.EventSetOperatorAddress{
 			Message: msg.Type(),
 			Address: orch.String(),
 		},
 	)
-
-	return &types.MsgSetOrchestratorAddressResponse{}, nil
-
 }
 
 // ValsetConfirm handles MsgValsetConfirm
@@ -112,14 +109,12 @@ func (k msgServer) ValsetConfirm(c context.Context, msg *types.MsgValsetConfirm)
 	}
 	key := k.SetValsetConfirm(ctx, *msg)
 
-	ctx.EventManager().EmitTypedEvent(
+	return &types.MsgValsetConfirmResponse{}, ctx.EventManager().EmitTypedEvent(
 		&types.EventValsetConfirmKey{
 			Message: msg.Type(),
 			Key:     string(key),
 		},
 	)
-
-	return &types.MsgValsetConfirmResponse{}, nil
 }
 
 // SendToEth handles MsgSendToEth
@@ -153,14 +148,12 @@ func (k msgServer) SendToEth(c context.Context, msg *types.MsgSendToEth) (*types
 		return nil, sdkerrors.Wrap(err, "Could not add to outgoing pool")
 	}
 
-	ctx.EventManager().EmitTypedEvent(
+	return &types.MsgSendToEthResponse{}, ctx.EventManager().EmitTypedEvent(
 		&types.EventOutgoingTxId{
 			Message: msg.Type(),
 			TxId:    fmt.Sprint(txID),
 		},
 	)
-
-	return &types.MsgSendToEthResponse{}, nil
 }
 
 // checkAndDeductSendToEthFees asserts that the minimum chainFee has been met for the given sendAmount
@@ -192,6 +185,7 @@ func (k msgServer) checkAndDeductSendToEthFees(ctx sdk.Context, sender sdk.AccAd
 	}
 
 	// Finally, collect any provided fees
+	// nolint: exhaustruct
 	if !(chainFee == sdk.Coin{}) && chainFee.Amount.IsPositive() {
 		senderAcc := k.accountKeeper.GetAccount(ctx, sender)
 
@@ -202,7 +196,7 @@ func (k msgServer) checkAndDeductSendToEthFees(ctx sdk.Context, sender sdk.AccAd
 		}
 
 		// Report the fee collection to the event log
-		ctx.EventManager().EmitTypedEvent(
+		return ctx.EventManager().EmitTypedEvent(
 			&types.EventSendToEthFeeCollected{
 				Sender:     sender.String(),
 				SendAmount: sendAmount.String(),
@@ -230,14 +224,12 @@ func (k msgServer) RequestBatch(c context.Context, msg *types.MsgRequestBatch) (
 		return nil, sdkerrors.Wrap(err, "Could not build outgoing tx batch")
 	}
 
-	ctx.EventManager().EmitTypedEvent(
+	return &types.MsgRequestBatchResponse{}, ctx.EventManager().EmitTypedEvent(
 		&types.EventBatchCreated{
 			Message:    msg.Type(),
 			BatchNonce: fmt.Sprint(batch.BatchNonce),
 		},
 	)
-
-	return &types.MsgRequestBatchResponse{}, nil
 }
 
 // ConfirmBatch handles MsgConfirmBatch
@@ -276,14 +268,12 @@ func (k msgServer) ConfirmBatch(c context.Context, msg *types.MsgConfirmBatch) (
 	}
 	key := k.SetBatchConfirm(ctx, msg)
 
-	ctx.EventManager().EmitTypedEvent(
+	return &types.MsgConfirmBatchResponse{}, ctx.EventManager().EmitTypedEvent(
 		&types.EventBatchConfirmKey{
 			Message:         msg.Type(),
 			BatchConfirmKey: string(key),
 		},
 	)
-
-	return nil, nil
 }
 
 // ConfirmLogicCall handles MsgConfirmLogicCall
@@ -356,15 +346,13 @@ func (k msgServer) claimHandlerCommon(ctx sdk.Context, msgAny *codectypes.Any, m
 	}
 
 	// Emit the handle message event
-	ctx.EventManager().EmitTypedEvent(
+	return ctx.EventManager().EmitTypedEvent(
 		&types.EventClaim{
 			Message:       string(msg.GetType()),
 			ClaimHash:     string(hash),
 			AttestationId: string(types.GetAttestationKey(msg.GetEvmChainPrefix(), msg.GetEventNonce(), hash)),
 		},
 	)
-
-	return nil
 }
 
 // confirmHandlerCommon is an internal function that provides common code for processing claim messages
@@ -577,14 +565,15 @@ func (k msgServer) SubmitBadSignatureEvidence(c context.Context, msg *types.MsgS
 	ctx := sdk.UnwrapSDKContext(c)
 
 	err := k.CheckBadSignatureEvidence(ctx, msg)
+	if err != nil {
+		return nil, err
+	}
 
-	ctx.EventManager().EmitTypedEvent(
+	return &types.MsgSubmitBadSignatureEvidenceResponse{}, ctx.EventManager().EmitTypedEvent(
 		&types.EventBadSignatureEvidence{
 			Message:                fmt.Sprint(msg.Type()),
 			BadEthSignature:        fmt.Sprint(msg.Signature),
 			BadEthSignatureSubject: fmt.Sprint(msg.Subject),
 		},
 	)
-
-	return &types.MsgSubmitBadSignatureEvidenceResponse{}, err
 }

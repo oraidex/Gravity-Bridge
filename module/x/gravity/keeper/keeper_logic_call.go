@@ -86,14 +86,12 @@ func (k Keeper) CancelOutgoingLogicCall(ctx sdk.Context, evmChainPrefix string, 
 	k.DeleteOutgoingLogicCall(ctx, evmChainPrefix, call.InvalidationId, call.InvalidationNonce)
 
 	// a consuming application will have to watch for this event and act on it
-	ctx.EventManager().EmitTypedEvent(
+	return ctx.EventManager().EmitTypedEvent(
 		&types.EventOutgoingLogicCallCanceled{
 			LogicCallInvalidationId:    fmt.Sprint(call.InvalidationId),
 			LogicCallInvalidationNonce: fmt.Sprint(call.InvalidationNonce),
 		},
 	)
-
-	return nil
 }
 
 /////////////////////////////

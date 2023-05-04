@@ -421,10 +421,13 @@ func TestMigrateStoreKeysFromKeys(t *testing.T) {
 
 	nonce := uint64(1234)
 
-	accAddr, _ := sdk.AccAddressFromBech32("gravity1ahx7f8wyertuus9r20284ej0asrs085ceqtfnm")
-	valAddr, _ := sdk.ValAddressFromBech32("gravityvaloper1jpz0ahls2chajf78nkqczdwwuqcu97w6j77vg6")
+	accAddr, err := sdk.AccAddressFromBech32("gravity1ahx7f8wyertuus9r20284ej0asrs085ceqtfnm")
+	require.NoError(t, err)
+	valAddr, err := sdk.ValAddressFromBech32("gravityvaloper1jpz0ahls2chajf78nkqczdwwuqcu97w6j77vg6")
+	require.NoError(t, err)
 	ethAddrStr := "0xdD80fdC958aD08C02105AF7a6A6642BC489E22F7"
-	ethAddr, _ := types.NewEthAddress(ethAddrStr)
+	ethAddr, err := types.NewEthAddress(ethAddrStr)
+	require.NoError(t, err)
 
 	dummyCheckpoint := "0x1de95c9ace999f8ec70c6dc8d045942da2612950567c4861aca959c0650194da"
 
@@ -498,7 +501,7 @@ func TestMigrateStoreKeysFromKeys(t *testing.T) {
 	}
 
 	// Run migrations
-	err := v2.MigrateStore(ctx, gravityKey, marshaler)
+	err = v2.MigrateStore(ctx, gravityKey, marshaler)
 	require.NoError(t, err)
 
 	// checks results of migration
@@ -526,9 +529,12 @@ func TestMigrateStoreKeysFromValues(t *testing.T) {
 
 	marshaler := keeper.MakeTestMarshaler()
 
-	ethAddr, _ := types.NewEthAddress("0x2a24af0501a534fca004ee1bd667b783f205a546")
-	tokenContract, _ := types.NewEthAddress("0x429881672B9AE42b8EbA0E26cD9C73711b891Ca5")
-	accAddr, _ := sdk.AccAddressFromBech32("gravity1ahx7f8wyertuus9r20284ej0asrs085ceqtfnm")
+	ethAddr, err := types.NewEthAddress("0x2a24af0501a534fca004ee1bd667b783f205a546")
+	require.NoError(t, err)
+	tokenContract, err := types.NewEthAddress("0x429881672B9AE42b8EbA0E26cD9C73711b891Ca5")
+	require.NoError(t, err)
+	accAddr, err := sdk.AccAddressFromBech32("gravity1ahx7f8wyertuus9r20284ej0asrs085ceqtfnm")
+	require.NoError(t, err)
 
 	dummyOutgoingTxBatch := types.OutgoingTxBatch{
 		BatchNonce:         1,
@@ -572,13 +578,14 @@ func TestMigrateStoreKeysFromValues(t *testing.T) {
 
 	// additional data for creating InternalOutgoingTransferTx
 	tokenId := uint64(1)
-	myReceiver, _ := types.NewEthAddress("0xd041c41EA1bf0F006ADBb6d2c9ef9D425dE5eaD7")
+	myReceiver, err := types.NewEthAddress("0xd041c41EA1bf0F006ADBb6d2c9ef9D425dE5eaD7")
+	require.NoError(t, err)
 	tokenFee, err := types.NewInternalERC20Token(sdk.NewIntFromUint64(3), tokenContract.GetAddress().String())
 	require.NoError(t, err)
 	tokenAmount, err := types.NewInternalERC20Token(sdk.NewIntFromUint64(101), tokenContract.GetAddress().String())
 	require.NoError(t, err)
 
-	dummyInternalOutgoingTransferTx, _ := types.NewInternalOutgoingTransferTx(tokenId, accAddr.String(), myReceiver.GetAddress().String(), tokenAmount.ToExternal(), tokenFee.ToExternal())
+	dummyInternalOutgoingTransferTx, err := types.NewInternalOutgoingTransferTx(tokenId, accAddr.String(), myReceiver.GetAddress().String(), tokenAmount.ToExternal(), tokenFee.ToExternal())
 	require.NoError(t, err)
 
 	val := dummyInternalOutgoingTransferTx.ToExternal()
@@ -598,13 +605,15 @@ func TestMigrateStoreKeysFromValues(t *testing.T) {
 		Orchestrator:   "0x00000000000000000004",
 		EvmChainPrefix: keeper.EthChainPrefix,
 	}
-	any, _ := codectypes.NewAnyWithValue(&msg)
+	any, err := codectypes.NewAnyWithValue(&msg)
+	require.NoError(t, err)
 
 	hash, err := msg.ClaimHash()
 	require.NoError(t, err)
 
 	dummyAttestation := &types.Attestation{
 		Observed: false,
+		Votes:    []string{},
 		Height:   uint64(1),
 		Claim:    any,
 	}
@@ -628,6 +637,7 @@ func TestMigrateStoreKeysFromValues(t *testing.T) {
 		Timeout:              10000,
 		InvalidationId:       invalidationId,
 		InvalidationNonce:    uint64(invalidationNonce),
+		CosmosBlockCreated:   0,
 	}
 
 	var valAddr sdk.AccAddress = bytes.Repeat([]byte{byte(1)}, 20)
@@ -735,7 +745,8 @@ func TestMigrateInvalidStore(t *testing.T) {
 
 	marshaler := keeper.MakeTestMarshaler()
 
-	ethAddr, _ := types.NewEthAddress("0x2a24af0501a534fca004ee1bd667b783f205a546")
+	ethAddr, err := types.NewEthAddress("0x2a24af0501a534fca004ee1bd667b783f205a546")
+	require.NoError(t, err)
 	// 43 chars length
 	invalidEthAddress := "0x2a24af0501a534fca004ee1bd667b783f205a5465"
 	// invalid instead of gravity prefix

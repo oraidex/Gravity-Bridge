@@ -266,17 +266,19 @@ func ValidateStore(ctx sdk.Context, evmChainPrefix string, k Keeper) error {
 	lastObservedEthereumClaimHeight := uint64(0) // used later to validate ethereum claim height
 	// OracleAttestationKey
 	k.IterateAttestations(ctx, evmChainPrefix, false, func(key []byte, att types.Attestation) (stop bool) {
-		err = att.ValidateBasic(k.cdc)
-		if err != nil {
-
-			err = fmt.Errorf("Invalid attestation %v in IterateAttestations: %v", att, err)
+		er := att.ValidateBasic(k.cdc)
+		if er != nil {
+			err = fmt.Errorf("Invalid attestation %v in IterateAttestations: %v", att, er)
 			return true
 		}
-		claim, _ := k.UnpackAttestationClaim(&att) // Already unpacked in ValidateBasic
+		claim, er := k.UnpackAttestationClaim(&att) // Already unpacked in ValidateBasic
+		if er != nil {
+			err = fmt.Errorf("Invalid attestation claim %v in IterateAttestations: %v", att, er)
+			return true
+		}
 		if att.Observed {
 			if claim.GetEventNonce() > lastObservedEventNonce {
-				err = fmt.Errorf("%s: last observed event nonce <> observed attestation nonce mismatch (%v < %v)", types.ErrInvalidAttestation, lastObservedEventNonce, claim.GetEventNonce())
-				// err = types.ErrInvalidAttestation // signal by setting err non-nil
+				err = fmt.Errorf("last observed event nonce <> observed attestation nonce mismatch (%v < %v)", lastObservedEventNonce, claim.GetEventNonce())
 				return true
 			}
 			claimHeight := claim.GetEthBlockHeight()

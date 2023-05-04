@@ -39,14 +39,16 @@ func (k Keeper) SetValsetRequest(ctx sdk.Context, evmChainPrefix string) types.V
 	checkpoint := valset.GetCheckpoint(k.GetGravityID(ctx, evmChainPrefix))
 	k.SetPastEthSignatureCheckpoint(ctx, evmChainPrefix, checkpoint)
 
-	ctx.EventManager().EmitTypedEvent(
+	if err := ctx.EventManager().EmitTypedEvent(
 		&types.EventMultisigUpdateRequest{
 			BridgeContract: k.GetBridgeContractAddress(ctx, evmChainPrefix).GetAddress().Hex(),
 			BridgeChainId:  strconv.Itoa(int(k.GetBridgeChainID(ctx, evmChainPrefix))),
 			MultisigId:     fmt.Sprint(valset.Nonce),
 			Nonce:          fmt.Sprint(valset.Nonce),
 		},
-	)
+	); err != nil {
+		panic(err)
+	}
 
 	return valset
 }
@@ -254,6 +256,7 @@ func (k Keeper) IterateValsetBySlashedValsetNonce(ctx sdk.Context, evmChainPrefi
 func (k Keeper) GetCurrentValset(ctx sdk.Context, evmChainPrefix string) (types.Valset, error) {
 	validators := k.StakingKeeper.GetBondedValidatorsByPower(ctx)
 	if len(validators) == 0 {
+		// nolint: exhaustruct
 		return types.Valset{}, types.ErrNoValidators
 	}
 	// allocate enough space for all validators, but len zero, we then append

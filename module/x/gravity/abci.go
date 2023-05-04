@@ -279,12 +279,14 @@ func valsetSlashing(ctx sdk.Context, k keeper.Keeper, params types.Params, evmCh
 					val = updateValidator(ctx, k, val.GetOperator())
 					if !val.IsJailed() {
 						k.StakingKeeper.Slash(ctx, consAddr, ctx.BlockHeight(), val.ConsensusPower(sdk.DefaultPowerReduction), params.SlashFractionValset)
-						ctx.EventManager().EmitTypedEvent(
+						if err := ctx.EventManager().EmitTypedEvent(
 							&types.EventSignatureSlashing{
 								Type:    types.AttributeKeyValsetSignatureSlashing,
 								Address: consAddr.String(),
 							},
-						)
+						); err != nil {
+							panic(fmt.Errorf("Unable to emit slashing event: %v", err))
+						}
 
 						k.StakingKeeper.Jail(ctx, consAddr)
 					}
@@ -324,12 +326,14 @@ func valsetSlashing(ctx sdk.Context, k keeper.Keeper, params types.Params, evmCh
 					validator = updateValidator(ctx, k, validator.GetOperator())
 					if !validator.IsJailed() {
 						k.StakingKeeper.Slash(ctx, valConsAddr, ctx.BlockHeight(), validator.ConsensusPower(sdk.DefaultPowerReduction), params.SlashFractionValset)
-						ctx.EventManager().EmitTypedEvent(
+						if err := ctx.EventManager().EmitTypedEvent(
 							&types.EventSignatureSlashing{
 								Type:    types.AttributeKeyValsetSignatureSlashing,
 								Address: valConsAddr.String(),
 							},
-						)
+						); err != nil {
+							panic(fmt.Errorf("Unable to emit slashing event: %v", err))
+						}
 						k.StakingKeeper.Jail(ctx, valConsAddr)
 					}
 				}
@@ -431,12 +435,14 @@ func batchSlashing(ctx sdk.Context, k keeper.Keeper, params types.Params, evmCha
 					val = updateValidator(ctx, k, val.GetOperator())
 					if !val.IsJailed() {
 						k.StakingKeeper.Slash(ctx, consAddr, ctx.BlockHeight(), val.ConsensusPower(sdk.DefaultPowerReduction), params.SlashFractionBatch)
-						ctx.EventManager().EmitTypedEvent(
+						if err := ctx.EventManager().EmitTypedEvent(
 							&types.EventSignatureSlashing{
 								Type:    types.AttributeKeyBatchSignatureSlashing,
 								Address: consAddr.String(),
 							},
-						)
+						); err != nil {
+							panic(fmt.Errorf("Unable to emit slashing event: %v", err))
+						}
 						k.StakingKeeper.Jail(ctx, consAddr)
 					}
 				}
@@ -508,12 +514,14 @@ func logicCallSlashing(ctx sdk.Context, k keeper.Keeper, params types.Params, ev
 					val = updateValidator(ctx, k, val.GetOperator())
 					if !val.IsJailed() {
 						k.StakingKeeper.Slash(ctx, consAddr, ctx.BlockHeight(), val.ConsensusPower(sdk.DefaultPowerReduction), params.SlashFractionLogicCall)
-						ctx.EventManager().EmitTypedEvent(
+						if err := ctx.EventManager().EmitTypedEvent(
 							&types.EventSignatureSlashing{
 								Type:    types.AttributeKeyLogicCallSignatureSlashing,
 								Address: consAddr.String(),
 							},
-						)
+						); err != nil {
+							panic(fmt.Errorf("Unable to emit slashing event: %v", err))
+						}
 						k.StakingKeeper.Jail(ctx, consAddr)
 					}
 				}

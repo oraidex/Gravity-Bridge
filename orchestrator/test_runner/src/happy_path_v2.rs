@@ -7,6 +7,7 @@ use crate::utils::get_erc20_balance_safe;
 use crate::utils::get_event_nonce_safe;
 use crate::utils::get_user_key;
 use crate::utils::send_one_eth;
+use crate::utils::stake_metadata;
 use crate::utils::start_orchestrators;
 use crate::EVM_CHAIN_PREFIX;
 use crate::MINER_ADDRESS;
@@ -34,6 +35,27 @@ use web30::client::Web3;
 use web30::types::SendTxOption;
 use web30::EthAddress;
 
+pub async fn happy_path_test_v2_native(
+    web30: &Web3,
+    grpc_client: GravityQueryClient<Channel>,
+    contact: &Contact,
+    keys: Vec<ValidatorKeys>,
+    gravity_address: EthAddress,
+    validator_out: bool,
+) {
+    let native_metadata = stake_metadata(contact).await;
+    deploy_and_bridge_cosmos_token(
+        web30,
+        grpc_client.clone(),
+        contact,
+        keys.clone(),
+        gravity_address,
+        validator_out,
+        native_metadata,
+    )
+    .await;
+}
+
 pub async fn happy_path_test_v2(
     web30: &Web3,
     grpc_client: GravityQueryClient<Channel>,
@@ -43,13 +65,33 @@ pub async fn happy_path_test_v2(
     validator_out: bool,
     ibc_metadata: Option<Metadata>,
 ) {
-    let mut grpc_client = grpc_client;
-
     let ibc_metadata = match ibc_metadata {
         Some(metadata) => metadata,
         None => footoken_metadata(contact).await,
     };
 
+    deploy_and_bridge_cosmos_token(
+        web30,
+        grpc_client.clone(),
+        contact,
+        keys.clone(),
+        gravity_address,
+        validator_out,
+        ibc_metadata.clone(),
+    )
+    .await;
+}
+
+pub async fn deploy_and_bridge_cosmos_token(
+    web30: &Web3,
+    grpc_client: GravityQueryClient<Channel>,
+    contact: &Contact,
+    keys: Vec<ValidatorKeys>,
+    gravity_address: EthAddress,
+    validator_out: bool,
+    ibc_metadata: Metadata,
+) {
+    let mut grpc_client = grpc_client;
     let erc20_contract = deploy_cosmos_representing_erc20_and_check_adoption(
         gravity_address,
         web30,

@@ -532,9 +532,12 @@ func (msg MsgBatchSendToEthClaim) GetSignBytes() []byte {
 func (msg MsgBatchSendToEthClaim) GetClaimer() sdk.AccAddress {
 	err := msg.ValidateBasic()
 	if err != nil {
-		panic("MsgBatchSendToEthClaim failed ValidateBasic! Should have been handled earlier")
+		panic(fmt.Errorf("MsgBatchSendToEthClaim failed ValidateBasic! Should have been handled earlier: %v", err))
 	}
-	val, _ := sdk.AccAddressFromBech32(msg.Orchestrator)
+	val, err := sdk.AccAddressFromBech32(msg.Orchestrator)
+	if err != nil {
+		panic(fmt.Errorf("Invalid orchestrator: %v", err))
+	}
 	return val
 }
 
@@ -599,7 +602,10 @@ func (msg MsgERC20DeployedClaim) GetClaimer() sdk.AccAddress {
 		panic("MsgERC20DeployedClaim failed ValidateBasic! Should have been handled earlier")
 	}
 
-	val, _ := sdk.AccAddressFromBech32(msg.Orchestrator)
+	val, err := sdk.AccAddressFromBech32(msg.Orchestrator)
+	if err != nil {
+		panic(err)
+	}
 	return val
 }
 
@@ -667,7 +673,10 @@ func (msg MsgLogicCallExecutedClaim) GetClaimer() sdk.AccAddress {
 		panic("MsgERC20DeployedClaim failed ValidateBasic! Should have been handled earlier")
 	}
 
-	val, _ := sdk.AccAddressFromBech32(msg.Orchestrator)
+	val, err := sdk.AccAddressFromBech32(msg.Orchestrator)
+	if err != nil {
+		panic(err)
+	}
 	return val
 }
 
@@ -743,10 +752,13 @@ func (msg MsgValsetUpdatedClaim) GetSignBytes() []byte {
 func (msg MsgValsetUpdatedClaim) GetClaimer() sdk.AccAddress {
 	err := msg.ValidateBasic()
 	if err != nil {
-		panic("MsgERC20DeployedClaim failed ValidateBasic! Should have been handled earlier")
+		panic(fmt.Errorf("MsgERC20DeployedClaim failed ValidateBasic! Should have been handled earlier: %v", err))
 	}
 
-	val, _ := sdk.AccAddressFromBech32(msg.Orchestrator)
+	val, err := sdk.AccAddressFromBech32(msg.Orchestrator)
+	if err != nil {
+		panic(fmt.Errorf("Orchestrator is invalid: %v", err))
+	}
 	return val
 }
 
