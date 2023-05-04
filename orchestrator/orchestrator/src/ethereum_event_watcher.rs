@@ -21,7 +21,7 @@ use gravity_utils::{
     },
 };
 use metrics_exporter::metrics_errors_counter;
-use relayer::find_latest_valset::convert_block_to_search;
+use relayer::utils::convert_block_to_search;
 use tokio::try_join;
 use tonic::transport::Channel;
 use web30::client::Web3;
