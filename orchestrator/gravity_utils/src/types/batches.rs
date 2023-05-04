@@ -7,7 +7,7 @@ use clarity::Signature as EthSignature;
 use deep_space::Address as CosmosAddress;
 use log::LevelFilter;
 use std::convert::TryFrom;
-use tokio::join;
+use tokio::try_join;
 use web30::client::Web3;
 use web30::EthAddress;
 
@@ -88,14 +88,14 @@ impl TransactionBatch {
         let tx_value_dai = get_dai_price(pubkey, token, tx_total.clone(), web30);
         let token_symbol = web30.get_erc20_symbol(token, pubkey);
         let current_block = web30.eth_block_number();
-        if let (
-            Ok(fee_value_weth),
-            Ok(fee_value_dai),
-            Ok(tx_value_weth),
-            Ok(tx_value_dai),
-            Ok(token_symbol),
-            Ok(current_block),
-        ) = join!(
+        if let Ok((
+            fee_value_weth,
+            fee_value_dai,
+            tx_value_weth,
+            tx_value_dai,
+            token_symbol,
+            current_block,
+        )) = try_join!(
             fee_value_weth,
             fee_value_dai,
             tx_value_weth,
