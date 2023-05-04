@@ -3,6 +3,7 @@ module github.com/Gravity-Bridge/Gravity-Bridge/module
 go 1.18
 
 require (
+	github.com/bianjieai/nft-transfer v1.1.1-beta.0.20230423022320-36d37f459aab
 	github.com/cosmos/cosmos-sdk v0.46.10
 	github.com/cosmos/ibc-go/v6 v6.1.0
 )
