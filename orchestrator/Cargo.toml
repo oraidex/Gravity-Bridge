@@ -19,8 +19,8 @@ prost = "0.11"
 prost-types = "0.11"
 tonic = "0.8"
 tokio = "1.21"
-cosmos-sdk-proto = { git = "https://github.com/oraichain/cosmos-rust", rev = "19f3de7", package = "cosmos-sdk-proto-althea", features = ["bech32ibc", "ethermint"] }
-web30 = { git = "https://github.com/oraichain/web30.git", rev = "339c820" }
+cosmos-sdk-proto = {git = "https://github.com/oraichain/cosmos-rust", rev = "19f3de7", package = "cosmos-sdk-proto-althea"}
+web30 = { git = "https://github.com/oraichain/web30.git", rev = "419a1b3" }
 deep_space = { git ="https://github.com/oraichain/deep_space.git", rev = "d2b2e56" }
 prometheus_exporter = {git="https://github.com/jkilpatr/prometheus_exporter", rev="c6a720a"}
 
