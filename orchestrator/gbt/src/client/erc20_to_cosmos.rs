@@ -1,6 +1,6 @@
 use std::process::exit;
 
-use crate::args::EthToCosmosOpts;
+use crate::args::Erc20ToCosmosOpts;
 use crate::utils::TIMEOUT;
 use ethereum_gravity::send_to_cosmos::send_to_cosmos;
 use ethereum_gravity::utils::get_valset_nonce;
@@ -9,7 +9,7 @@ use gravity_utils::{
     num_conversion::fraction_to_exponent,
 };
 
-pub async fn eth_to_cosmos(args: EthToCosmosOpts, prefix: String) {
+pub async fn erc20_to_cosmos(args: Erc20ToCosmosOpts, prefix: String) {
     let gravity_address = args.gravity_contract_address;
     let erc20_address = args.token_contract_address;
     let cosmos_dest = args.destination;

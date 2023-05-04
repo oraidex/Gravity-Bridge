@@ -18,6 +18,7 @@ contract GravityERC721 is ERC721Holder, ReentrancyGuard {
 		address indexed _sender,
 		string _destination,
 		uint256 _tokenId,
+		string _tokenURI,
 		uint256 _eventNonce
 	);
 
@@ -40,7 +41,8 @@ contract GravityERC721 is ERC721Holder, ReentrancyGuard {
 			_tokenContract,
 			msg.sender,
 			_destination,
-			_tokenId, 
+			_tokenId,
+			ERC721(_tokenContract).tokenURI(_tokenId),
 			state_lastERC721EventNonce
 		);
 	}
