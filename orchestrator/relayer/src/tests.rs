@@ -2,7 +2,7 @@ use std::{str::FromStr, time::Duration};
 
 use actix::System;
 use ethereum_gravity::message_signatures::encode_valset_confirm;
-use futures::join;
+use futures::try_join;
 use sha3::{Digest, Keccak256};
 use web30::{client::Web3, EthAddress};
 
@@ -56,12 +56,13 @@ fn test_compare_checkpoint_hash_bsc_network() {
         let nonce_future = get_latest_valset_nonce(gravity_contract_addr, &web3);
         let eth_checkpoint_hash_future = get_eth_gravity_checkpoint(gravity_contract_addr, &web3);
         let gravity_id_future = get_gravity_id(gravity_contract_addr, &web3);
-        if let (Ok(nonce), Ok(eth_checkpoint_hash), Ok(gravity_id), Ok(mut grpc_client)) = join!(
-            nonce_future,
-            eth_checkpoint_hash_future,
-            gravity_id_future,
-            GravityQueryClient::connect(oraibridge_grpc_url)
-        ) {
+        let mut grpc_client = GravityQueryClient::connect(oraibridge_grpc_url)
+            .await
+            .unwrap();
+
+        if let Ok((nonce, eth_checkpoint_hash, gravity_id)) =
+            try_join!(nonce_future, eth_checkpoint_hash_future, gravity_id_future)
+        {
             let result =
                 cosmos_gravity::query::get_valset(&mut grpc_client, evm_chain_prefix, nonce)
                     .await
@@ -89,12 +90,13 @@ fn test_compare_checkpoint_hash_tron_network() {
         let nonce_future = get_latest_valset_nonce(gravity_contract_addr, &web3);
         let eth_checkpoint_hash_future = get_eth_gravity_checkpoint(gravity_contract_addr, &web3);
         let gravity_id_future = get_gravity_id(gravity_contract_addr, &web3);
-        if let (Ok(nonce), Ok(eth_checkpoint_hash), Ok(gravity_id), Ok(mut grpc_client)) = join!(
-            nonce_future,
-            eth_checkpoint_hash_future,
-            gravity_id_future,
-            GravityQueryClient::connect(oraibridge_grpc_url)
-        ) {
+        let mut grpc_client = GravityQueryClient::connect(oraibridge_grpc_url)
+            .await
+            .unwrap();
+
+        if let Ok((nonce, eth_checkpoint_hash, gravity_id)) =
+            try_join!(nonce_future, eth_checkpoint_hash_future, gravity_id_future)
+        {
             let result =
                 cosmos_gravity::query::get_valset(&mut grpc_client, evm_chain_prefix, nonce)
                     .await
