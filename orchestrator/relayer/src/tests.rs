@@ -2,8 +2,8 @@ use std::{str::FromStr, time::Duration};
 
 use actix::System;
 use ethereum_gravity::message_signatures::encode_valset_confirm;
-use futures::try_join;
 use sha3::{Digest, Keccak256};
+use tokio::try_join;
 use web30::{client::Web3, EthAddress};
 
 use gravity_proto::gravity::query_client::QueryClient as GravityQueryClient;
