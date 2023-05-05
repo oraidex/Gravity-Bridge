@@ -1,8 +1,8 @@
 use clarity::Address;
 use ethereum_gravity::message_signatures::encode_valset_confirm;
-use futures::try_join;
 use gravity_proto::gravity::query_client::QueryClient as GravityQueryClient;
 use gravity_utils::{error::GravityError, types::Valset};
+use tokio::try_join;
 use tonic::transport::Channel;
 use web30::client::Web3;
 
