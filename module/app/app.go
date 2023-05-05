@@ -2,6 +2,7 @@ package app
 
 import (
 	"fmt"
+	"github.com/Gravity-Bridge/Gravity-Bridge/module/x/internft"
 	"io"
 	"net/http"
 	"os"
@@ -72,6 +73,9 @@ import (
 	"github.com/cosmos/cosmos-sdk/x/mint"
 	mintkeeper "github.com/cosmos/cosmos-sdk/x/mint/keeper"
 	minttypes "github.com/cosmos/cosmos-sdk/x/mint/types"
+	nfttypes "github.com/cosmos/cosmos-sdk/x/nft"
+	nftkeeper "github.com/cosmos/cosmos-sdk/x/nft/keeper"
+	nftmodule "github.com/cosmos/cosmos-sdk/x/nft/module"
 	"github.com/cosmos/cosmos-sdk/x/params"
 	paramsclient "github.com/cosmos/cosmos-sdk/x/params/client"
 	paramskeeper "github.com/cosmos/cosmos-sdk/x/params/keeper"
@@ -99,6 +103,11 @@ import (
 	porttypes "github.com/cosmos/ibc-go/v6/modules/core/05-port/types"
 	ibchost "github.com/cosmos/ibc-go/v6/modules/core/24-host"
 	ibckeeper "github.com/cosmos/ibc-go/v6/modules/core/keeper"
+
+	// NFT IBC transfer module
+	nfttransfer "github.com/bianjieai/nft-transfer"
+	ibcnfttransferkeeper "github.com/bianjieai/nft-transfer/keeper"
+	ibcnfttransfertypes "github.com/bianjieai/nft-transfer/types"
 
 	// Bech32-IBC (The Althea fork)
 	"github.com/althea-net/bech32-ibc/x/bech32ibc"
@@ -159,6 +168,8 @@ var (
 		vesting.AppModuleBasic{},
 		gravity.AppModuleBasic{},
 		bech32ibc.AppModuleBasic{},
+		nftmodule.AppModuleBasic{},
+		nfttransfer.AppModuleBasic{},
 	)
 
 	// module account permissions
@@ -172,6 +183,7 @@ var (
 		govtypes.ModuleName:            {authtypes.Burner},
 		ibctransfertypes.ModuleName:    {authtypes.Minter, authtypes.Burner},
 		gravitytypes.ModuleName:        {authtypes.Minter, authtypes.Burner},
+		nfttypes.ModuleName:            nil,
 	}
 
 	// module accounts that are allowed to receive tokens
@@ -233,10 +245,14 @@ type Gravity struct {
 	gravityKeeper     *keeper.Keeper
 	bech32IbcKeeper   *bech32ibckeeper.Keeper
 
+	nftKeeper            *nftkeeper.Keeper
+	ibcnftTransferKeeper *ibcnfttransferkeeper.Keeper
+
 	// make scoped keepers public for test purposes
 	// NOTE: If you add anything to this struct, add a nil check to ValidateMembers below!
-	ScopedIBCKeeper      *capabilitykeeper.ScopedKeeper
-	ScopedTransferKeeper *capabilitykeeper.ScopedKeeper
+	ScopedIBCKeeper         *capabilitykeeper.ScopedKeeper
+	ScopedTransferKeeper    *capabilitykeeper.ScopedKeeper
+	ScopedNFTTransferKeeper *capabilitykeeper.ScopedKeeper
 
 	// Module Manager
 	mm *module.Manager
@@ -306,6 +322,12 @@ func (app Gravity) ValidateMembers() {
 	if app.bech32IbcKeeper == nil {
 		panic("Nil bech32IbcKeeper!")
 	}
+	if app.nftKeeper == nil {
+		panic("Nil nftKeeper!")
+	}
+	if app.ibcnftTransferKeeper == nil {
+		panic("Nil ibcnftTransferKeeper!")
+	}
 
 	// scoped keepers
 	if app.ScopedIBCKeeper == nil {
@@ -313,6 +335,9 @@ func (app Gravity) ValidateMembers() {
 	}
 	if app.ScopedTransferKeeper == nil {
 		panic("Nil ScopedTransferKeeper!")
+	}
+	if app.ScopedNFTTransferKeeper == nil {
+		panic("Nil ScopedNFTTransferKeeper!")
 	}
 
 	// managers
@@ -354,6 +379,7 @@ func NewGravityApp(
 		ibchost.StoreKey, upgradetypes.StoreKey, evidencetypes.StoreKey,
 		ibctransfertypes.StoreKey, capabilitytypes.StoreKey,
 		gravitytypes.StoreKey, bech32ibctypes.StoreKey,
+		nfttypes.StoreKey, ibcnfttransfertypes.StoreKey,
 	)
 	tKeys := sdk.NewTransientStoreKeys(paramstypes.TStoreKey)
 	memKeys := sdk.NewMemoryStoreKeys(capabilitytypes.MemStoreKey)
@@ -387,6 +413,9 @@ func NewGravityApp(
 
 	scopedTransferKeeper := capabilityKeeper.ScopeToModule(ibctransfertypes.ModuleName)
 	app.ScopedTransferKeeper = &scopedTransferKeeper
+
+	scopedNFTTransferKeeper := capabilityKeeper.ScopeToModule(ibcnfttransfertypes.ModuleName)
+	app.ScopedNFTTransferKeeper = &scopedNFTTransferKeeper
 
 	// Applications that wish to enforce statically created ScopedKeepers should call `Seal` after creating
 	// their scoped modules in `NewApp` with `ScopeToModule`
@@ -520,6 +549,30 @@ func NewGravityApp(
 	)
 	app.crisisKeeper = &crisisKeeper
 
+	nftKeeper := nftkeeper.NewKeeper(
+		keys[nfttypes.StoreKey],
+		appCodec,
+		app.accountKeeper,
+		app.bankKeeper,
+	)
+	app.nftKeeper = &nftKeeper
+
+	ibcnftTransferKeeper := ibcnfttransferkeeper.NewKeeper(
+		appCodec,
+		keys[ibcnfttransfertypes.StoreKey],
+		authtypes.NewModuleAddress(govtypes.ModuleName).String(),
+		app.ibcKeeper.ChannelKeeper,
+		app.ibcKeeper.ChannelKeeper,
+		&app.ibcKeeper.PortKeeper,
+		app.accountKeeper,
+		internft.NewInterNftKeeperWrapper(app.nftKeeper),
+		scopedNFTTransferKeeper,
+	)
+	app.ibcnftTransferKeeper = &ibcnftTransferKeeper
+
+	ibcnfttransferModule := nfttransfer.NewAppModule(ibcnftTransferKeeper)
+	nfttransferIBCModule := nfttransfer.NewIBCModule(ibcnftTransferKeeper)
+
 	// Deprecated: Avoid adding new handlers, instead use the new proposal flow
 	// by granting the governance module the right to execute the message.
 	// See: https://github.com/cosmos/cosmos-sdk/blob/release/v0.46.x/x/gov/spec/01_concepts.md#proposal-messages
@@ -554,7 +607,8 @@ func NewGravityApp(
 	ibcTransferIBCModule := transfer.NewIBCModule(ibcTransferKeeper)
 
 	ibcRouter := porttypes.NewRouter()
-	ibcRouter.AddRoute(ibctransfertypes.ModuleName, ibcTransferIBCModule)
+	ibcRouter.AddRoute(ibctransfertypes.ModuleName, ibcTransferIBCModule).
+		AddRoute(ibcnfttransfertypes.ModuleName, nfttransferIBCModule)
 	ibcKeeper.SetRouter(ibcRouter)
 
 	evidenceKeeper := *evidencekeeper.NewKeeper(
@@ -649,6 +703,8 @@ func NewGravityApp(
 			appCodec,
 			bech32IbcKeeper,
 		),
+		nftmodule.NewAppModule(appCodec, nftKeeper, app.accountKeeper, app.bankKeeper, app.interfaceRegistry),
+		ibcnfttransferModule,
 	)
 	app.mm = &mm
 
@@ -673,6 +729,8 @@ func NewGravityApp(
 		authz.ModuleName,
 		govtypes.ModuleName,
 		paramstypes.ModuleName,
+		nfttypes.ModuleName,
+		ibcnfttransfertypes.ModuleName,
 	)
 	mm.SetOrderEndBlockers(
 		crisistypes.ModuleName,
@@ -694,6 +752,8 @@ func NewGravityApp(
 		genutiltypes.ModuleName,
 		authz.ModuleName,
 		paramstypes.ModuleName,
+		nfttypes.ModuleName,
+		ibcnfttransfertypes.ModuleName,
 	)
 	mm.SetOrderInitGenesis(
 		capabilitytypes.ModuleName,
@@ -715,6 +775,8 @@ func NewGravityApp(
 		crisistypes.ModuleName,
 		vestingtypes.ModuleName,
 		paramstypes.ModuleName,
+		nfttypes.ModuleName,
+		ibcnfttransfertypes.ModuleName,
 	)
 
 	mm.RegisterInvariants(&crisisKeeper)

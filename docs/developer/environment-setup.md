@@ -106,11 +106,10 @@ make test
 
 #### Dependency Errors
 
-'''
+```
 go: downloading github.com/regen-network/protobuf v1.3.3-alpha.regen.1
 ../../../go/pkg/mod/github.com/tendermint/tendermint@v0.34.13/abci/types/types.pb.go:9:2: reading github.com/regen-network/protobuf/go.mod at revision v1.3.3-alpha.regen.1: unknown revision v1.3.3-alpha.regen.1
 ../../../go/pkg/mod/github.com/cosmos/cosmos-sdk@v0.44.2/types/tx/service.pb.go:12:2: reading github.com/regen-network/protobuf/go.mod at revision v1.3.3-alpha.regen.1: unknown revision v1.3.3-alpha.regen.1
-
 ```
 
 If you see dependency errors like this, clean your cache and build again
@@ -163,14 +162,12 @@ The integration tests have two methods of operation, one that runs one of a pre-
 of Gravity bridge for you as a developer to interact with. This is very useful for iterating quickly on changes.
 
 ```
-
 # builds the original docker container, only have to run this once
 
 ./tests/build-container.sh
 
 # This starts the Ethereum chain, Cosmos chain,
 
-```
 ./tests/start-chains.sh
 ```
 
@@ -184,6 +181,7 @@ These test cases spawn Orchestrators as well as an IBC relayer, run through thei
 
 This will just kick off the orchestrators and ibc relayer and not run any particular test case.
 
+```
 # This runs a pre-defined test against the chains, keeping state between runs
 
 ./tests/run-tests.sh
