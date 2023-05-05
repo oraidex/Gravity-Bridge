@@ -241,12 +241,6 @@ pub async fn eth_oracle_main_loop(
                     last_checked_event = nonces.event_nonce;
                 }
 
-                // cache latest_eth_valset and current_block
-                set_last_checked_block_info(
-                    evm_chain_prefix,
-                    (previous_block, Some(last_checked_block.clone())),
-                );
-
                 metrics_latest(
                     last_checked_event.to_string().parse().unwrap(),
                     "last_checked_event",
