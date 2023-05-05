@@ -1,170 +1,54 @@
-use clarity::{Address, Uint256};
+use clarity::Address;
+use ethereum_gravity::message_signatures::encode_valset_confirm;
 use gravity_proto::gravity::query_client::QueryClient as GravityQueryClient;
-use gravity_utils::types::event_signatures::*;
-use gravity_utils::types::ValsetUpdatedEvent;
 use gravity_utils::{error::GravityError, types::Valset};
-use std::collections::HashMap;
-use std::env;
-use std::sync::{Arc, RwLock};
+use tokio::try_join;
 use tonic::transport::Channel;
 use web30::client::Web3;
 
-/// This is roughly the maximum number of blocks a reasonable Ethereum node
-/// can search in a single request before it starts timing out or behaving badly
-pub const BLOCKS_TO_SEARCH: u128 = 5_000u128;
+use crate::utils::get_eth_gravity_checkpoint;
+use crate::utils::get_gravity_id;
+use crate::utils::get_latest_valset_nonce;
+use sha3::{Digest, Keccak256};
 
-pub fn convert_block_to_search() -> u128 {
-    env::var("BLOCK_TO_SEARCH")
-        .unwrap_or_else(|_| BLOCKS_TO_SEARCH.to_string())
-        .parse::<u128>()
-        .unwrap_or_else(|_| BLOCKS_TO_SEARCH)
-}
-
-// TODO: using leveldb
-lazy_static! {
-    // cache evm_chain_prefix => (scan_block,Valset)
-    static ref LATEST_VALSET_INFO: Arc<RwLock<HashMap<String, (Uint256,Option<Valset>)>>> =
-        Arc::new(RwLock::new(HashMap::new()));
-}
-
-fn get_latest_valset_info(evm_chain_prefix: &str) -> Option<(Uint256, Option<Valset>)> {
-    LATEST_VALSET_INFO
-        .read()
-        .unwrap()
-        .get(evm_chain_prefix)
-        .cloned()
-}
-
-fn set_latest_valset_info(evm_chain_prefix: &str, info: (Uint256, Option<Valset>)) {
-    let mut lock = LATEST_VALSET_INFO.write().unwrap();
-    lock.insert(evm_chain_prefix.to_string(), info);
-}
-
-/// This function finds the latest valset on the Gravity contract by looking back through the event
-/// history and finding the most recent ValsetUpdatedEvent. Most of the time this will be very fast
-/// as the latest update will be in recent blockchain history and the search moves from the present
-/// backwards in time. In the case that the validator set has not been updated for a very long time
-/// this will take longer.
+/// This function finds the latest valset on the Gravity contract by querying the latest valset nonce on Ethereum
+/// Then use that nonce to query the valset on cosmos
+/// It then hashes the Cosmos's valset and compare it with the latest checkpoint stored on the Gravity contract address
+/// If they match then we use the valset on Cosmos
+/// If not then we panic for safety reasons.
 pub async fn find_latest_valset(
     grpc_client: &mut GravityQueryClient<Channel>,
     evm_chain_prefix: &str,
     gravity_contract_address: Address,
     web3: &Web3,
 ) -> Result<Valset, GravityError> {
-    let block_to_search = convert_block_to_search();
-    let latest_block = web3.eth_block_number().await?;
-    let mut current_block: Uint256 = latest_block;
-
-    let (previous_block, mut previous_valset) =
-        get_latest_valset_info(evm_chain_prefix).unwrap_or((0u8.into(), None));
-
-    while current_block.clone() > previous_block {
-        trace!(
-            "About to submit a Valset or Batch looking back into the history to find the last Valset Update, on block {}",
-            current_block
-        );
-        let end_search = if current_block.clone() < block_to_search.into() {
-            0u8.into()
-        } else {
-            Uint256::max(
-                current_block.clone() - block_to_search.into(),
-                previous_block.clone(),
-            )
-        };
-        let all_valset_events: Vec<ValsetUpdatedEvent> = match web3
-            .parse_event(
-                end_search.clone(),
-                Some(current_block.clone()),
-                gravity_contract_address,
-                VALSET_UPDATED_EVENT_SIG,
-            )
-            .await
+    if let Ok((nonce, eth_checkpoint, gravity_id)) = try_join!(
+        get_latest_valset_nonce(gravity_contract_address, &web3),
+        get_eth_gravity_checkpoint(gravity_contract_address, &web3),
+        get_gravity_id(gravity_contract_address, &web3)
+    ) {
+        if let Some(valset) =
+            cosmos_gravity::query::get_valset(grpc_client, evm_chain_prefix, nonce).await?
         {
-            Ok(events) => events,
-            Err(err) => {
-                warn!(
-                    "Failed to get events with err: {}, for block range {} - {}, repeating...",
-                    err.to_string(),
-                    end_search,
-                    current_block
-                );
-                continue;
+            let checkpoint = encode_valset_confirm(gravity_id, valset.clone());
+            let cosmos_checkpoint = Keccak256::digest(&checkpoint);
+            /*
+            This function exists to provide a warning if Cosmos and Ethereum have different validator sets
+            for a given nonce. In the mundane version of this warning the validator sets disagree on sorting order
+            which can happen if some relayer uses an unstable sort, or in a case of a mild griefing attack.
+            The Gravity contract validates signatures in order of highest to lowest power. That way it can exit
+            the loop early once a vote has enough power, if a relayer were to submit things in the reverse order
+            they could grief users of the contract into paying more in gas.
+            The other (and far worse) way a disagreement here could occur is if validators are colluding to steal
+            funds from the Gravity contract and have submitted a highjacking update. If slashing for off Cosmos chain
+            Ethereum signatures is implemented you would put that handler here.
+            */
+            if eth_checkpoint.ne(&cosmos_checkpoint.to_vec()) {
+                panic!("Validator sets for nonce {} of Cosmos and nonce {} of Ethereum differ. Possible bridge highjacking!", nonce, valset.nonce);
             }
-        };
 
-        trace!("Found events {:?}", all_valset_events);
-
-        // by default the lowest found valset goes first, we want the highest.
-        // we take only the last event if we find any at all.
-        if let Some(event) = all_valset_events.last().cloned() {
-            // update latest_eth_valset
-            previous_valset = Some(Valset {
-                nonce: event.valset_nonce,
-                members: event.members,
-                reward_amount: event.reward_amount,
-                reward_token: event.reward_token,
-            });
-
-            // now break from loop
-            break;
+            return Ok(valset);
         }
-
-        current_block = end_search;
     }
-
-    // return cached valset
-    if let Some(latest_eth_valset) = previous_valset.clone() {
-        // cache latest_eth_valset and current_block
-        set_latest_valset_info(evm_chain_prefix, (latest_block, previous_valset));
-
-        // just for warning
-        let cosmos_chain_valset = cosmos_gravity::query::get_valset(
-            grpc_client,
-            evm_chain_prefix,
-            latest_eth_valset.nonce,
-        )
-        .await?;
-        check_if_valsets_differ(cosmos_chain_valset, &latest_eth_valset);
-        return Ok(latest_eth_valset);
-    }
-
     panic!("Could not find the last validator set for contract {}, probably not a valid Gravity contract!", gravity_contract_address)
-}
-
-/// This function exists to provide a warning if Cosmos and Ethereum have different validator sets
-/// for a given nonce. In the mundane version of this warning the validator sets disagree on sorting order
-/// which can happen if some relayer uses an unstable sort, or in a case of a mild griefing attack.
-/// The Gravity contract validates signatures in order of highest to lowest power. That way it can exit
-/// the loop early once a vote has enough power, if a relayer were to submit things in the reverse order
-/// they could grief users of the contract into paying more in gas.
-/// The other (and far worse) way a disagreement here could occur is if validators are colluding to steal
-/// funds from the Gravity contract and have submitted a highjacking update. If slashing for off Cosmos chain
-/// Ethereum signatures is implemented you would put that handler here.
-fn check_if_valsets_differ(cosmos_valset: Option<Valset>, ethereum_valset: &Valset) {
-    if cosmos_valset.is_none() && ethereum_valset.nonce == 0 {
-        // bootstrapping case
-        return;
-    } else if cosmos_valset.is_none() {
-        error!("Cosmos does not have a valset for nonce {} but that is the one on the Ethereum chain! Possible bridge highjacking!", ethereum_valset.nonce);
-        return;
-    }
-    let cosmos_valset = cosmos_valset.unwrap();
-    if cosmos_valset != *ethereum_valset {
-        // if this is not true then we have a logic error on the Cosmos chain
-        // or with our Ethereum search
-        assert_eq!(cosmos_valset.nonce, ethereum_valset.nonce);
-
-        let mut c_valset = cosmos_valset.members;
-        let mut e_valset = ethereum_valset.members.clone();
-        c_valset.sort();
-        e_valset.sort();
-        if c_valset == e_valset {
-            info!(
-                "Sorting disagreement between Cosmos and Ethereum on Valset nonce {}",
-                ethereum_valset.nonce
-            );
-        } else {
-            info!("Validator sets for nonce {} Cosmos and Ethereum differ. Possible bridge highjacking!", ethereum_valset.nonce)
-        }
-    }
 }

@@ -21,7 +21,8 @@ use gravity_utils::{
     },
 };
 use metrics_exporter::{metrics_errors_counter, metrics_latest};
-use relayer::find_latest_valset::convert_block_to_search;
+use relayer::utils::convert_block_to_search;
+use tokio::try_join;
 use tonic::transport::Channel;
 use web30::client::Web3;
 use web30::jsonrpc::error::Web3Error;
@@ -121,54 +122,37 @@ pub async fn check_for_and_relay_events(
         latest_block
     };
 
-    let deposits = web3
-        .parse_event(
-            starting_block.clone(),
-            Some(latest_block.clone()),
-            gravity_contract_address,
-            SENT_TO_COSMOS_EVENT_SIG,
-        )
-        .await;
-
-    let batches = web3
-        .parse_event(
-            starting_block.clone(),
-            Some(latest_block.clone()),
-            gravity_contract_address,
-            TRANSACTION_BATCH_EXECUTED_EVENT_SIG,
-        )
-        .await;
-    let valsets = web3
-        .parse_event(
+    if let Ok((valsets, batches, deposits, erc20_deployed, logic_call_executed)) = try_join!(
+        web3.parse_event(
             starting_block.clone(),
             Some(latest_block.clone()),
             gravity_contract_address,
             VALSET_UPDATED_EVENT_SIG,
-        )
-        .await;
-    let erc20_deployed = web3
-        .parse_event(
+        ),
+        web3.parse_event(
+            starting_block.clone(),
+            Some(latest_block.clone()),
+            gravity_contract_address,
+            TRANSACTION_BATCH_EXECUTED_EVENT_SIG,
+        ),
+        web3.parse_event(
+            starting_block.clone(),
+            Some(latest_block.clone()),
+            gravity_contract_address,
+            SENT_TO_COSMOS_EVENT_SIG,
+        ),
+        web3.parse_event(
             starting_block.clone(),
             Some(latest_block.clone()),
             gravity_contract_address,
             ERC20_DEPLOYED_EVENT_SIG,
-        )
-        .await;
-    let logic_call_executed = web3
-        .parse_event(
+        ),
+        web3.parse_event(
             starting_block.clone(),
             Some(latest_block.clone()),
             gravity_contract_address,
             LOGIC_CALL_EVENT_SIG,
         )
-        .await;
-
-    if let (Ok(valsets), Ok(batches), Ok(deposits), Ok(erc20_deployed), Ok(logic_call_executed)) = (
-        valsets,
-        batches,
-        deposits,
-        erc20_deployed,
-        logic_call_executed,
     ) {
         // (deposits, batches, valsets, erc20_deployed, logic_call_executed)
         trace!("Deposits {:?}", deposits);
