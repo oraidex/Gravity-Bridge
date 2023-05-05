@@ -21,7 +21,7 @@ use gravity_utils::{
     },
 };
 use metrics_exporter::metrics_errors_counter;
-use relayer::find_latest_valset::convert_block_to_search;
+use relayer::utils::convert_block_to_search;
 use tokio::try_join;
 use tonic::transport::Channel;
 use web30::client::Web3;
@@ -68,7 +68,7 @@ pub async fn check_for_events(
             starting_block.clone(),
             Some(latest_block.clone()),
             gravity_contract_address,
-            SENT_TO_COSMOS_EVENT_SIG,
+            VALSET_UPDATED_EVENT_SIG,
         ),
         web3.parse_event(
             starting_block.clone(),
@@ -80,7 +80,7 @@ pub async fn check_for_events(
             starting_block.clone(),
             Some(latest_block.clone()),
             gravity_contract_address,
-            VALSET_UPDATED_EVENT_SIG,
+            SENT_TO_COSMOS_EVENT_SIG,
         ),
         web3.parse_event(
             starting_block.clone(),

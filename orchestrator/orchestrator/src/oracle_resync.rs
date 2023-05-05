@@ -9,7 +9,7 @@ use gravity_utils::types::{
     ValsetUpdatedEvent,
 };
 use metrics_exporter::metrics_errors_counter;
-use relayer::find_latest_valset::convert_block_to_search;
+use relayer::utils::convert_block_to_search;
 use std::collections::HashMap;
 use web30::{ContractEvent, Web3Event};
 // use std::env;

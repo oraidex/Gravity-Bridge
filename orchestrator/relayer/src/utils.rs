@@ -1,9 +1,21 @@
 use clarity::abi::encode_call;
 use clarity::{Address, Uint256};
 use gravity_utils::num_conversion::downcast_uint256;
+use std::env;
 use web30::client::Web3;
 use web30::jsonrpc::error::Web3Error;
 use web30::types::TransactionRequest;
+
+/// This is roughly the maximum number of blocks a reasonable Ethereum node
+/// can search in a single request before it starts timing out or behaving badly
+pub const BLOCKS_TO_SEARCH: u128 = 5_000u128;
+
+pub fn convert_block_to_search() -> u128 {
+    env::var("BLOCK_TO_SEARCH")
+        .unwrap_or_else(|_| BLOCKS_TO_SEARCH.to_string())
+        .parse::<u128>()
+        .unwrap_or_else(|_| BLOCKS_TO_SEARCH)
+}
 
 pub async fn get_latest_valset_nonce(
     gravity_contract_address: Address,
