@@ -77,6 +77,8 @@ var (
 	// [0xeefcb999cc3d7b80b052b55106a6ba5e]
 	LastEventNonceByValidatorKey = HashString("LastEventNonceByValidatorKey")
 
+	// TODO: if needed we need to add a "LastERC721EventNonceByValidatorKey" key
+
 	// LastObservedEventNonceKey indexes the latest event nonce
 	// [0xa34e56ab6fab9ee91e82ba216bfeb759]
 	LastObservedEventNonceKey = HashString("LastObservedEventNonceKey")
