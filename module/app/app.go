@@ -507,6 +507,27 @@ func NewGravityApp(
 	)
 	app.bech32IbcKeeper = &bech32IbcKeeper
 
+	nftKeeper := nftkeeper.NewKeeper(
+		keys[nfttypes.StoreKey],
+		appCodec,
+		app.accountKeeper,
+		app.bankKeeper,
+	)
+	app.nftKeeper = &nftKeeper
+
+	ibcnftTransferKeeper := ibcnfttransferkeeper.NewKeeper(
+		appCodec,
+		keys[ibcnfttransfertypes.StoreKey],
+		authtypes.NewModuleAddress(govtypes.ModuleName).String(),
+		app.ibcKeeper.ChannelKeeper,
+		app.ibcKeeper.ChannelKeeper,
+		&app.ibcKeeper.PortKeeper,
+		app.accountKeeper,
+		internft.NewInterNftKeeperWrapper(app.nftKeeper),
+		scopedNFTTransferKeeper,
+	)
+	app.ibcnftTransferKeeper = &ibcnftTransferKeeper
+
 	gravityKeeper := keeper.NewKeeper(
 		keys[gravitytypes.StoreKey],
 		app.GetSubspace(gravitytypes.ModuleName),
@@ -518,6 +539,8 @@ func NewGravityApp(
 		&accountKeeper,
 		&ibcTransferKeeper,
 		&bech32IbcKeeper,
+		&nftKeeper,
+		&ibcnftTransferKeeper,
 	)
 	app.gravityKeeper = &gravityKeeper
 
@@ -548,27 +571,6 @@ func NewGravityApp(
 		authtypes.FeeCollectorName,
 	)
 	app.crisisKeeper = &crisisKeeper
-
-	nftKeeper := nftkeeper.NewKeeper(
-		keys[nfttypes.StoreKey],
-		appCodec,
-		app.accountKeeper,
-		app.bankKeeper,
-	)
-	app.nftKeeper = &nftKeeper
-
-	ibcnftTransferKeeper := ibcnfttransferkeeper.NewKeeper(
-		appCodec,
-		keys[ibcnfttransfertypes.StoreKey],
-		authtypes.NewModuleAddress(govtypes.ModuleName).String(),
-		app.ibcKeeper.ChannelKeeper,
-		app.ibcKeeper.ChannelKeeper,
-		&app.ibcKeeper.PortKeeper,
-		app.accountKeeper,
-		internft.NewInterNftKeeperWrapper(app.nftKeeper),
-		scopedNFTTransferKeeper,
-	)
-	app.ibcnftTransferKeeper = &ibcnftTransferKeeper
 
 	ibcnfttransferModule := nfttransfer.NewAppModule(ibcnftTransferKeeper)
 	nfttransferIBCModule := nfttransfer.NewIBCModule(ibcnftTransferKeeper)

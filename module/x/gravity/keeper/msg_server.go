@@ -343,9 +343,9 @@ func (k msgServer) checkOrchestratorValidatorInSet(ctx sdk.Context, orchestrator
 
 // claimHandlerCommon is an internal function that provides common code for processing claims once they are
 // translated from the message to the Ethereum claim interface
-func (k msgServer) claimHandlerCommon(ctx sdk.Context, msgAny *codectypes.Any, msg types.EthereumClaim) error {
+func (k msgServer) claimHandlerCommon(ctx sdk.Context, msgAny *codectypes.Any, msg types.EthereumClaim, nonceSource types.NonceSource) error {
 	// Add the claim to the store
-	_, err := k.Attest(ctx, msg, msgAny)
+	_, err := k.Attest(ctx, msg, msgAny, nonceSource)
 	if err != nil {
 		return sdkerrors.Wrap(err, "create attestation")
 	}
@@ -359,7 +359,7 @@ func (k msgServer) claimHandlerCommon(ctx sdk.Context, msgAny *codectypes.Any, m
 		&types.EventClaim{
 			Message:       string(msg.GetType()),
 			ClaimHash:     string(hash),
-			AttestationId: string(types.GetAttestationKey(msg.GetEventNonce(), hash)),
+			AttestationId: string(types.GetAttestationKey(msg.GetEventNonce(), hash, nonceSource)),
 		},
 	)
 
@@ -424,7 +424,7 @@ func (k msgServer) SendToCosmosClaim(c context.Context, msg *types.MsgSendToCosm
 	if err != nil {
 		return nil, sdkerrors.Wrap(err, "Could not check Any value")
 	}
-	err = k.claimHandlerCommon(ctx, any, msg)
+	err = k.claimHandlerCommon(ctx, any, msg, types.GravityContractNonce)
 	if err != nil {
 		return nil, err
 	}
@@ -432,9 +432,23 @@ func (k msgServer) SendToCosmosClaim(c context.Context, msg *types.MsgSendToCosm
 	return &types.MsgSendToCosmosClaimResponse{}, nil
 }
 
-func (k msgServer) SendERC721ToCosmosClaim(ctx context.Context, claim *types.MsgSendERC721ToCosmosClaim) (*types.MsgSendERC721ToCosmosClaimResponse, error) {
-	//TODO implement me
-	panic("implement me")
+func (k msgServer) SendERC721ToCosmosClaim(c context.Context, msg *types.MsgSendERC721ToCosmosClaim) (*types.MsgSendERC721ToCosmosClaimResponse, error) {
+	ctx := sdk.UnwrapSDKContext(c)
+
+	err := k.checkOrchestratorValidatorInSet(ctx, msg.Orchestrator)
+	if err != nil {
+		return nil, sdkerrors.Wrap(err, "Could not check orchstrator validator inset")
+	}
+	any, err := codectypes.NewAnyWithValue(msg)
+	if err != nil {
+		return nil, sdkerrors.Wrap(err, "Could not check Any value")
+	}
+	err = k.claimHandlerCommon(ctx, any, msg, types.ERC721ContractNonce)
+	if err != nil {
+		return nil, err
+	}
+
+	return &types.MsgSendERC721ToCosmosClaimResponse{}, nil
 }
 
 // ExecuteIbcAutoForwards moves pending IBC Auto-Forwards to their respective chains by calling ibc-transfer's Transfer
@@ -474,7 +488,7 @@ func (k msgServer) BatchSendToEthClaim(c context.Context, msg *types.MsgBatchSen
 		panic(sdkerrors.Wrap(err, "Could not check Any value"))
 	}
 
-	err = k.claimHandlerCommon(ctx, msgAny, msg)
+	err = k.claimHandlerCommon(ctx, msgAny, msg, types.GravityContractNonce)
 	if err != nil {
 		return nil, err
 	}
@@ -514,7 +528,7 @@ func (k msgServer) ERC20DeployedClaim(c context.Context, msg *types.MsgERC20Depl
 	if err != nil {
 		return nil, sdkerrors.Wrap(err, "Could not check Any value")
 	}
-	err = k.claimHandlerCommon(ctx, any, msg)
+	err = k.claimHandlerCommon(ctx, any, msg, types.GravityContractNonce)
 	if err != nil {
 		return nil, err
 	}
@@ -534,7 +548,7 @@ func (k msgServer) LogicCallExecutedClaim(c context.Context, msg *types.MsgLogic
 	if err != nil {
 		return nil, sdkerrors.Wrap(err, "Could not check Any value")
 	}
-	err = k.claimHandlerCommon(ctx, any, msg)
+	err = k.claimHandlerCommon(ctx, any, msg, types.GravityContractNonce)
 	if err != nil {
 		return nil, err
 	}
@@ -554,7 +568,7 @@ func (k msgServer) ValsetUpdateClaim(c context.Context, msg *types.MsgValsetUpda
 	if err != nil {
 		return nil, sdkerrors.Wrap(err, "Could not check Any value")
 	}
-	err = k.claimHandlerCommon(ctx, any, msg)
+	err = k.claimHandlerCommon(ctx, any, msg, types.GravityContractNonce)
 	if err != nil {
 		return nil, err
 	}

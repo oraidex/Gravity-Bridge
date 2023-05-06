@@ -33,7 +33,7 @@ func (k Keeper) ValidatePendingIbcAutoForward(ctx sdk.Context, forward types.Pen
 		return err
 	}
 
-	latestEventNonce := k.GetLastObservedEventNonce(ctx)
+	latestEventNonce := k.GetLastObservedEventNonce(ctx, types.GravityContractNonce)
 	if forward.EventNonce > latestEventNonce {
 		return sdkerrors.Wrap(types.ErrInvalid, "EventNonce must be <= latest observed event nonce")
 	}

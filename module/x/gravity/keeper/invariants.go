@@ -241,10 +241,11 @@ func ValidateStore(ctx sdk.Context, k Keeper) error {
 	// OracleClaimKey HAS BEEN REMOVED
 
 	// LastObservedEventNonceKey (type checked when fetching)
-	lastObservedEventNonce := k.GetLastObservedEventNonce(ctx)
+	lastObservedEventNonce := k.GetLastObservedEventNonce(ctx, types.GravityContractNonce) // TODO: WHAT ABOUT ERC721 NONCE SOURCE?
 	lastObservedEthereumClaimHeight := uint64(0) // used later to validate ethereum claim height
 	// OracleAttestationKey
-	k.IterateAttestations(ctx, false, func(key []byte, att types.Attestation) (stop bool) {
+	// TODO: WHAT ABOUT ERC721 NONCE SOURCE?
+	k.IterateAttestations(ctx, types.GravityContractNonce, false, func(key []byte, att types.Attestation) (stop bool) {
 		err = att.ValidateBasic(k.cdc)
 		if err != nil {
 			err = fmt.Errorf("Invalid attestation %v in IterateAttestations: %v", att, err)
@@ -476,7 +477,8 @@ func CheckBatches(ctx sdk.Context, k Keeper) error {
 	}
 
 	var err error = nil
-	k.IterateClaims(ctx, true, types.CLAIM_TYPE_BATCH_SEND_TO_ETH, func(key []byte, att types.Attestation, claim types.EthereumClaim) (stop bool) {
+	// TODO: WHAT ABOUT ERC721 NONCE SOURCE?
+	k.IterateClaims(ctx, types.GravityContractNonce, true, types.CLAIM_TYPE_BATCH_SEND_TO_ETH, func(key []byte, att types.Attestation, claim types.EthereumClaim) (stop bool) {
 		batchClaim := claim.(*types.MsgBatchSendToEthClaim)
 		// Executed (aka observed) batches should have strictly lesser batch nonces than the in progress batches for the same token contract
 		// note that batches for different tokens have the same nonce stream but don't invalidate each other (nonces should probably be separate per token type)
@@ -528,7 +530,8 @@ func CheckValsets(ctx sdk.Context, k Keeper) error {
 	// The previously stored valsets may have been created for multiple reasons, so we make no more power diff checks
 
 	// Check the stored valsets against the observed valset update attestations
-	k.IterateClaims(ctx, true, types.CLAIM_TYPE_VALSET_UPDATED, func(key []byte, att types.Attestation, claim types.EthereumClaim) (stop bool) {
+	// TODO: WHAT ABOUT ERC721 NONCE SOURCE?
+	k.IterateClaims(ctx, types.GravityContractNonce, true, types.CLAIM_TYPE_VALSET_UPDATED, func(key []byte, att types.Attestation, claim types.EthereumClaim) (stop bool) {
 		if !att.Observed {
 			// This claim is in-progress, malicious, or erroneous - continue to the next one
 			return false
