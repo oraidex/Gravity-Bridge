@@ -1281,7 +1281,7 @@ var (
 
 	pattern_Msg_SendToCosmosClaim_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2}, []string{"gravity", "v1", "send_to_cosmos_claim"}, "", runtime.AssumeColonVerbOpt(true)))
 
-	pattern_Msg_SendERC721ToCosmosClaim_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2}, []string{"gravity", "v1", "send_erc732_to_cosmos_claim"}, "", runtime.AssumeColonVerbOpt(true)))
+	pattern_Msg_SendERC721ToCosmosClaim_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2}, []string{"gravity", "v1", "send_erc721_to_cosmos_claim"}, "", runtime.AssumeColonVerbOpt(true)))
 
 	pattern_Msg_ExecuteIbcAutoForwards_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2}, []string{"gravity", "v1", "execute_ibc_auto_forwards"}, "", runtime.AssumeColonVerbOpt(true)))
 

@@ -214,14 +214,14 @@ message MsgSendToCosmosClaimResponse {}
 // issued to the Cosmos address in question
 // -------------
 message MsgSendERC721ToCosmosClaim {
-  uint64 event_nonce    = 1;
+  uint64 event_nonce      = 1;
   uint64 eth_block_height = 2;
-  string token_contract = 3;
-  string token_id       = 4;
-  string token_uri     = 5;
-  string ethereum_sender = 5;
-  string cosmos_receiver = 6;
-  string orchestrator    = 7;
+  string token_contract   = 3;
+  string token_id         = 4;
+  string token_uri        = 5;
+  string ethereum_sender  = 6;
+  string cosmos_receiver  = 7;
+  string orchestrator     = 8;
 }
 
 message MsgSendERC721ToCosmosClaimResponse {}
