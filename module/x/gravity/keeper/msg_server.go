@@ -432,6 +432,11 @@ func (k msgServer) SendToCosmosClaim(c context.Context, msg *types.MsgSendToCosm
 	return &types.MsgSendToCosmosClaimResponse{}, nil
 }
 
+func (k msgServer) SendERC721ToCosmosClaim(ctx context.Context, claim *types.MsgSendERC721ToCosmosClaim) (*types.MsgSendERC721ToCosmosClaimResponse, error) {
+	//TODO implement me
+	panic("implement me")
+}
+
 // ExecuteIbcAutoForwards moves pending IBC Auto-Forwards to their respective chains by calling ibc-transfer's Transfer
 // function with all the relevant information
 // Note: this endpoint and the related queue are necessary due to a Tendermint bug where events created in EndBlocker

@@ -28,6 +28,9 @@ service Msg {
   rpc SendToCosmosClaim(MsgSendToCosmosClaim) returns (MsgSendToCosmosClaimResponse) {
     option (google.api.http).post = "/gravity/v1/send_to_cosmos_claim";
   }
+  rpc SendERC721ToCosmosClaim(MsgSendERC721ToCosmosClaim) returns (MsgSendERC721ToCosmosClaimResponse) {
+    option (google.api.http).post = "/gravity/v1/send_erc721_to_cosmos_claim";
+  }
   rpc ExecuteIbcAutoForwards(MsgExecuteIbcAutoForwards) returns (MsgExecuteIbcAutoForwardsResponse) {
     option (google.api.http).post = "/gravity/v1/execute_ibc_auto_forwards";
   }
@@ -204,6 +207,24 @@ message MsgSendToCosmosClaim {
 }
 
 message MsgSendToCosmosClaimResponse {}
+
+// MsgSendERC721ToCosmosClaim
+// When more than 66% of the active validator set has
+// claimed to have seen the ERC621 deposit enter the ethereum blockchain NFT is minted and
+// issued to the Cosmos address in question
+// -------------
+message MsgSendERC721ToCosmosClaim {
+  uint64 event_nonce      = 1;
+  uint64 eth_block_height = 2;
+  string token_contract   = 3;
+  string token_id         = 4;
+  string token_uri        = 5;
+  string ethereum_sender  = 6;
+  string cosmos_receiver  = 7;
+  string orchestrator     = 8;
+}
+
+message MsgSendERC721ToCosmosClaimResponse {}
 
 // MsgExecuteIbcAutoForwards
 // Prompts the forwarding of Pending IBC Auto-Forwards in the queue

@@ -141,6 +141,7 @@ message Params {
   // from Ethereum to the bridge
   repeated string ethereum_blacklist = 19;
   uint64 min_chain_fee_basis_points = 20;
+  string bridge_erc721_ethereum_address = 21;
 }
 
 // GenesisState struct, containing all persistant data required by the Gravity module
@@ -180,4 +181,6 @@ message GravityNonces {
   // the last batch id from the Gravity batch pool, this prevents ID duplication
   // during chain upgrades
   uint64 last_batch_id = 7;
+  // the last observed GravityERC721.sol contract event nonce
+  uint64 last_erc721_observed_nonce = 8;
 }
