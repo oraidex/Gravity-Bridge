@@ -61,6 +61,8 @@ func ClaimTypeToTypeUrl(claimType ClaimType) string {
 		msgName = proto.MessageName(&MsgLogicCallExecutedClaim{})
 	case CLAIM_TYPE_VALSET_UPDATED:
 		msgName = proto.MessageName(&MsgValsetUpdatedClaim{})
+	case CLAIM_TYPE_SEND_ERC721_TO_COSMOS:
+		msgName = proto.MessageName(&MsgSendERC721ToCosmosClaim{})
 	}
 
 	return "/" + msgName

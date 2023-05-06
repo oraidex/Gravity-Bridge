@@ -13,17 +13,19 @@ enum ClaimType {
   option (gogoproto.goproto_enum_prefix) = false;
 
   // An unspecified claim type
-  CLAIM_TYPE_UNSPECIFIED         = 0;
+  CLAIM_TYPE_UNSPECIFIED           = 0;
   // A claim for a SendToCosmos transaction
-  CLAIM_TYPE_SEND_TO_COSMOS      = 1;
+  CLAIM_TYPE_SEND_TO_COSMOS        = 1;
   // A claim for when batches are relayed
-  CLAIM_TYPE_BATCH_SEND_TO_ETH   = 2;
+  CLAIM_TYPE_BATCH_SEND_TO_ETH     = 2;
   // A claim for when an erc20 contract has been deployed
-  CLAIM_TYPE_ERC20_DEPLOYED      = 3;
+  CLAIM_TYPE_ERC20_DEPLOYED        = 3;
   // A claim for when a logic call has been executed
-  CLAIM_TYPE_LOGIC_CALL_EXECUTED = 4;
+  CLAIM_TYPE_LOGIC_CALL_EXECUTED   = 4;
   // A claim for when a valset update has happened
-  CLAIM_TYPE_VALSET_UPDATED      = 5;
+  CLAIM_TYPE_VALSET_UPDATED        = 5;
+  // A claim for a SendERC721ToCosmos transaction
+  CLAIM_TYPE_SEND_ERC721_TO_COSMOS = 6;
 }
 
 // Attestation is an aggregate of `claims` that eventually becomes `observed` by
@@ -80,6 +82,13 @@ message EventSendToCosmos {
   string amount = 1;
   string nonce  = 2;
   string token  = 3;
+}
+
+message EventSendERC721ToCosmos {
+  string contract = 1;
+  string tokenId  = 2;
+  string nonce    = 3;
+  // string tokenUri = 4; ?
 }
 
 message EventSendToCosmosLocal {
