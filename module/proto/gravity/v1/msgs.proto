@@ -29,7 +29,7 @@ service Msg {
     option (google.api.http).post = "/gravity/v1/send_to_cosmos_claim";
   }
   rpc SendERC721ToCosmosClaim(MsgSendERC721ToCosmosClaim) returns (MsgSendERC721ToCosmosClaimResponse) {
-    option (google.api.http).post = "/gravity/v1/send_erc732_to_cosmos_claim";
+    option (google.api.http).post = "/gravity/v1/send_erc721_to_cosmos_claim";
   }
   rpc ExecuteIbcAutoForwards(MsgExecuteIbcAutoForwards) returns (MsgExecuteIbcAutoForwardsResponse) {
     option (google.api.http).post = "/gravity/v1/execute_ibc_auto_forwards";
@@ -218,7 +218,7 @@ message MsgSendERC721ToCosmosClaim {
   uint64 eth_block_height = 2;
   string token_contract = 3;
   string token_id       = 4;
-  // string token_uri     = 5; ?
+  string token_uri     = 5;
   string ethereum_sender = 5;
   string cosmos_receiver = 6;
   string orchestrator    = 7;
