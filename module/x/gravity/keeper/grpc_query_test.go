@@ -154,6 +154,6 @@ func createAttestations(t *testing.T, k keeper.Keeper, ctx sdk.Context, length i
 		hash, err := msg.ClaimHash()
 		require.NoError(t, err)
 
-		k.SetAttestation(ctx, nonce, hash, att)
+		k.SetAttestation(ctx, nonce, hash, att, types.GravityContractNonce)
 	}
 }

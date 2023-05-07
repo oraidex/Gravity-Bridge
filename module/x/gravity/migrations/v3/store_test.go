@@ -72,7 +72,7 @@ func TestMigrateAttestation(t *testing.T) {
 	require.NoError(t, err)
 
 	oldKeyEntry := store.Get(attestationOldKey)
-	newKeyEntry := store.Get(types.GetAttestationKey(nonce, newClaimHash))
+	newKeyEntry := store.Get(types.GetAttestationKey(nonce, newClaimHash, types.GravityContractNonce))
 	// Check migration results:
 	require.Empty(t, oldKeyEntry)
 	require.NotEqual(t, oldKeyEntry, newKeyEntry)
