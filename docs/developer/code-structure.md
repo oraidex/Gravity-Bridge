@@ -6,7 +6,7 @@ design documentation, when we do you should take a detour to read it.
 
 Gravity bridge is a large codebase with many components, so this document focuses on end to end flows providing touchpoints along the entire path across all the components.
 
-## Deposit from Ethereum To Cosmos
+## ERC20 deposit from Ethereum To Cosmos
 
 This covers the complete flow, with code links, for a deposit. This is covered conceptually in [minting and locking](/docs/design/mint-lock.md) as well as [Oracle](/docs/design/oracle.md) which you should read first.
 
@@ -29,6 +29,14 @@ At the end of every block the [EndBlocker](/module/x/gravity/abci.go) runs. In i
 The [AttestationHandler](/module/x/gravity/keeper/attestation_handler.go) contains a case for every possible state change required by the oracle and mints, burns, or processes an event as required. In this case we only care about MsgSendToCosmosClaim.
 
 Here we determine if the deposited coin is Cosmos Originated, at which point we should unlock the Cosmos token we locked into the bank module and send it to the user. If it is Ethereum originated we mint and issue to the user a representative token.
+
+## ERC721 deposit from Ethereum To Cosmos
+
+The flow for ERC721 is heavily based on `ERC20 deposit from Ethereum To Cosmos`, so you should familiarize yourself with fungible token deposit logic to understand how Ethereum-originating NFTs are being transfered to Cosmos-based chains.
+
+A separate `eth_oracle_main_loop` is started in the [Orchestrator](/orchestrator/orchestrator/src/main_loop.rs), which specifically watches for [GravityERC721.sol](/solidity/contracts/GravityERC721.sol) events. If the Oracle is run for the first time, it's looking for the `GravityERC721DeployedEvent` event to determine the minimum block from which it should start to watch for events.
+
+When the `SendERC721ToCosmosEvent` is observed in [check_for_events](/orchestrator/orchestrator/src/ethereum_event_watcher.rs), [send_erc721_claims](/orchestrator/cosmos_gravity/src/send.rs) logic handles creating and submitting `MsgSendERC721ToCosmosClaim` to the Cosmos chain in the same ordered way as [Gravity.sol](/solidity/contracts/Gravity.sol)-based claims are, but using a separate event nonce for all ERC721 related events [get_last_erc721_event_nonce_for_validator](/orchestrator/cosmos_gravity/src/query.rs).
 
 ## Withdraw from Cosmos to Ethereum
 

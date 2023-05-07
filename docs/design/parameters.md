@@ -30,6 +30,12 @@ Gravity code.
 In the future the relayer may attempt to use this value rather than require
 the user to set this value themselves in the settings.
 
+## bridge_erc721_ethereum_address
+
+is address of the Ethereum contract holding ERC721 tokens transfered
+to Cosmos. It's used by the oracle to determine the contract address
+if it hasn't been provided by the user.
+
 ## bridge_chain_id
 
 the unique identifier of the Ethereum chain, this is a reference value
