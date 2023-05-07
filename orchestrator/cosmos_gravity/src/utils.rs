@@ -1,4 +1,4 @@
-use crate::query::{get_last_event_nonce_for_validator, get_min_chain_fee_basis_points};
+use crate::query::{get_last_event_nonce_for_validator, get_min_chain_fee_basis_points, get_last_erc721_event_nonce_for_validator};
 use deep_space::client::ChainStatus;
 use deep_space::error::CosmosGrpcError;
 use deep_space::utils::encode_any;
@@ -38,6 +38,25 @@ pub async fn get_last_event_nonce_with_retry(
         );
         sleep(RETRY_TIME).await;
         res = get_last_event_nonce_for_validator(client, our_cosmos_address, prefix.clone()).await;
+    }
+    res.unwrap()
+}
+
+/// gets the Cosmos last erc721 event nonce, no matter how long it takes.
+pub async fn get_last_erc721_event_nonce_with_retry(
+    client: &mut GravityQueryClient<Channel>,
+    our_cosmos_address: CosmosAddress,
+    prefix: String,
+) -> u64 {
+    let mut res =
+        get_last_erc721_event_nonce_for_validator(client, our_cosmos_address, prefix.clone()).await;
+    while res.is_err() {
+        error!(
+            "Failed to get last event nonce, is the Cosmos GRPC working? {:?}",
+            res
+        );
+        sleep(RETRY_TIME).await;
+        res = get_last_erc721_event_nonce_for_validator(client, our_cosmos_address, prefix.clone()).await;
     }
     res.unwrap()
 }

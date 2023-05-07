@@ -177,9 +177,24 @@ pub async fn get_transaction_batch_signatures(
     Ok(out)
 }
 
-/// Gets the last event nonce that a given validator has attested to, this lets us
+/// Gets the last event nonce for gravity.sol contract that a given validator has attested to, this lets us
 /// catch up with what the current event nonce should be if a oracle is restarted
 pub async fn get_last_event_nonce_for_validator(
+    client: &mut GravityQueryClient<Channel>,
+    address: Address,
+    prefix: String,
+) -> Result<u64, GravityError> {
+    let request = client
+        .last_event_nonce_by_addr(QueryLastEventNonceByAddrRequest {
+            address: address.to_bech32(prefix).unwrap(),
+        })
+        .await?;
+    Ok(request.into_inner().event_nonce)
+}
+
+/// Gets the last event nonce for gravityerc721.sol contract that a given validator has attested to, this lets us
+/// catch up with what the current event nonce should be if a oracle is restarted
+pub async fn get_last_erc721_event_nonce_for_validator(
     client: &mut GravityQueryClient<Channel>,
     address: Address,
     prefix: String,

@@ -20,12 +20,12 @@ pub async fn erc721_happy_path_test(
     contact: &Contact,
     keys: Vec<ValidatorKeys>,
     gravity_address: EthAddress,
-    gravity_erc721_address: EthAddress,
+    gravityerc721_address: EthAddress,
     erc721_address: EthAddress,
     validator_out: bool,
 ) {
     let grav_sol_address_in_erc721 =
-        get_gravity_sol_address(gravity_erc721_address, *MINER_ADDRESS, web30)
+        get_gravity_sol_address(gravityerc721_address, *MINER_ADDRESS, web30)
             .await
             .unwrap();
 
@@ -37,7 +37,7 @@ pub async fn erc721_happy_path_test(
         grav_sol_address_in_erc721
     );
     info!("Gravity address is {}", gravity_address);
-    info!("GravityERC721 address is {}", gravity_erc721_address);
+    info!("GravityERC721 address is {}", gravityerc721_address);
 
     assert_eq!(grav_sol_address_in_erc721, gravity_address);
 
@@ -45,6 +45,7 @@ pub async fn erc721_happy_path_test(
     start_orchestrators(
         keys.clone(),
         gravity_address,
+        gravityerc721_address,
         validator_out,
         no_relay_market_config,
     )
@@ -61,7 +62,7 @@ pub async fn erc721_happy_path_test(
             contact,
             user_keys.cosmos_address,
             gravity_address,
-            gravity_erc721_address,
+            gravityerc721_address,
             erc721_address,
             Uint256::from_bytes_be(&i.to_be_bytes()),
             None,
@@ -73,7 +74,7 @@ pub async fn erc721_happy_path_test(
     let token_id_for_approval = Uint256::from_bytes_be(&203_i32.to_be_bytes());
     test_erc721_transfer_utils(
         web30,
-        gravity_erc721_address,
+        gravityerc721_address,
         erc721_address,
         token_id_for_approval.clone(),
     )

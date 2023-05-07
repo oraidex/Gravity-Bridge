@@ -17,12 +17,13 @@ pub async fn send_to_eth_and_cancel(
     web30: &Web3,
     keys: Vec<ValidatorKeys>,
     gravity_address: EthAddress,
+    gravityerc721_address: EthAddress,
     erc20_address: EthAddress,
 ) {
     let mut grpc_client = grpc_client;
 
     let no_relay_market_config = create_default_test_config();
-    start_orchestrators(keys.clone(), gravity_address, false, no_relay_market_config).await;
+    start_orchestrators(keys.clone(), gravity_address, gravityerc721_address, false, no_relay_market_config).await;
 
     // a pair of cosmos and Ethereum keys + addresses to use for this test
     let user_keys = get_user_key(None);

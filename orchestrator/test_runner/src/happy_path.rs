@@ -36,6 +36,7 @@ pub async fn happy_path_test(
     contact: &Contact,
     keys: Vec<ValidatorKeys>,
     gravity_address: EthAddress,
+    gravityerc721_address: EthAddress,
     erc20_address: EthAddress,
     validator_out: bool,
 ) {
@@ -45,6 +46,7 @@ pub async fn happy_path_test(
     start_orchestrators(
         keys.clone(),
         gravity_address,
+        gravityerc721_address,
         validator_out,
         no_relay_market_config,
     )

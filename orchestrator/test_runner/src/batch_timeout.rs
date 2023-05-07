@@ -38,12 +38,13 @@ pub async fn batch_timeout_test(
     grpc_client: GravityQueryClient<Channel>,
     keys: Vec<ValidatorKeys>,
     gravity_address: EthAddress,
+    gravityerc721_address: EthAddress,
     erc20_addresses: Vec<EthAddress>,
 ) {
     let mut grpc_client = grpc_client;
 
     let no_relay_market_config = create_no_batch_requests_config();
-    start_orchestrators(keys.clone(), gravity_address, false, no_relay_market_config).await;
+    start_orchestrators(keys.clone(), gravity_address, gravityerc721_address, false, no_relay_market_config).await;
 
     // first we reduce batch timeout (denominated in miliseconds)
     // to one minute, the absolute minimum value
