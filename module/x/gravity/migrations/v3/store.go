@@ -84,7 +84,7 @@ func getAttestationConverter(logger log.Logger) func([]byte, codec.BinaryCodec, 
 			return nil, err
 		}
 
-		newKey, err := types.GetAttestationKey(claim.GetEventNonce(), hash), nil
+		newKey, err := types.GetAttestationKey(claim.GetEventNonce(), hash, types.GravityContractNonce), nil
 		// The new key must be returned without a prefix, since it will be set on a PrefixStore
 		newKeyNoPrefix := newKey[len(implicitPrefix):]
 

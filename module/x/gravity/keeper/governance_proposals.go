@@ -13,6 +13,8 @@ import (
 
 // this file contains code related to custom governance proposals
 
+// TODO: There are probably some ERC721 nonce types that needs to be handled here!
+
 func RegisterProposalTypes() {
 	// use of prefix stripping to prevent a typo between the proposal we check
 	// and the one we register, any issues with the registration string will prevent
@@ -65,14 +67,14 @@ func (k Keeper) HandleUnhaltBridgeProposal(ctx sdk.Context, p *types.UnhaltBridg
 // and prune those that are older than nonceCutoff
 func pruneAttestationsAfterNonce(ctx sdk.Context, k Keeper, nonceCutoff uint64) {
 	// Decide on the most recent nonce we can actually roll back to
-	lastObserved := k.GetLastObservedEventNonce(ctx)
+	lastObserved := k.GetLastObservedEventNonce(ctx, types.GravityContractNonce)
 	if nonceCutoff < lastObserved || nonceCutoff == 0 {
 		ctx.Logger().Error("Attempted to reset to a nonce before the last \"observed\" event, which is not allowed", "lastObserved", lastObserved, "nonce", nonceCutoff)
 		return
 	}
 
 	// Get relevant event nonces
-	attmap, keys := k.GetAttestationMapping(ctx)
+	attmap, keys := k.GetAttestationMapping(ctx, types.GravityContractNonce)
 
 	// Discover all affected validators whose LastEventNonce must be reset to nonceCutoff
 
@@ -95,7 +97,7 @@ func pruneAttestationsAfterNonce(ctx sdk.Context, k Keeper, nonceCutoff uint64) 
 					}
 				}
 
-				k.DeleteAttestation(ctx, att)
+				k.DeleteAttestation(ctx, att, types.GravityContractNonce)
 			}
 		}
 	}
@@ -106,10 +108,10 @@ func pruneAttestationsAfterNonce(ctx sdk.Context, k Keeper, nonceCutoff uint64) 
 		if err != nil {
 			panic(sdkerrors.Wrap(err, "invalid validator address affected by bridge reset"))
 		}
-		valLastNonce := k.GetLastEventNonceByValidator(ctx, val)
+		valLastNonce := k.GetLastEventNonceByValidator(ctx, val, types.GravityContractNonce)
 		if valLastNonce > nonceCutoff {
 			ctx.Logger().Info("Resetting validator's last event nonce due to bridge unhalt", "validator", vote, "lastEventNonce", valLastNonce, "resetNonce", nonceCutoff)
-			k.SetLastEventNonceByValidator(ctx, val, nonceCutoff)
+			k.SetLastEventNonceByValidator(ctx, val, nonceCutoff, types.GravityContractNonce)
 		}
 	}
 }

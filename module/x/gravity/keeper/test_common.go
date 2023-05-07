@@ -2,6 +2,11 @@ package keeper
 
 import (
 	"bytes"
+	"github.com/Gravity-Bridge/Gravity-Bridge/module/x/internft"
+	ibcnfttransferkeeper "github.com/bianjieai/nft-transfer/keeper"
+	ibcnfttransfertypes "github.com/bianjieai/nft-transfer/types"
+	nfttypes "github.com/cosmos/cosmos-sdk/x/nft"
+	nftkeeper "github.com/cosmos/cosmos-sdk/x/nft/keeper"
 	"testing"
 	"time"
 
@@ -248,18 +253,20 @@ var (
 
 // TestInput stores the various keepers required to test gravity
 type TestInput struct {
-	GravityKeeper     Keeper
-	AccountKeeper     authkeeper.AccountKeeper
-	StakingKeeper     stakingkeeper.Keeper
-	SlashingKeeper    slashingkeeper.Keeper
-	DistKeeper        distrkeeper.Keeper
-	BankKeeper        bankkeeper.BaseKeeper
-	GovKeeper         govkeeper.Keeper
-	IbcTransferKeeper ibctransferkeeper.Keeper
-	Context           sdk.Context
-	Marshaler         codec.Codec
-	LegacyAmino       *codec.LegacyAmino
-	GravityStoreKey   *sdkstore.KVStoreKey
+	GravityKeeper        Keeper
+	AccountKeeper        authkeeper.AccountKeeper
+	StakingKeeper        stakingkeeper.Keeper
+	SlashingKeeper       slashingkeeper.Keeper
+	DistKeeper           distrkeeper.Keeper
+	BankKeeper           bankkeeper.BaseKeeper
+	GovKeeper            govkeeper.Keeper
+	IbcTransferKeeper    ibctransferkeeper.Keeper
+	NftKeeper            nftkeeper.Keeper
+	IbcNftTransferKeeper ibcnfttransferkeeper.Keeper
+	Context              sdk.Context
+	Marshaler            codec.Codec
+	LegacyAmino          *codec.LegacyAmino
+	GravityStoreKey      *sdkstore.KVStoreKey
 }
 
 // SetupFiveValChain does all the initialization for a 5 Validator chain using the keys here
@@ -409,6 +416,8 @@ func CreateTestEnv(t *testing.T) TestInput {
 	keyIbc := sdk.NewKVStoreKey(ibchost.StoreKey)
 	keyIbcTransfer := sdk.NewKVStoreKey(ibctransfertypes.StoreKey)
 	keyBech32Ibc := sdk.NewKVStoreKey(bech32ibctypes.StoreKey)
+	keyNft := sdk.NewKVStoreKey(nfttypes.StoreKey)
+	keyIbcNftTransfer := sdk.NewKVStoreKey(ibcnfttransfertypes.StoreKey)
 
 	// Initialize memory database and mount stores on it
 	db := dbm.NewMemDB()
@@ -427,6 +436,8 @@ func CreateTestEnv(t *testing.T) TestInput {
 	ms.MountStoreWithDB(keyIbc, sdkstore.StoreTypeIAVL, db)
 	ms.MountStoreWithDB(keyIbcTransfer, sdkstore.StoreTypeIAVL, db)
 	ms.MountStoreWithDB(keyBech32Ibc, sdkstore.StoreTypeIAVL, db)
+	ms.MountStoreWithDB(keyNft, sdkstore.StoreTypeIAVL, db)
+	ms.MountStoreWithDB(keyIbcNftTransfer, sdkstore.StoreTypeIAVL, db)
 	err := ms.LoadLatestVersion()
 	require.Nil(t, err)
 
@@ -481,6 +492,7 @@ func CreateTestEnv(t *testing.T) TestInput {
 		govtypes.ModuleName:            {authtypes.Burner},
 		types.ModuleName:               {authtypes.Minter, authtypes.Burner},
 		ibctransfertypes.ModuleName:    {authtypes.Minter, authtypes.Burner},
+		nfttypes.ModuleName:            nil,
 	}
 
 	accountKeeper := authkeeper.NewAccountKeeper(
@@ -611,8 +623,29 @@ func CreateTestEnv(t *testing.T) TestInput {
 		panic("Test Env Creation failure, could not set native hrp")
 	}
 
+	nftKeeper := nftkeeper.NewKeeper(
+		keyNft,
+		marshaler,
+		accountKeeper,
+		bankKeeper,
+	)
+
+	scopedNFTTransferKeeper := capabilityKeeper.ScopeToModule(ibcnfttransfertypes.ModuleName)
+	ibcnftTransferKeeper := ibcnfttransferkeeper.NewKeeper(
+		marshaler,
+		keyIbcNftTransfer,
+		authtypes.NewModuleAddress(govtypes.ModuleName).String(),
+		ibcKeeper.ChannelKeeper,
+		ibcKeeper.ChannelKeeper,
+		&ibcKeeper.PortKeeper,
+		accountKeeper,
+		internft.NewInterNftKeeperWrapper(&nftKeeper),
+		scopedNFTTransferKeeper,
+	)
+
 	k := NewKeeper(gravityKey, getSubspace(paramsKeeper, types.DefaultParamspace), marshaler, &bankKeeper,
-		&stakingKeeper, &slashingKeeper, &distKeeper, &accountKeeper, &ibcTransferKeeper, &bech32IbcKeeper)
+		&stakingKeeper, &slashingKeeper, &distKeeper, &accountKeeper, &ibcTransferKeeper, &bech32IbcKeeper,
+		&nftKeeper, &ibcnftTransferKeeper)
 
 	stakingKeeper = *stakingKeeper.SetHooks(
 		stakingtypes.NewMultiStakingHooks(
@@ -624,7 +657,8 @@ func CreateTestEnv(t *testing.T) TestInput {
 
 	// set gravityIDs for batches and tx items, simulating genesis setup
 	k.SetLatestValsetNonce(ctx, 0)
-	k.setLastObservedEventNonce(ctx, 0)
+	k.setLastObservedEventNonce(ctx, 0, types.GravityContractNonce)
+	k.setLastObservedEventNonce(ctx, 0, types.ERC721ContractNonce)
 	k.SetLastSlashedValsetNonce(ctx, 0)
 	k.SetLastSlashedBatchBlock(ctx, 0)
 	k.SetLastSlashedLogicCallBlock(ctx, 0)
@@ -634,17 +668,20 @@ func CreateTestEnv(t *testing.T) TestInput {
 	k.SetParams(ctx, TestingGravityParams)
 
 	testInput := TestInput{
-		GravityKeeper:   k,
-		AccountKeeper:   accountKeeper,
-		BankKeeper:      bankKeeper,
-		StakingKeeper:   stakingKeeper,
-		SlashingKeeper:  slashingKeeper,
-		DistKeeper:      distKeeper,
-		GovKeeper:       govKeeper,
-		Context:         ctx,
-		Marshaler:       marshaler,
-		LegacyAmino:     cdc,
-		GravityStoreKey: gravityKey,
+		GravityKeeper:        k,
+		AccountKeeper:        accountKeeper,
+		StakingKeeper:        stakingKeeper,
+		SlashingKeeper:       slashingKeeper,
+		DistKeeper:           distKeeper,
+		BankKeeper:           bankKeeper,
+		GovKeeper:            govKeeper,
+		IbcTransferKeeper:    ibcTransferKeeper,
+		NftKeeper:            nftKeeper,
+		IbcNftTransferKeeper: ibcnftTransferKeeper,
+		Context:              ctx,
+		Marshaler:            marshaler,
+		LegacyAmino:          cdc,
+		GravityStoreKey:      gravityKey,
 	}
 	// check invariants before starting
 	testInput.Context.Logger().Info("Asserting invariants on new test env")

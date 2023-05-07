@@ -2,6 +2,7 @@ package keeper
 
 import (
 	"fmt"
+	"github.com/cosmos/cosmos-sdk/x/nft"
 	"math/big"
 	"strconv"
 	"strings"
@@ -47,6 +48,9 @@ func (a AttestationHandler) Handle(ctx sdk.Context, att types.Attestation, claim
 	case *types.MsgValsetUpdatedClaim:
 		return a.handleValsetUpdated(ctx, *claim)
 
+	case *types.MsgSendERC721ToCosmosClaim:
+		return a.handleSendERC721ToCosmos(ctx, *claim)
+
 	default:
 		panic(fmt.Sprintf("Invalid event type for attestations %s", claim.GetType()))
 	}
@@ -68,7 +72,7 @@ func (a AttestationHandler) handleSendToCosmos(ctx sdk.Context, claim types.MsgS
 			"address", receiverAddress,
 			"cause", addressErr.Error(),
 			"claim type", claim.GetType(),
-			"id", types.GetAttestationKey(claim.GetEventNonce(), hash),
+			"id", types.GetAttestationKey(claim.GetEventNonce(), hash, types.GravityContractNonce),
 			"nonce", fmt.Sprint(claim.GetEventNonce()),
 		)
 	}
@@ -82,7 +86,7 @@ func (a AttestationHandler) handleSendToCosmos(ctx sdk.Context, claim types.MsgS
 		a.keeper.logger(ctx).Error("Invalid token contract",
 			"cause", errTokenAddress.Error(),
 			"claim type", claim.GetType(),
-			"id", types.GetAttestationKey(claim.GetEventNonce(), hash),
+			"id", types.GetAttestationKey(claim.GetEventNonce(), hash, types.GravityContractNonce),
 			"nonce", fmt.Sprint(claim.GetEventNonce()),
 		)
 		return sdkerrors.Wrap(errTokenAddress, "invalid token contract on claim")
@@ -93,7 +97,7 @@ func (a AttestationHandler) handleSendToCosmos(ctx sdk.Context, claim types.MsgS
 		a.keeper.logger(ctx).Error("Invalid ethereum sender",
 			"cause", errEthereumSender.Error(),
 			"claim type", claim.GetType(),
-			"id", types.GetAttestationKey(claim.GetEventNonce(), hash),
+			"id", types.GetAttestationKey(claim.GetEventNonce(), hash, types.GravityContractNonce),
 			"nonce", fmt.Sprint(claim.GetEventNonce()),
 		)
 		return sdkerrors.Wrap(errTokenAddress, "invalid ethereum sender on claim")
@@ -106,7 +110,7 @@ func (a AttestationHandler) handleSendToCosmos(ctx sdk.Context, claim types.MsgS
 		a.keeper.logger(ctx).Error("Invalid SendToCosmos: receiver is blacklisted",
 			"address", receiverAddress,
 			"claim type", claim.GetType(),
-			"id", types.GetAttestationKey(claim.GetEventNonce(), hash),
+			"id", types.GetAttestationKey(claim.GetEventNonce(), hash, types.GravityContractNonce),
 			"nonce", fmt.Sprint(claim.GetEventNonce()),
 		)
 		invalidAddress = true
@@ -152,7 +156,7 @@ func (a AttestationHandler) handleSendToCosmos(ctx sdk.Context, claim types.MsgS
 			a.keeper.logger(ctx).Error("Failed community pool send",
 				"cause", err.Error(),
 				"claim type", claim.GetType(),
-				"id", types.GetAttestationKey(claim.GetEventNonce(), hash),
+				"id", types.GetAttestationKey(claim.GetEventNonce(), hash, types.GravityContractNonce),
 				"nonce", fmt.Sprint(claim.GetEventNonce()),
 			)
 			return sdkerrors.Wrap(err, "failed to send to Community pool")
@@ -182,6 +186,143 @@ func (a AttestationHandler) handleSendToCosmos(ctx sdk.Context, claim types.MsgS
 	}
 
 	return nil
+}
+
+func (a AttestationHandler) handleSendERC721ToCosmos(ctx sdk.Context, claim types.MsgSendERC721ToCosmosClaim) error {
+	invalidAddress := false
+	// Validate the receiver as a valid bech32 address
+	receiverAddress, addressErr := types.IBCAddressFromBech32(claim.CosmosReceiver)
+
+	if addressErr != nil {
+		invalidAddress = true
+		hash, _ := claim.ClaimHash()
+		a.keeper.logger(ctx).Error("Invalid SendERC721ToCosmos receiver",
+			"address", receiverAddress,
+			"cause", addressErr.Error(),
+			"claim type", claim.GetType(),
+			"id", types.GetAttestationKey(claim.GetEventNonce(), hash, types.ERC721ContractNonce),
+			"nonce", fmt.Sprint(claim.GetEventNonce()),
+		)
+	}
+	tokenAddress, errTokenAddress := types.NewEthAddress(claim.TokenContract)
+	ethereumSender, errEthereumSender := types.NewEthAddress(claim.EthereumSender)
+	// nil address is not possible unless the validators get together and submit
+	// a bogus event, this would create lost tokens stuck in the bridge
+	// and not accessible to anyone
+	if errTokenAddress != nil {
+		hash, _ := claim.ClaimHash()
+		a.keeper.logger(ctx).Error("Invalid token contract",
+			"cause", errTokenAddress.Error(),
+			"claim type", claim.GetType(),
+			"id", types.GetAttestationKey(claim.GetEventNonce(), hash, types.ERC721ContractNonce),
+			"nonce", fmt.Sprint(claim.GetEventNonce()),
+		)
+		return sdkerrors.Wrap(errTokenAddress, "invalid token contract on claim")
+	}
+	// likewise nil sender would have to be caused by a bogus event
+	if errEthereumSender != nil {
+		hash, _ := claim.ClaimHash()
+		a.keeper.logger(ctx).Error("Invalid ethereum sender",
+			"cause", errEthereumSender.Error(),
+			"claim type", claim.GetType(),
+			"id", types.GetAttestationKey(claim.GetEventNonce(), hash, types.ERC721ContractNonce),
+			"nonce", fmt.Sprint(claim.GetEventNonce()),
+		)
+		return sdkerrors.Wrap(errTokenAddress, "invalid ethereum sender on claim")
+	}
+
+	// Block blacklisted asset transfers
+	// (these funds are unrecoverable for the blacklisted sender, they will instead be sent to community pool)
+	if a.keeper.IsOnBlacklist(ctx, *ethereumSender) {
+		hash, _ := claim.ClaimHash()
+		a.keeper.logger(ctx).Error("Invalid SendToCosmos: receiver is blacklisted",
+			"address", receiverAddress,
+			"claim type", claim.GetType(),
+			"id", types.GetAttestationKey(claim.GetEventNonce(), hash, types.ERC721ContractNonce),
+			"nonce", fmt.Sprint(claim.GetEventNonce()),
+		)
+		invalidAddress = true
+	}
+
+	// TODO: Check if nft is Cosmos-originated asset and get denom (see handleSendToCosmos for more ideas), until then we can just get the denom directly
+	denom := types.GravityERC721Denom(*tokenAddress)
+	nftToken := nft.NFT{
+		ClassId: denom,
+		Id:      claim.TokenId,
+		Uri:     claim.TokenUri,
+	}
+
+	moduleAddr := a.keeper.accountKeeper.GetModuleAddress(types.ModuleName)
+	if err := a.mintEthereumOriginatedERC721Vouchers(ctx, moduleAddr, claim, nftToken); err != nil {
+		// TODO: Evaluate closely, if we can't mint an ethereum voucher, what should we do?
+		return err
+	}
+
+	if !invalidAddress { // address appears valid, attempt to send minted/locked coins to receiver
+		if err := a.keeper.nftKeeper.Transfer(ctx, denom, claim.TokenId, receiverAddress); err != nil {
+			// Well, fuck
+			return err
+		}
+		// Failure to send will result in NFT transfer to community pool
+		ibcForwardQueued, err := a.sendERC721ToCosmosAccount(ctx, claim, receiverAddress, nftToken)
+		_ = ibcForwardQueued
+
+		/* TODO: Add this stuff type of  later for production
+		// Perform module balance assertions
+		if err != nil || ibcForwardQueued { // ibc forward enqueue and errors should not send tokens to anyone
+			a.assertNothingSent(ctx, moduleAddr, preSendBalance, denom)
+		} else { // No error, local send -> assert send had right amount
+			a.assertSentAmount(ctx, moduleAddr, preSendBalance, denom, claim.Amount)
+		}*/
+
+		if err != nil { // trigger send to community pool
+			invalidAddress = true
+		}
+	}
+
+	// for whatever reason above, blacklisted, invalid string, etc this deposit is not valid
+	// we can't send the tokens back on the Ethereum side, and if we don't put them somewhere on
+	// the cosmos side they will be lost an inaccessible even though they are locked in the bridge.
+	// so we deposit the tokens into the community pool for later use via governance vote
+	if invalidAddress {
+		if err := a.keeper.SendERC721ToCommunityPool(ctx, nftToken); err != nil {
+			hash, _ := claim.ClaimHash()
+			a.keeper.logger(ctx).Error("Failed community pool send",
+				"cause", err.Error(),
+				"claim type", claim.GetType(),
+				"id", types.GetAttestationKey(claim.GetEventNonce(), hash, types.ERC721ContractNonce),
+				"nonce", fmt.Sprint(claim.GetEventNonce()),
+			)
+			return sdkerrors.Wrap(err, "failed to send to Community pool")
+		}
+
+		if err := ctx.EventManager().EmitTypedEvent(
+			&types.EventInvalidSendERC721ToCosmosReceiver{
+				Contract: tokenAddress.GetAddress().Hex(),
+				ClassId:  nftToken.ClassId,
+				TokenId:  nftToken.Id,
+				Nonce:    strconv.Itoa(int(claim.GetEventNonce())),
+				Sender:   claim.EthereumSender,
+			},
+		); err != nil {
+			return err
+		}
+
+	} else {
+		if err := ctx.EventManager().EmitTypedEvent(
+			&types.EventSendERC721ToCosmos{
+				Contract: claim.TokenContract,
+				ClassId: nftToken.ClassId,
+				TokenId:  nftToken.Id,
+				Nonce:    strconv.Itoa(int(claim.GetEventNonce())),
+			},
+		); err != nil {
+			return err
+		}
+	}
+
+	return nil
+
 }
 
 // Upon acceptance of sufficient validator BatchSendToEth claims: burn ethereum originated vouchers, invalidate pending
@@ -415,7 +556,7 @@ func (a AttestationHandler) mintEthereumOriginatedVouchers(
 		a.keeper.logger(ctx).Error("Failed minting",
 			"cause", err.Error(),
 			"claim type", claim.GetType(),
-			"id", types.GetAttestationKey(claim.GetEventNonce(), hash),
+			"id", types.GetAttestationKey(claim.GetEventNonce(), hash, types.GravityContractNonce),
 			"nonce", fmt.Sprint(claim.GetEventNonce()),
 		)
 		return sdkerrors.Wrapf(err, "mint vouchers coins: %s", coins)
@@ -429,6 +570,76 @@ func (a AttestationHandler) mintEthereumOriginatedVouchers(
 		)
 	}
 	return nil
+}
+
+func (a AttestationHandler) mintEthereumOriginatedERC721Vouchers(
+	ctx sdk.Context, moduleAddr sdk.AccAddress, claim types.MsgSendERC721ToCosmosClaim, nftToken nft.NFT,
+) error {
+	hasClass := a.keeper.nftKeeper.HasClass(ctx, nftToken.ClassId)
+	if !hasClass {
+		// TODO: Maybe add some more stuff to the class, like name etc?
+		class := nft.Class{
+			Id: nftToken.ClassId,
+		}
+		a.keeper.nftKeeper.SaveClass(ctx, class)
+	}
+
+	if err := a.keeper.nftKeeper.Mint(ctx, nftToken, moduleAddr); err != nil {
+		// uh oh! we lost an NFT! This is a big problem, we need to figure out how to deal with this
+		hash, _ := claim.ClaimHash()
+		a.keeper.logger(ctx).Error("Failed minting ERC721",
+			"cause", err.Error(),
+			"claim type", claim.GetType(),
+			"id", types.GetAttestationKey(claim.GetEventNonce(), hash, types.ERC721ContractNonce),
+			"nonce", fmt.Sprint(claim.GetEventNonce()),
+		)
+		return sdkerrors.Wrapf(err, "mint vouchers erc721: %s s", nftToken.ClassId, nftToken.Id)
+	}
+
+	return nil
+}
+
+func (a AttestationHandler) sendERC721ToCosmosAccount(ctx sdk.Context, claim types.MsgSendERC721ToCosmosClaim, receiver sdk.AccAddress, nftToken nft.NFT) (ibcForwardQueued bool, err error) {
+	accountPrefix, err := types.GetPrefixFromBech32(claim.CosmosReceiver)
+	if err != nil {
+		hash, _ := claim.ClaimHash()
+		a.keeper.logger(ctx).Error("Invalid bech32 CosmosReceiver",
+			"cause", err.Error(), "address", receiver,
+			"claimType", claim.GetType(),
+			"id", types.GetAttestationKey(claim.GetEventNonce(), hash, types.ERC721ContractNonce),
+			"nonce", fmt.Sprint(claim.GetEventNonce()),
+		)
+		return false, err
+	}
+	nativePrefix, err := a.keeper.bech32IbcKeeper.GetNativeHrp(ctx)
+	if err != nil {
+		// In a real environment bech32ibc panics on InitGenesis and on Send with their bech32ics20 module, which
+		// prevents all MsgSend + MsgMultiSend transfers, in a testing environment it is possible to hit this condition,
+		// so we should panic as well. This will cause a chain halt, and prevent attestation handling until prefix is set
+		panic("SendToCosmos failure: bech32ibc NativeHrp has not been set!")
+	}
+
+	if accountPrefix == nativePrefix { // Send to a native gravity account
+		return false, a.sendERC721ToLocalAddress(ctx, claim, receiver, nftToken)
+	} else { // Try to send tokens to IBC chain, fall back to native send on errors
+		panic("not implemented just yet! need to figure out if I can skip that pesky ibc-forwarding queue crap")
+		/*hrpIbcRecord, err := a.keeper.bech32IbcKeeper.GetHrpIbcRecord(ctx, accountPrefix)
+		if err != nil {
+			hash, _ := claim.ClaimHash()
+			a.keeper.logger(ctx).Error("Unregistered foreign prefix",
+				"cause", err.Error(), "address", receiver,
+				"claim type", claim.GetType(),
+				"id", types.GetAttestationKey(claim.GetEventNonce(), hash, types.GravityContractNonce),
+				"nonce", fmt.Sprint(claim.GetEventNonce()),
+			)
+
+			// Fall back to sending tokens to native account
+			return false, sdkerrors.Wrap(
+				a.sendERC721ToLocalAddress(ctx, claim, receiver, class),
+				"Unregistered foreign prefix, send via x/nft",
+			)
+		}*/
+	}
 }
 
 // Transfer tokens to gravity native accounts via bank module or foreign accounts via ibc-transfer
@@ -447,7 +658,7 @@ func (a AttestationHandler) sendCoinToCosmosAccount(
 		a.keeper.logger(ctx).Error("Invalid bech32 CosmosReceiver",
 			"cause", err.Error(), "address", receiver,
 			"claimType", claim.GetType(),
-			"id", types.GetAttestationKey(claim.GetEventNonce(), hash),
+			"id", types.GetAttestationKey(claim.GetEventNonce(), hash, types.GravityContractNonce),
 			"nonce", fmt.Sprint(claim.GetEventNonce()),
 		)
 		return false, err
@@ -469,7 +680,7 @@ func (a AttestationHandler) sendCoinToCosmosAccount(
 			a.keeper.logger(ctx).Error("Unregistered foreign prefix",
 				"cause", err.Error(), "address", receiver,
 				"claim type", claim.GetType(),
-				"id", types.GetAttestationKey(claim.GetEventNonce(), hash),
+				"id", types.GetAttestationKey(claim.GetEventNonce(), hash, types.GravityContractNonce),
 				"nonce", fmt.Sprint(claim.GetEventNonce()),
 			)
 
@@ -512,7 +723,7 @@ func (a AttestationHandler) sendCoinToLocalAddress(
 		a.keeper.logger(ctx).Error("Blacklisted deposit",
 			"cause", err.Error(),
 			"claim type", claim.GetType(),
-			"id", types.GetAttestationKey(claim.GetEventNonce(), hash),
+			"id", types.GetAttestationKey(claim.GetEventNonce(), hash, types.GravityContractNonce),
 			"nonce", fmt.Sprint(claim.GetEventNonce()),
 		)
 	} else { // no error
@@ -532,6 +743,39 @@ func (a AttestationHandler) sendCoinToLocalAddress(
 	}
 
 	return err // returns nil if no error
+}
+
+func (a AttestationHandler) sendERC721ToLocalAddress(
+	ctx sdk.Context, claim types.MsgSendERC721ToCosmosClaim, receiver sdk.AccAddress, nftToken nft.NFT,
+) (err error) {
+	err = a.keeper.nftKeeper.Transfer(ctx, nftToken.ClassId, nftToken.Id, receiver)
+	if err != nil {
+		// Well, that can't be good
+		hash, _ := claim.ClaimHash()
+		a.keeper.logger(ctx).Error("ERC721 transfer failed",
+			"cause", err.Error(),
+			"claim type", claim.GetType(),
+			"id", types.GetAttestationKey(claim.GetEventNonce(), hash, types.ERC721ContractNonce),
+			"nonce", fmt.Sprint(claim.GetEventNonce()),
+		)
+	} else {
+		a.keeper.logger(ctx).Info("SendERC721ToCosmos to local gravity receiver", "ethSender", claim.EthereumSender,
+			"receiver", receiver, "contract", claim.TokenContract, "classId", nftToken.ClassId, "nftId", nftToken.Id,
+			"nonce", claim.EventNonce, "ethContract", claim.TokenContract, "ethBlockHeight", claim.EthBlockHeight,
+			"cosmosBlockHeight", ctx.BlockHeight(),
+		)
+		if err := ctx.EventManager().EmitTypedEvent(&types.EventSendERC721ToCosmosLocal{
+			Nonce:    fmt.Sprint(claim.EventNonce),
+			Receiver: receiver.String(),
+			Contract: claim.TokenContract,
+			ClassId:  nftToken.ClassId,
+			TokenId:  nftToken.Id,
+		}); err != nil {
+			return err
+		}
+	}
+
+	return err
 }
 
 // addToIbcAutoForwardQueue Send tokens first to a local address, then via ibc-transfer module to foreign cosmos account

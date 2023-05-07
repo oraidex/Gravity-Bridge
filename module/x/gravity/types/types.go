@@ -14,6 +14,13 @@ import (
 	bech32ibckeeper "github.com/althea-net/bech32-ibc/x/bech32ibc/keeper"
 )
 
+type NonceSource uint
+
+const (
+	GravityContractNonce NonceSource = iota
+	ERC721ContractNonce
+)
+
 // UInt64FromBytesUnsafe create uint from binary big endian representation
 // Note: This is unsafe because the function will panic if provided over 8 bytes
 func UInt64FromBytesUnsafe(s []byte) uint64 {

@@ -59,7 +59,8 @@ func InitGenesis(ctx sdk.Context, k Keeper, data types.GenesisState) {
 
 	// restore various nonces, this MUST match GravityNonces in genesis
 	k.SetLatestValsetNonce(ctx, data.GravityNonces.LatestValsetNonce)
-	k.setLastObservedEventNonce(ctx, data.GravityNonces.LastObservedNonce)
+	k.setLastObservedEventNonce(ctx, data.GravityNonces.LastObservedNonce, types.GravityContractNonce)
+	k.setLastObservedEventNonce(ctx, data.GravityNonces.LastErc721ObservedNonce, types.ERC721ContractNonce)
 	k.SetLastSlashedValsetNonce(ctx, data.GravityNonces.LastSlashedValsetNonce)
 	k.SetLastSlashedBatchBlock(ctx, data.GravityNonces.LastSlashedBatchBlock)
 	k.SetLastSlashedLogicCallBlock(ctx, data.GravityNonces.LastSlashedLogicCallBlock)
@@ -92,7 +93,8 @@ func InitGenesis(ctx sdk.Context, k Keeper, data types.GenesisState) {
 		if err != nil {
 			panic(fmt.Errorf("error when computing ClaimHash for %v", hash))
 		}
-		k.SetAttestation(ctx, claim.GetEventNonce(), hash, &att)
+		// TODO: ERC721 attestations??
+		k.SetAttestation(ctx, claim.GetEventNonce(), hash, &att, types.GravityContractNonce)
 	}
 
 	// reset attestation state of specific validators
@@ -119,9 +121,10 @@ func InitGenesis(ctx sdk.Context, k Keeper, data types.GenesisState) {
 			if err != nil {
 				panic(err)
 			}
-			last := k.GetLastEventNonceByValidator(ctx, val)
+			// TODO: ERC721 nonce?
+			last := k.GetLastEventNonceByValidator(ctx, val, types.GravityContractNonce)
 			if claim.GetEventNonce() > last {
-				k.SetLastEventNonceByValidator(ctx, val, claim.GetEventNonce())
+				k.SetLastEventNonceByValidator(ctx, val, claim.GetEventNonce(), types.GravityContractNonce)
 			}
 		}
 	}
@@ -203,7 +206,8 @@ func ExportGenesis(ctx sdk.Context, k Keeper) types.GenesisState {
 		calls              = k.GetOutgoingLogicCalls(ctx)
 		batches            = k.GetOutgoingTxBatches(ctx)
 		valsets            = k.GetValsets(ctx)
-		attmap, attKeys    = k.GetAttestationMapping(ctx)
+		attmap, attKeys    = k.GetAttestationMapping(ctx, types.GravityContractNonce)
+		// TODO: ERC721 attestations??
 		vsconfs            = []types.MsgValsetConfirm{}
 		batchconfs         = []types.MsgConfirmBatch{}
 		callconfs          = []types.MsgConfirmLogicCall{}
@@ -261,7 +265,8 @@ func ExportGenesis(ctx sdk.Context, k Keeper) types.GenesisState {
 		Params: &p,
 		GravityNonces: types.GravityNonces{
 			LatestValsetNonce:         k.GetLatestValsetNonce(ctx),
-			LastObservedNonce:         k.GetLastObservedEventNonce(ctx),
+			LastObservedNonce:         k.GetLastObservedEventNonce(ctx, types.GravityContractNonce),
+			LastErc721ObservedNonce:   k.GetLastObservedEventNonce(ctx, types.ERC721ContractNonce),
 			LastSlashedValsetNonce:    k.GetLastSlashedValsetNonce(ctx),
 			LastSlashedBatchBlock:     k.GetLastSlashedBatchBlock(ctx),
 			LastSlashedLogicCallBlock: k.GetLastSlashedLogicCallBlock(ctx),

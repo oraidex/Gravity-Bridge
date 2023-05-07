@@ -25,35 +25,35 @@ func TestGetAndDeleteAttestation(t *testing.T) {
 	// Get created attestations
 	for i := 0; i < length; i++ {
 		nonce := uint64(1 + i)
-		att := k.GetAttestation(ctx, nonce, hashes[i])
+		att := k.GetAttestation(ctx, nonce, hashes[i], types.GravityContractNonce)
 		require.NotNil(t, att)
 	}
 
-	recentAttestations := k.GetMostRecentAttestations(ctx, uint64(length))
+	recentAttestations := k.GetMostRecentAttestations(ctx, types.GravityContractNonce, uint64(length))
 	require.True(t, len(recentAttestations) == length)
 
 	// Delete last 3 attestations
 	var nilAtt *types.Attestation
 	for i := 7; i < length; i++ {
 		nonce := uint64(1 + i)
-		att := k.GetAttestation(ctx, nonce, hashes[i])
-		k.DeleteAttestation(ctx, *att)
+		att := k.GetAttestation(ctx, nonce, hashes[i], types.GravityContractNonce)
+		k.DeleteAttestation(ctx, *att, types.GravityContractNonce)
 
-		att = k.GetAttestation(ctx, nonce, hashes[i])
+		att = k.GetAttestation(ctx, nonce, hashes[i], types.GravityContractNonce)
 		require.Equal(t, nilAtt, att)
 	}
-	recentAttestations = k.GetMostRecentAttestations(ctx, uint64(10))
+	recentAttestations = k.GetMostRecentAttestations(ctx, types.GravityContractNonce, uint64(10))
 	require.True(t, len(recentAttestations) == 7)
 
 	// Check all attestations again
 	for i := 0; i < 7; i++ {
 		nonce := uint64(1 + i)
-		att := k.GetAttestation(ctx, nonce, hashes[i])
+		att := k.GetAttestation(ctx, nonce, hashes[i], types.GravityContractNonce)
 		require.NotNil(t, att)
 	}
 	for i := 7; i < length; i++ {
 		nonce := uint64(1 + i)
-		att := k.GetAttestation(ctx, nonce, hashes[i])
+		att := k.GetAttestation(ctx, nonce, hashes[i], types.GravityContractNonce)
 		require.Equal(t, nilAtt, att)
 	}
 }
@@ -69,7 +69,7 @@ func TestGetMostRecentAttestations(t *testing.T) {
 	length := 10
 	msgs, anys, _ := createAttestations(t, length, k, ctx)
 
-	recentAttestations := k.GetMostRecentAttestations(ctx, uint64(length))
+	recentAttestations := k.GetMostRecentAttestations(ctx, types.GravityContractNonce, uint64(length))
 	require.True(t, len(recentAttestations) == length,
 		"recentAttestations should have len %v but instead has %v", length, len(recentAttestations))
 	for n, attest := range recentAttestations {
@@ -118,7 +118,7 @@ func createAttestations(t *testing.T, length int, k Keeper, ctx sdktypes.Context
 		hash, err := msg.ClaimHash()
 		hashes = append(hashes, hash)
 		require.NoError(t, err)
-		k.SetAttestation(ctx, nonce, hash, att)
+		k.SetAttestation(ctx, nonce, hash, att, types.GravityContractNonce)
 	}
 
 	return msgs, anys, hashes
@@ -184,13 +184,13 @@ func TestGetSetLastEventNonceByValidator(t *testing.T) {
 	addrInBytes := valAccount.GetAddress().Bytes()
 
 	// In case this is first time validator is submiting claim, nonce is expected to be LastObservedNonce-1
-	k.setLastObservedEventNonce(ctx, nonce)
-	getEventNonce := k.GetLastEventNonceByValidator(ctx, addrInBytes)
+	k.setLastObservedEventNonce(ctx, nonce, types.GravityContractNonce)
+	getEventNonce := k.GetLastEventNonceByValidator(ctx, addrInBytes, types.GravityContractNonce)
 	require.Equal(t, nonce-1, getEventNonce)
 
-	require.NotPanics(t, func() { k.SetLastEventNonceByValidator(ctx, addrInBytes, nonce) })
+	require.NotPanics(t, func() { k.SetLastEventNonceByValidator(ctx, addrInBytes, nonce, types.GravityContractNonce) })
 
-	getEventNonce = k.GetLastEventNonceByValidator(ctx, addrInBytes)
+	getEventNonce = k.GetLastEventNonceByValidator(ctx, addrInBytes, types.GravityContractNonce)
 	require.Equal(t, nonce, getEventNonce)
 }
 
@@ -205,7 +205,7 @@ func TestInvalidHeight(t *testing.T) {
 	orch0 := OrchAddrs[0]
 	sender := AccAddrs[0]
 	receiver := EthAddrs[0]
-	lastNonce := pk.GetLastObservedEventNonce(ctx)
+	lastNonce := pk.GetLastObservedEventNonce(ctx, types.GravityContractNonce)
 	lastEthHeight := pk.GetLastObservedEthereumBlockHeight(ctx).EthereumBlockHeight
 	lastBatchNonce := 0
 	tokenContract := "0x2260FAC5E5542a773Aa44fBCfeDf7C193bc2C599"
@@ -263,7 +263,7 @@ func TestInvalidHeight(t *testing.T) {
 	// Assert that there is no attestation since the above panicked
 	badHash, err := bad.ClaimHash()
 	require.NoError(t, err)
-	att := pk.GetAttestation(ctx, bad.GetEventNonce(), badHash)
+	att := pk.GetAttestation(ctx, bad.GetEventNonce(), badHash, types.GravityContractNonce)
 	require.Nil(t, att)
 
 	// Attest the actual batch, and assert the votes are correct
@@ -283,7 +283,7 @@ func TestInvalidHeight(t *testing.T) {
 		require.NoError(t, err)
 		require.Equal(t, badHash, goodHash) // The hash should be the same, even though that's wrong
 
-		att := pk.GetAttestation(ctx, good.GetEventNonce(), goodHash)
+		att := pk.GetAttestation(ctx, good.GetEventNonce(), goodHash, types.GravityContractNonce)
 		require.NotNil(t, att)
 		log.Info("Asserting that the bad attestation only has one claimer", "attVotes", att.Votes)
 		require.Equal(t, len(att.Votes), i+1) // Only these good orchestrators votes should be counted

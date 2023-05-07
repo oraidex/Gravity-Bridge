@@ -15,6 +15,8 @@ const (
 	// GravityDenomPrefix indicates the prefix for all assets minted by this module
 	GravityDenomPrefix = ModuleName
 
+	GravityERC721DenomPrefix = ModuleName + "_erc721"
+
 	// GravityDenomSeparator is the separator for gravity denoms
 	GravityDenomSeparator = ""
 
@@ -175,6 +177,11 @@ func (i *InternalERC20Token) GravityCoin() sdk.Coin {
 // GravityDenom converts an EthAddress to a gravity cosmos denom
 func GravityDenom(tokenContract EthAddress) string {
 	return fmt.Sprintf("%s%s%s", GravityDenomPrefix, GravityDenomSeparator, tokenContract.GetAddress().Hex())
+}
+
+// GravityERC721Denom converts an EthAddress to a gravity cosmos denom for ERC721 tokens
+func GravityERC721Denom(tokenContract EthAddress) string {
+	return fmt.Sprintf("%s%s%s", GravityERC721DenomPrefix, GravityDenomSeparator, tokenContract.GetAddress().Hex())
 }
 
 // ValidateBasic performs stateless validation

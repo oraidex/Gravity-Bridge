@@ -19,6 +19,7 @@ func (k Keeper) Attest(
 	ctx sdk.Context,
 	claim types.EthereumClaim,
 	anyClaim *codectypes.Any,
+	nonceSource types.NonceSource,
 ) (*types.Attestation, error) {
 	val, found := k.GetOrchestratorValidator(ctx, claim.GetClaimer())
 	if !found {
@@ -34,7 +35,7 @@ func (k Keeper) Attest(
 	// and prevents validators from submitting two claims with the same nonce.
 	// This prevents there being two attestations with the same nonce that get 2/3s of the votes
 	// in the endBlocker.
-	lastEventNonce := k.GetLastEventNonceByValidator(ctx, valAddr)
+	lastEventNonce := k.GetLastEventNonceByValidator(ctx, valAddr, nonceSource)
 	if claim.GetEventNonce() != lastEventNonce+1 {
 		return nil, fmt.Errorf(types.ErrNonContiguousEventNonce.Error(), lastEventNonce+1, claim.GetEventNonce())
 	}
@@ -44,7 +45,7 @@ func (k Keeper) Attest(
 	if err != nil {
 		return nil, sdkerrors.Wrap(err, "unable to compute claim hash")
 	}
-	att := k.GetAttestation(ctx, claim.GetEventNonce(), hash)
+	att := k.GetAttestation(ctx, claim.GetEventNonce(), hash, nonceSource)
 
 	// If it does not exist, create a new one.
 	if att == nil {
@@ -66,8 +67,8 @@ func (k Keeper) Attest(
 		// Add the validator's vote to this attestation
 		att.Votes = append(att.Votes, valAddr.String())
 
-		k.SetAttestation(ctx, claim.GetEventNonce(), hash, att)
-		k.SetLastEventNonceByValidator(ctx, valAddr, claim.GetEventNonce())
+		k.SetAttestation(ctx, claim.GetEventNonce(), hash, att, nonceSource)
+		k.SetLastEventNonceByValidator(ctx, valAddr, claim.GetEventNonce(), nonceSource)
 
 		return att, nil
 	} else {
@@ -78,7 +79,7 @@ func (k Keeper) Attest(
 // TryAttestation checks if an attestation has enough votes to be applied to the consensus state
 // and has not already been marked Observed, then calls processAttestation to actually apply it to the state,
 // and then marks it Observed and emits an event.
-func (k Keeper) TryAttestation(ctx sdk.Context, att *types.Attestation) {
+func (k Keeper) TryAttestation(ctx sdk.Context, att *types.Attestation, nonceSource types.NonceSource) {
 	claim, err := k.UnpackAttestationClaim(att)
 	if err != nil {
 		panic("could not cast to claim")
@@ -106,20 +107,20 @@ func (k Keeper) TryAttestation(ctx sdk.Context, att *types.Attestation) {
 			// If the power of all the validators that have voted on the attestation is higher or equal to the threshold,
 			// process the attestation, set Observed to true, and break
 			if attestationPower.GT(requiredPower) {
-				lastEventNonce := k.GetLastObservedEventNonce(ctx)
+				lastEventNonce := k.GetLastObservedEventNonce(ctx, nonceSource)
 				// this check is performed at the next level up so this should never panic
 				// outside of programmer error.
 				if claim.GetEventNonce() != lastEventNonce+1 {
 					panic("attempting to apply events to state out of order")
 				}
-				k.setLastObservedEventNonce(ctx, claim.GetEventNonce())
+				k.setLastObservedEventNonce(ctx, claim.GetEventNonce(), nonceSource)
 				k.SetLastObservedEthereumBlockHeight(ctx, claim.GetEthBlockHeight())
 
 				att.Observed = true
-				k.SetAttestation(ctx, claim.GetEventNonce(), hash, att)
+				k.SetAttestation(ctx, claim.GetEventNonce(), hash, att, nonceSource)
 
-				k.processAttestation(ctx, att, claim)
-				k.emitObservedEvent(ctx, att, claim)
+				k.processAttestation(ctx, att, claim, nonceSource)
+				k.emitObservedEvent(ctx, att, claim, nonceSource)
 
 				break
 			}
@@ -131,7 +132,7 @@ func (k Keeper) TryAttestation(ctx sdk.Context, att *types.Attestation) {
 }
 
 // processAttestation actually applies the attestation to the consensus state
-func (k Keeper) processAttestation(ctx sdk.Context, att *types.Attestation, claim types.EthereumClaim) {
+func (k Keeper) processAttestation(ctx sdk.Context, att *types.Attestation, claim types.EthereumClaim, nonceSource types.NonceSource) {
 	hash, err := claim.ClaimHash()
 	if err != nil {
 		panic("unable to compute claim hash")
@@ -144,7 +145,7 @@ func (k Keeper) processAttestation(ctx sdk.Context, att *types.Attestation, clai
 		k.logger(ctx).Error("attestation failed",
 			"cause", err.Error(),
 			"claim type", claim.GetType(),
-			"id", types.GetAttestationKey(claim.GetEventNonce(), hash),
+			"id", types.GetAttestationKey(claim.GetEventNonce(), hash, nonceSource),
 			"nonce", fmt.Sprint(claim.GetEventNonce()),
 		)
 	} else {
@@ -154,7 +155,7 @@ func (k Keeper) processAttestation(ctx sdk.Context, att *types.Attestation, clai
 
 // emitObservedEvent emits an event with information about an attestation that has been applied to
 // consensus state.
-func (k Keeper) emitObservedEvent(ctx sdk.Context, att *types.Attestation, claim types.EthereumClaim) {
+func (k Keeper) emitObservedEvent(ctx sdk.Context, att *types.Attestation, claim types.EthereumClaim, nonceSource types.NonceSource) {
 	hash, err := claim.ClaimHash()
 	if err != nil {
 		panic(sdkerrors.Wrap(err, "unable to compute claim hash"))
@@ -165,23 +166,23 @@ func (k Keeper) emitObservedEvent(ctx sdk.Context, att *types.Attestation, claim
 			AttestationType: string(claim.GetType()),
 			BridgeContract:  k.GetBridgeContractAddress(ctx).GetAddress().Hex(),
 			BridgeChainId:   strconv.Itoa(int(k.GetBridgeChainID(ctx))),
-			AttestationId:   string(types.GetAttestationKey(claim.GetEventNonce(), hash)),
+			AttestationId:   string(types.GetAttestationKey(claim.GetEventNonce(), hash, nonceSource)),
 			Nonce:           fmt.Sprint(claim.GetEventNonce()),
 		},
 	)
 }
 
 // SetAttestation sets the attestation in the store
-func (k Keeper) SetAttestation(ctx sdk.Context, eventNonce uint64, claimHash []byte, att *types.Attestation) {
+func (k Keeper) SetAttestation(ctx sdk.Context, eventNonce uint64, claimHash []byte, att *types.Attestation, nonceSource types.NonceSource) {
 	store := ctx.KVStore(k.storeKey)
-	aKey := types.GetAttestationKey(eventNonce, claimHash)
+	aKey := types.GetAttestationKey(eventNonce, claimHash, nonceSource)
 	store.Set(aKey, k.cdc.MustMarshal(att))
 }
 
 // GetAttestation return an attestation given a nonce
-func (k Keeper) GetAttestation(ctx sdk.Context, eventNonce uint64, claimHash []byte) *types.Attestation {
+func (k Keeper) GetAttestation(ctx sdk.Context, eventNonce uint64, claimHash []byte, nonceSource types.NonceSource) *types.Attestation {
 	store := ctx.KVStore(k.storeKey)
-	aKey := types.GetAttestationKey(eventNonce, claimHash)
+	aKey := types.GetAttestationKey(eventNonce, claimHash, nonceSource)
 	bz := store.Get(aKey)
 	if len(bz) == 0 {
 		return nil
@@ -192,7 +193,7 @@ func (k Keeper) GetAttestation(ctx sdk.Context, eventNonce uint64, claimHash []b
 }
 
 // DeleteAttestation deletes the given attestation
-func (k Keeper) DeleteAttestation(ctx sdk.Context, att types.Attestation) {
+func (k Keeper) DeleteAttestation(ctx sdk.Context, att types.Attestation, nonceSource types.NonceSource) {
 	claim, err := k.UnpackAttestationClaim(&att)
 	if err != nil {
 		panic("Bad Attestation in DeleteAttestation")
@@ -203,16 +204,16 @@ func (k Keeper) DeleteAttestation(ctx sdk.Context, att types.Attestation) {
 	}
 	store := ctx.KVStore(k.storeKey)
 
-	store.Delete(types.GetAttestationKey(claim.GetEventNonce(), hash))
+	store.Delete(types.GetAttestationKey(claim.GetEventNonce(), hash, nonceSource))
 }
 
 // GetAttestationMapping returns a mapping of eventnonce -> attestations at that nonce
 // it also returns a pre-sorted array of the keys, this assists callers of this function
 // by providing a deterministic iteration order. You should always iterate over ordered keys
 // if you are iterating this map at all.
-func (k Keeper) GetAttestationMapping(ctx sdk.Context) (attestationMapping map[uint64][]types.Attestation, orderedKeys []uint64) {
+func (k Keeper) GetAttestationMapping(ctx sdk.Context, nonceSource types.NonceSource) (attestationMapping map[uint64][]types.Attestation, orderedKeys []uint64) {
 	attestationMapping = make(map[uint64][]types.Attestation)
-	k.IterateAttestations(ctx, false, func(_ []byte, att types.Attestation) bool {
+	k.IterateAttestations(ctx, nonceSource, false, func(_ []byte, att types.Attestation) bool {
 		claim, err := k.UnpackAttestationClaim(&att)
 		if err != nil {
 			panic("couldn't cast to claim")
@@ -237,9 +238,18 @@ func (k Keeper) GetAttestationMapping(ctx sdk.Context) (attestationMapping map[u
 // IterateAttestations iterates through all attestations executing a given callback on each discovered attestation
 // If reverse is true, attestations will be returned in descending order by key (aka by event nonce and then claim hash)
 // cb should return true to stop iteration, false to continue
-func (k Keeper) IterateAttestations(ctx sdk.Context, reverse bool, cb func(key []byte, att types.Attestation) (stop bool)) {
+func (k Keeper) IterateAttestations(ctx sdk.Context, nonceSource types.NonceSource, reverse bool, cb func(key []byte, att types.Attestation) (stop bool)) {
 	store := ctx.KVStore(k.storeKey)
-	keyPrefix := types.OracleAttestationKey
+
+	var keyPrefix []byte
+	switch nonceSource {
+	case types.GravityContractNonce:
+		keyPrefix = types.OracleAttestationKey
+	case types.ERC721ContractNonce:
+		keyPrefix = types.OracleERC721AttestationKey
+	default:
+		panic("unknown nonce source")
+	}
 
 	var iter storetypes.Iterator
 	if reverse {
@@ -278,10 +288,10 @@ func (k Keeper) IterateAttestations(ctx sdk.Context, reverse bool, cb func(key [
 // IterateClaims iterates through all attestations, filtering them for claims of a given type
 // If reverse is true, attestations will be returned in descending order by key (aka by event nonce and then claim hash)
 // cb should return true to stop iteration, false to continue
-func (k Keeper) IterateClaims(ctx sdk.Context, reverse bool, claimType types.ClaimType, cb func(key []byte, att types.Attestation, claim types.EthereumClaim) (stop bool)) {
+func (k Keeper) IterateClaims(ctx sdk.Context, nonceSource types.NonceSource, reverse bool, claimType types.ClaimType, cb func(key []byte, att types.Attestation, claim types.EthereumClaim) (stop bool)) {
 	typeUrl := types.ClaimTypeToTypeUrl(claimType) // Used to avoid unpacking undesired attestations
 
-	k.IterateAttestations(ctx, reverse, func(key []byte, att types.Attestation) bool {
+	k.IterateAttestations(ctx, nonceSource, reverse, func(key []byte, att types.Attestation) bool {
 		if att.Claim.TypeUrl == typeUrl {
 			claim, err := k.UnpackAttestationClaim(&att)
 			if err != nil {
@@ -297,8 +307,8 @@ func (k Keeper) IterateClaims(ctx sdk.Context, reverse bool, claimType types.Cla
 // GetMostRecentAttestations returns sorted (by nonce) attestations up to a provided limit number of attestations
 // Note: calls GetAttestationMapping in the hopes that there are potentially many attestations
 // which are distributed between few nonces to minimize sorting time
-func (k Keeper) GetMostRecentAttestations(ctx sdk.Context, limit uint64) []types.Attestation {
-	attestationMapping, keys := k.GetAttestationMapping(ctx)
+func (k Keeper) GetMostRecentAttestations(ctx sdk.Context, nonceSource types.NonceSource, limit uint64) []types.Attestation {
+	attestationMapping, keys := k.GetAttestationMapping(ctx, nonceSource)
 	attestations := make([]types.Attestation, 0, limit)
 
 	// Iterate the nonces and collect the attestations
@@ -320,9 +330,19 @@ func (k Keeper) GetMostRecentAttestations(ctx sdk.Context, limit uint64) []types
 }
 
 // GetLastObservedEventNonce returns the latest observed event nonce
-func (k Keeper) GetLastObservedEventNonce(ctx sdk.Context) uint64 {
+func (k Keeper) GetLastObservedEventNonce(ctx sdk.Context, nonceSource types.NonceSource) uint64 {
 	store := ctx.KVStore(k.storeKey)
-	bytes := store.Get(types.LastObservedEventNonceKey)
+
+	var key []byte
+	switch nonceSource {
+	case types.GravityContractNonce:
+		key = types.LastObservedEventNonceKey
+	case types.ERC721ContractNonce:
+		key = types.LastERC721EventNonceByValidatorKey
+	default:
+		panic("invalid nonce source")
+	}
+	bytes := store.Get(key)
 
 	if len(bytes) == 0 {
 		return 0
@@ -396,32 +416,42 @@ func (k Keeper) SetLastObservedValset(ctx sdk.Context, valset types.Valset) {
 }
 
 // setLastObservedEventNonce sets the latest observed event nonce
-func (k Keeper) setLastObservedEventNonce(ctx sdk.Context, nonce uint64) {
+func (k Keeper) setLastObservedEventNonce(ctx sdk.Context, nonce uint64, nonceSource types.NonceSource) {
 	store := ctx.KVStore(k.storeKey)
-	last := k.GetLastObservedEventNonce(ctx)
+	last := k.GetLastObservedEventNonce(ctx, nonceSource)
 	// event nonce must increase, unless it's zero at which point allow zero to be set
 	// as many times as needed (genesis test setup etc)
 	zeroCase := last == 0 && nonce == 0
 	if last >= nonce && !zeroCase {
 		panic("Event nonce going backwards or replay!")
 	}
-	store.Set(types.LastObservedEventNonceKey, types.UInt64Bytes(nonce))
+
+	var nonceKey []byte
+	switch nonceSource {
+	case types.GravityContractNonce:
+		nonceKey = types.LastObservedEventNonceKey
+	case types.ERC721ContractNonce:
+		nonceKey = types.LastERC721EventNonceByValidatorKey
+	default:
+		panic("invalid nonce source")
+	}
+	store.Set(nonceKey, types.UInt64Bytes(nonce))
 }
 
 // GetLastEventNonceByValidator returns the latest event nonce for a given validator
-func (k Keeper) GetLastEventNonceByValidator(ctx sdk.Context, validator sdk.ValAddress) uint64 {
+func (k Keeper) GetLastEventNonceByValidator(ctx sdk.Context, validator sdk.ValAddress, nonceSource types.NonceSource) uint64 {
 	if err := sdk.VerifyAddressFormat(validator); err != nil {
 		panic(sdkerrors.Wrap(err, "invalid validator address"))
 	}
 	store := ctx.KVStore(k.storeKey)
-	bytes := store.Get(types.GetLastEventNonceByValidatorKey(validator))
+	bytes := store.Get(types.GetLastEventNonceByValidatorKey(validator, nonceSource))
 
 	if len(bytes) == 0 {
 		// in the case that we have no existing value this is the first
 		// time a validator is submitting a claim. Since we don't want to force
 		// them to replay the entire history of all events ever we can't start
 		// at zero
-		lastEventNonce := k.GetLastObservedEventNonce(ctx)
+		lastEventNonce := k.GetLastObservedEventNonce(ctx, nonceSource)
 		if lastEventNonce >= 1 {
 			return lastEventNonce - 1
 		} else {
@@ -432,12 +462,12 @@ func (k Keeper) GetLastEventNonceByValidator(ctx sdk.Context, validator sdk.ValA
 }
 
 // SetLastEventNonceByValidator sets the latest event nonce for a give validator
-func (k Keeper) SetLastEventNonceByValidator(ctx sdk.Context, validator sdk.ValAddress, nonce uint64) {
+func (k Keeper) SetLastEventNonceByValidator(ctx sdk.Context, validator sdk.ValAddress, nonce uint64, nonceSource types.NonceSource) {
 	if err := sdk.VerifyAddressFormat(validator); err != nil {
 		panic(sdkerrors.Wrap(err, "invalid validator address"))
 	}
 	store := ctx.KVStore(k.storeKey)
-	store.Set(types.GetLastEventNonceByValidatorKey(validator), types.UInt64Bytes(nonce))
+	store.Set(types.GetLastEventNonceByValidatorKey(validator, nonceSource), types.UInt64Bytes(nonce))
 }
 
 // IterateValidatorLastEventNonces iterates through all batch confirmations

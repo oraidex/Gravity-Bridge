@@ -173,7 +173,7 @@ func TestBatchAndTxImportExport(t *testing.T) {
 			IbcChannel:      sourceChannel,
 			EventNonce:      uint64(i + 1),
 		}
-		input.GravityKeeper.setLastObservedEventNonce(ctx, fwd.EventNonce)
+		input.GravityKeeper.setLastObservedEventNonce(ctx, fwd.EventNonce, types.GravityContractNonce)
 		err = input.GravityKeeper.addPendingIbcAutoForward(ctx, fwd, stake)
 		require.NoError(t, err)
 		forwards[i] = &fwd

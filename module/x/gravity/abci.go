@@ -12,12 +12,14 @@ import (
 func EndBlocker(ctx sdk.Context, k keeper.Keeper) {
 	params := k.GetParams(ctx)
 	slashing(ctx, k)
-	attestationTally(ctx, k)
+	attestationTally(ctx, k, types.GravityContractNonce)
+	attestationTally(ctx, k, types.ERC721ContractNonce)
 	cleanupTimedOutBatches(ctx, k)
 	cleanupTimedOutLogicCalls(ctx, k)
 	createValsets(ctx, k)
 	pruneValsets(ctx, k, params)
-	pruneAttestations(ctx, k)
+	pruneAttestations(ctx, k, types.GravityContractNonce)
+	pruneAttestations(ctx, k, types.ERC721ContractNonce)
 }
 
 func createValsets(ctx sdk.Context, k keeper.Keeper) {
@@ -98,14 +100,14 @@ func slashing(ctx sdk.Context, k keeper.Keeper) {
 // Iterate over all attestations currently being voted on in order of nonce and
 // "Observe" those who have passed the threshold. Break the loop once we see
 // an attestation that has not passed the threshold
-func attestationTally(ctx sdk.Context, k keeper.Keeper) {
+func attestationTally(ctx sdk.Context, k keeper.Keeper, nonceSource types.NonceSource) {
 	params := k.GetParams(ctx)
 	// bridge is currently disabled, do not process attestations from Ethereum
 	if !params.BridgeActive {
 		return
 	}
 
-	attmap, keys := k.GetAttestationMapping(ctx)
+	attmap, keys := k.GetAttestationMapping(ctx, nonceSource)
 
 	// This iterates over all keys (event nonces) in the attestation mapping. Each value contains
 	// a slice with one or more attestations at that event nonce. There can be multiple attestations
@@ -131,8 +133,8 @@ func attestationTally(ctx sdk.Context, k keeper.Keeper) {
 			// we skip the other attestations and move on to the next nonce again.
 			// If no attestation becomes observed, when we get to the next nonce, every attestation in
 			// it will be skipped. The same will happen for every nonce after that.
-			if nonce == uint64(k.GetLastObservedEventNonce(ctx))+1 {
-				k.TryAttestation(ctx, &att)
+			if nonce == uint64(k.GetLastObservedEventNonce(ctx, nonceSource))+1 {
+				k.TryAttestation(ctx, &att, nonceSource)
 			}
 		}
 	}
@@ -491,14 +493,14 @@ func logicCallSlashing(ctx sdk.Context, k keeper.Keeper, params types.Params) {
 // use. This could be combined with create attestation and save some computation
 // but (A) pruning keeps the iteration small in the first place and (B) there is
 // already enough nuance in the other handler that it's best not to complicate it further
-func pruneAttestations(ctx sdk.Context, k keeper.Keeper) {
-	attmap, keys := k.GetAttestationMapping(ctx)
+func pruneAttestations(ctx sdk.Context, k keeper.Keeper, nonceSource types.NonceSource) {
+	attmap, keys := k.GetAttestationMapping(ctx, nonceSource)
 
 	// we delete all attestations earlier than the current event nonce
 	// minus some buffer value. This buffer value is purely to allow
 	// frontends and other UI components to view recent oracle history
 	const eventsToKeep = 1000
-	lastNonce := uint64(k.GetLastObservedEventNonce(ctx))
+	lastNonce := uint64(k.GetLastObservedEventNonce(ctx, nonceSource))
 	var cutoff uint64
 	if lastNonce <= eventsToKeep {
 		return
@@ -516,7 +518,7 @@ func pruneAttestations(ctx sdk.Context, k keeper.Keeper) {
 		for _, att := range attmap[nonce] {
 			// delete all before the cutoff
 			if nonce < cutoff {
-				k.DeleteAttestation(ctx, att)
+				k.DeleteAttestation(ctx, att, nonceSource)
 			}
 		}
 	}

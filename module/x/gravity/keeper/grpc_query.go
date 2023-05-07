@@ -28,6 +28,7 @@ var _ types.QueryServer = Keeper{
 const MERCURY_UPGRADE_HEIGHT uint64 = 1282013
 const QUERY_ATTESTATIONS_LIMIT uint64 = 1000
 
+
 // Params queries the params of the gravity module
 func (k Keeper) Params(c context.Context, req *types.QueryParamsRequest) (*types.QueryParamsResponse, error) {
 	var params types.Params
@@ -276,9 +277,32 @@ func (k Keeper) LastEventNonceByAddr(
 	if err := sdk.VerifyAddressFormat(validator.GetOperator()); err != nil {
 		return nil, sdkerrors.Wrap(err, "invalid validator address")
 	}
-	lastEventNonce := k.GetLastEventNonceByValidator(ctx, validator.GetOperator())
+	lastEventNonce := k.GetLastEventNonceByValidator(ctx, validator.GetOperator(), types.GravityContractNonce)
 	ret.EventNonce = lastEventNonce
 	return &ret, nil
+}
+
+func (k Keeper) LastERC721EventNonceByAddr(
+	c context.Context, req *types.QueryLastERC721EventNonceByAddrRequest,
+) (*types.QueryLastERC721EventNonceByAddrResponse, error) {
+	ctx := sdk.UnwrapSDKContext(c)
+
+	addr, err := sdk.AccAddressFromBech32(req.Address)
+	if err != nil {
+		return nil, sdkerrors.Wrap(sdkerrors.ErrInvalidAddress, req.Address)
+	}
+
+	validator, found := k.GetOrchestratorValidator(ctx, addr)
+	if !found {
+		return nil, sdkerrors.Wrap(types.ErrUnknown, "address")
+	}
+	if err := sdk.VerifyAddressFormat(validator.GetOperator()); err != nil {
+		return nil, sdkerrors.Wrap(err, "invalid validator address")
+	}
+
+	lastEventNonce := k.GetLastEventNonceByValidator(ctx, validator.GetOperator(), types.ERC721ContractNonce)
+
+	return &types.QueryLastERC721EventNonceByAddrResponse{EventNonce: lastEventNonce}, nil
 }
 
 // DenomToERC20 queries the Cosmos Denom that maps to an Ethereum ERC20
@@ -360,18 +384,28 @@ func (k Keeper) GetLastObservedEthNonce(
 	ctx := sdk.UnwrapSDKContext(c)
 
 	// Use the old locator pre-Mercury, when the keys changed to hashed strings
-	var locator func(ctx sdk.Context) uint64
+	var locator func(ctx sdk.Context, nonceSource types.NonceSource) uint64
 	if req.UseV1Key {
 		locator = k.GetOldLastObservedEventNonce
 	} else {
 		locator = k.GetLastObservedEventNonce
 	}
-	nonce := locator(ctx)
+	nonce := locator(ctx, types.GravityContractNonce)
 
 	return &types.QueryLastObservedEthNonceResponse{Nonce: nonce}, nil
 }
 
-func (k Keeper) GetOldLastObservedEventNonce(ctx sdk.Context) uint64 {
+func (k Keeper) GetLastObservedERC721EthNonce(
+	c context.Context, req *types.QueryLastObservedERC721EthNonceRequest,
+) (*types.QueryLastObservedERC721EthNonceResponse, error) {
+	ctx := sdk.UnwrapSDKContext(c)
+
+	nonce := k.GetLastObservedEventNonce(ctx, types.ERC721ContractNonce)
+
+	return &types.QueryLastObservedERC721EthNonceResponse{Nonce: nonce}, nil
+}
+
+func (k Keeper) GetOldLastObservedEventNonce(ctx sdk.Context, _ types.NonceSource) uint64 {
 	store := ctx.KVStore(k.storeKey)
 	bytes := store.Get([]byte(v1.LastObservedEventNonceKey))
 
@@ -389,7 +423,7 @@ func (k Keeper) GetAttestations(
 	ctx := sdk.UnwrapSDKContext(c)
 
 	// Use the old iterator pre-Mercury, when the keys changed to hashed strings
-	var iterator func(ctx sdk.Context, reverse bool, cb func([]byte, types.Attestation) bool)
+	var iterator func(ctx sdk.Context, nonceSource types.NonceSource, reverse bool, cb func([]byte, types.Attestation) bool)
 	if req.UseV1Key {
 		iterator = k.IterateOldAttestations
 	} else {
@@ -410,7 +444,9 @@ func (k Keeper) GetAttestations(
 	reverse := strings.EqualFold(req.OrderBy, "desc")
 	filter := req.Height > 0 || req.Nonce > 0 || req.ClaimType != ""
 
-	iterator(ctx, reverse, func(_ []byte, att types.Attestation) (abort bool) {
+
+	// TODO: ADD NONCE TYPE TO QUERY
+	iterator(ctx, types.GravityContractNonce, reverse, func(_ []byte, att types.Attestation) (abort bool) {
 		claim, err := k.UnpackAttestationClaim(&att)
 		if err != nil {
 			iterErr = sdkerrors.Wrap(sdkerrors.ErrUnpackAny, "failed to unmarshal Ethereum claim")
@@ -455,7 +491,7 @@ func (k Keeper) GetAttestations(
 }
 
 // This is the pre-Mercury Attestation iterator, which used an old prefix
-func (k Keeper) IterateOldAttestations(ctx sdk.Context, reverse bool, cb func([]byte, types.Attestation) bool) {
+func (k Keeper) IterateOldAttestations(ctx sdk.Context, _ types.NonceSource, reverse bool, cb func([]byte, types.Attestation) bool) {
 	store := ctx.KVStore(k.storeKey)
 	prefix := v1.OracleAttestationKey
 
