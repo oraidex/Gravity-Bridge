@@ -668,17 +668,20 @@ func CreateTestEnv(t *testing.T) TestInput {
 	k.SetParams(ctx, TestingGravityParams)
 
 	testInput := TestInput{
-		GravityKeeper:   k,
-		AccountKeeper:   accountKeeper,
-		BankKeeper:      bankKeeper,
-		StakingKeeper:   stakingKeeper,
-		SlashingKeeper:  slashingKeeper,
-		DistKeeper:      distKeeper,
-		GovKeeper:       govKeeper,
-		Context:         ctx,
-		Marshaler:       marshaler,
-		LegacyAmino:     cdc,
-		GravityStoreKey: gravityKey,
+		GravityKeeper:        k,
+		AccountKeeper:        accountKeeper,
+		StakingKeeper:        stakingKeeper,
+		SlashingKeeper:       slashingKeeper,
+		DistKeeper:           distKeeper,
+		BankKeeper:           bankKeeper,
+		GovKeeper:            govKeeper,
+		IbcTransferKeeper:    ibcTransferKeeper,
+		NftKeeper:            nftKeeper,
+		IbcNftTransferKeeper: ibcnftTransferKeeper,
+		Context:              ctx,
+		Marshaler:            marshaler,
+		LegacyAmino:          cdc,
+		GravityStoreKey:      gravityKey,
 	}
 	// check invariants before starting
 	testInput.Context.Logger().Info("Asserting invariants on new test env")
