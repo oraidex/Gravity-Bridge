@@ -80,8 +80,8 @@ message EventInvalidSendToCosmosReceiver {
 
 message EventInvalidSendERC721ToCosmosReceiver {
   string contract = 1;
-  string classId  = 2;
-  string tokenId  = 3;
+  string class_id  = 2;
+  string token_id  = 3;
   string nonce    = 4;
   string sender   = 5;
 }
@@ -94,8 +94,8 @@ message EventSendToCosmos {
 
 message EventSendERC721ToCosmos {
   string contract = 1;
-  string classId = 3;
-  string tokenId = 4;
+  string class_id = 3;
+  string token_id = 4;
   string nonce    = 5;
 }
 
@@ -110,8 +110,8 @@ message EventSendERC721ToCosmosLocal {
   string nonce = 1;
   string receiver = 2;
   string contract = 3;
-  string classId = 4;
-  string tokenId = 5;
+  string class_id = 4;
+  string token_id = 5;
 }
 
 message EventSendToCosmosPendingIbcAutoForward {
@@ -126,8 +126,8 @@ message EventSendERC721ToCosmosPendingIbcAutoForward {
   string nonce = 1;
   string receiver = 2;
   string contract = 3;
-  string classId = 4;
-  string tokenId = 5;
+  string class_id = 4;
+  string token_id = 5;
   string channel = 6;
 }
 
@@ -145,8 +145,8 @@ message EventSendERC721ToCosmosExecutedIbcAutoForward {
   string nonce = 1;
   string receiver = 2;
   string contract = 3;
-  string classId = 4;
-  string tokenId = 5;
+  string class_id = 4;
+  string token_id = 5;
   string channel = 6;
   string timeout_time = 7;
   string timeout_height = 8;
