@@ -45,6 +45,10 @@ The oracle observes the Ethereum chain for events from the [Gravity.sol](/solidi
 
 claim representing a `SendToCosmosEvent` from [Gravity.sol](/solidity/contracts/Gravity.sol). When this passes the oracle vote tokens will be issued to a Cosmos account.
 
+### SendERC721ToCosmosClaim
+
+claim representing a `SendERC721ToCosmosEvent` from [GravityERC721.sol](/solidity/contracts/GravityERC721.sol). When this passes the oracle vote, NFT token is minted and transfered into the Cosmos account.
+
 ### WithdrawClaim
 
 claim representing a `TransactionBatchExecutedEvent` from [Gravity.sol](/solidity/contracts/Gravity.sol). When this passes the oracle vote the batch in state is cleaned up and tokens are burned/locked.
