@@ -21,6 +21,13 @@ const (
 	ERC721ContractNonce
 )
 
+// ERC721HRPPrefix is an ugly hack!
+// TODO: The hrp hack here is ugly as shit, but the hrp thing doesn't seem to allow more than one ibc channel per account prefix...
+const ERC721HRPPrefix = "nftprefix"
+func AccountPrefixForERC721Hrp(accountPrefix string) string {
+	return ERC721HRPPrefix + accountPrefix
+}
+
 // UInt64FromBytesUnsafe create uint from binary big endian representation
 // Note: This is unsafe because the function will panic if provided over 8 bytes
 func UInt64FromBytesUnsafe(s []byte) uint64 {

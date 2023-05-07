@@ -12,6 +12,8 @@ package keeper
 
 import (
 	"fmt"
+	ibcnfttransfertypes "github.com/bianjieai/nft-transfer/types"
+	"github.com/cosmos/cosmos-sdk/x/nft"
 	"time"
 
 	"github.com/Gravity-Bridge/Gravity-Bridge/module/x/gravity/types"
@@ -62,10 +64,48 @@ func (k Keeper) ValidatePendingIbcAutoForward(ctx sdk.Context, forward types.Pen
 	return nil
 }
 
+// ValidatePendingERC721IbcAutoForward performs basic validation, asserts the nonce is not ahead of what gravity is aware of,
+// requires ForeignReceiver's bech32 prefix to be registered and match with IbcChannel, and gravity module must have the
+// funds to meet this forward amount
+func (k Keeper) ValidatePendingERC721IbcAutoForward(ctx sdk.Context, forward types.PendingERC721IbcAutoForward) error {
+	if err := forward.ValidateBasic(); err != nil {
+		return err
+	}
+
+	latestEventNonce := k.GetLastObservedEventNonce(ctx, types.ERC721ContractNonce)
+	if forward.EventNonce > latestEventNonce {
+		return sdkerrors.Wrap(types.ErrInvalid, "EventNonce must be <= latest observed event nonce")
+	}
+	prefix, _, err := bech32.DecodeAndConvert(forward.ForeignReceiver)
+	if err != nil { // Covered by ValidateBasic, but check anyway to avoid linter issues
+		return sdkerrors.Wrapf(err, "ForeignReceiver %s is not a valid bech32 address", forward.ForeignReceiver)
+	}
+	hrpPrefix := types.AccountPrefixForERC721Hrp(prefix)
+	hrpRecord, err := k.bech32IbcKeeper.GetHrpIbcRecord(ctx, hrpPrefix)
+	if err != nil {
+		return sdkerrors.Wrapf(bech32ibctypes.ErrInvalidHRP, "ForeignReciever %s has an invalid or unregistered prefix: %s", forward.ForeignReceiver, hrpPrefix)
+	}
+	if forward.IbcChannel != hrpRecord.SourceChannel {
+		return sdkerrors.Wrapf(types.ErrMismatched, "IbcChannel %s does not match the registered prefix's IBC channel %v",
+			forward.IbcChannel, hrpRecord.String(),
+		)
+	}
+	modAcc := k.accountKeeper.GetModuleAccount(ctx, types.ModuleName).GetAddress()
+	owner := k.nftKeeper.GetOwner(ctx, forward.ClassId, forward.TokenId)
+	if !owner.Equals(modAcc) {
+		return sdkerrors.Wrapf(
+			sdkerrors.ErrInsufficientFunds, "Gravity Module account does not have nft token %s from class id %s",
+			forward.TokenId, forward.ClassId,
+		)
+	}
+
+	return nil
+}
+
 // GetNextPendingIbcAutoForward returns the first pending IBC Auto-Forward in the queue
 func (k Keeper) GetNextPendingIbcAutoForward(ctx sdk.Context) *types.PendingIbcAutoForward {
 	store := ctx.KVStore(k.storeKey)
-	prefix := types.PendingIbcAutoForwards
+	prefix := types.GetPendingIbcAutoForwardsPrefixKey(types.GravityContractNonce)
 	iter := store.Iterator(prefixRange(prefix))
 	defer iter.Close()
 	if iter.Valid() {
@@ -82,11 +122,26 @@ func (k Keeper) GetNextPendingIbcAutoForward(ctx sdk.Context) *types.PendingIbcA
 	return nil
 }
 
+// GetNextPendingERC721IbcAutoForward returns the first pending IBC Auto-Forward in the queue
+func (k Keeper) GetNextPendingERC721IbcAutoForward(ctx sdk.Context) *types.PendingERC721IbcAutoForward {
+	store := ctx.KVStore(k.storeKey)
+	prefix := types.GetPendingIbcAutoForwardsPrefixKey(types.ERC721ContractNonce)
+	iter := store.Iterator(prefixRange(prefix))
+	defer iter.Close()
+	if iter.Valid() {
+		var forward types.PendingERC721IbcAutoForward
+		k.cdc.MustUnmarshal(iter.Value(), &forward)
+
+		return &forward
+	}
+	return nil
+}
+
 // PendingIbcAutoForwards returns an ordered slice of the queued IBC Auto-Forward sends to IBC-enabled chains
-func (k Keeper) PendingIbcAutoForwards(ctx sdk.Context, limit uint64) []*types.PendingIbcAutoForward {
+func (k Keeper) PendingIbcAutoForwards(ctx sdk.Context, limit uint64, nonceSource types.NonceSource) []*types.PendingIbcAutoForward {
 	forwards := make([]*types.PendingIbcAutoForward, 0)
 
-	k.IteratePendingIbcAutoForwards(ctx, func(key []byte, forward *types.PendingIbcAutoForward) (stop bool) {
+	k.IteratePendingIbcAutoForwards(ctx, nonceSource, func(key []byte, forward *types.PendingIbcAutoForward) (stop bool) {
 		forwards = append(forwards, forward)
 		if limit != 0 && uint64(len(forwards)) >= limit {
 			return true
@@ -99,9 +154,9 @@ func (k Keeper) PendingIbcAutoForwards(ctx sdk.Context, limit uint64) []*types.P
 
 // IteratePendingIbcAutoForwards executes the given callback on each PendingIbcAutoForward in the store
 // cb should return true to stop iteration, false to continue
-func (k Keeper) IteratePendingIbcAutoForwards(ctx sdk.Context, cb func(key []byte, forward *types.PendingIbcAutoForward) (stop bool)) {
+func (k Keeper) IteratePendingIbcAutoForwards(ctx sdk.Context, nonceSource types.NonceSource, cb func(key []byte, forward *types.PendingIbcAutoForward) (stop bool)) {
 	store := ctx.KVStore(k.storeKey)
-	prefixStore := prefix.NewStore(store, types.PendingIbcAutoForwards)
+	prefixStore := prefix.NewStore(store, types.GetPendingIbcAutoForwardsPrefixKey(nonceSource))
 	iter := prefixStore.Iterator(nil, nil)
 	defer iter.Close()
 	for ; iter.Valid(); iter.Next() {
@@ -121,7 +176,7 @@ func (k Keeper) addPendingIbcAutoForward(ctx sdk.Context, forward types.PendingI
 		return err
 	}
 	store := ctx.KVStore(k.storeKey)
-	key := types.GetPendingIbcAutoForwardKey(forward.EventNonce)
+	key := types.GetPendingIbcAutoForwardKey(forward.EventNonce, types.GravityContractNonce)
 
 	if store.Has(key) {
 		return sdkerrors.Wrapf(types.ErrDuplicate,
@@ -145,11 +200,40 @@ func (k Keeper) addPendingIbcAutoForward(ctx sdk.Context, forward types.PendingI
 	})
 }
 
+func (k Keeper) addPendingERC721PendingIbcAutoForward(ctx sdk.Context, forward types.PendingERC721IbcAutoForward) error {
+	if err := k.ValidatePendingERC721IbcAutoForward(ctx, forward); err != nil {
+		return err
+	}
+
+	store := ctx.KVStore(k.storeKey)
+	key := types.GetPendingIbcAutoForwardKey(forward.EventNonce, types.ERC721ContractNonce)
+	if store.Has(key) {
+		return sdkerrors.Wrapf(types.ErrDuplicate,
+			"Pending IBC Auto-Forward Queue already has an entry with nonce %v", forward.EventNonce,
+		)
+	}
+	store.Set(key, k.cdc.MustMarshal(&forward))
+
+	k.logger(ctx).Info("SendToCosmos Pending IBC Auto-Forward", "ibcReceiver", forward.ForeignReceiver,
+		"class-id", forward.ClassId, "token-id", forward.TokenId,
+		"ibc-port", k.ibcTransferKeeper.GetPort(ctx), "ibcChannel", forward.IbcChannel, "claimNonce", forward.EventNonce,
+		"cosmosBlockTime", ctx.BlockTime(), "cosmosBlockHeight", ctx.BlockHeight(),
+	)
+
+	return ctx.EventManager().EmitTypedEvent(&types.EventSendERC721ToCosmosPendingIbcAutoForward{
+		Nonce:    fmt.Sprint(forward.EventNonce),
+		Receiver: forward.ForeignReceiver,
+		ClassId:  forward.ClassId,
+		TokenId:  forward.TokenId,
+		Channel:  forward.IbcChannel,
+	})
+}
+
 // deletePendingIbcAutoForward removes a single pending IBC Auto-Forward send to an IBC-enabled chain from the store
 // WARNING: this should only be called while clearing the queue in ClearNextPendingIbcAutoForward
-func (k Keeper) deletePendingIbcAutoForward(ctx sdk.Context, eventNonce uint64) error {
+func (k Keeper) deletePendingIbcAutoForward(ctx sdk.Context, eventNonce uint64, nonceSource types.NonceSource) error {
 	store := ctx.KVStore(k.storeKey)
-	key := types.GetPendingIbcAutoForwardKey(eventNonce)
+	key := types.GetPendingIbcAutoForwardKey(eventNonce, nonceSource)
 	if !store.Has(key) {
 		return sdkerrors.Wrapf(types.ErrInvalid, "No PendingIbcAutoForward with nonce %v in the store", eventNonce)
 	}
@@ -160,9 +244,19 @@ func (k Keeper) deletePendingIbcAutoForward(ctx sdk.Context, eventNonce uint64) 
 // ProcessPendingIbcAutoForwards processes and dequeues many pending IBC Auto-Forwards, either sending the funds to their
 // respective destination chains or on error sending the funds to the local gravity-prefixed account
 // See ProcessNextPendingIbcAutoForward for more details
-func (k Keeper) ProcessPendingIbcAutoForwards(ctx sdk.Context, forwardsToClear uint64) error {
+func (k Keeper) ProcessPendingIbcAutoForwards(ctx sdk.Context, forwardsToClear uint64, nonceSource types.NonceSource) error {
 	for i := uint64(0); i < forwardsToClear; i++ {
-		stop, err := k.ProcessNextPendingIbcAutoForward(ctx)
+		var stop bool
+		var err error
+		switch nonceSource {
+		case types.GravityContractNonce:
+			stop, err = k.ProcessNextPendingIbcAutoForward(ctx)
+		case types.ERC721ContractNonce:
+			stop, err = k.ProcessNextPendingERC721IbcAutoForward(ctx)
+		default:
+			panic("unknown nonce source")
+		}
+
 		if err != nil {
 			return sdkerrors.Wrapf(err, "unable to process Pending IBC Auto-Forward number %v", i)
 		}
@@ -191,7 +285,7 @@ func (k Keeper) ProcessNextPendingIbcAutoForward(ctx sdk.Context) (stop bool, er
 		panic(fmt.Sprintf("Invalid forward found in Pending IBC Auto-Forward queue: %s", err.Error()))
 	}
 	// Point of no return: the funds will be sent somewhere, either the IBC address, local address or the community pool
-	err = k.deletePendingIbcAutoForward(ctx, forward.EventNonce)
+	err = k.deletePendingIbcAutoForward(ctx, forward.EventNonce, types.GravityContractNonce)
 	if err != nil {
 		// Fail this tx
 		panic(fmt.Sprintf("Discovered nonexistent Pending IBC Auto-Forward in the queue %s", forward.String()))
@@ -247,6 +341,57 @@ func (k Keeper) ProcessNextPendingIbcAutoForward(ctx sdk.Context) (stop bool, er
 	return false, nil // Error case has been handled, funds are in receiver's control locally or on IBC chain
 }
 
+func (k Keeper) ProcessNextPendingERC721IbcAutoForward(ctx sdk.Context) (stop bool, err error) {
+	forward := k.GetNextPendingERC721IbcAutoForward(ctx)
+	if forward == nil {
+		return true, nil // No forwards to process, exit early
+	}
+	if err := forward.ValidateBasic(); err != nil { // double-check the forward before sending it
+		// Fail this tx
+		panic(fmt.Sprintf("Invalid forward found in Pending IBC Auto-Forward queue: %s", err.Error()))
+	}
+	// Point of no return: the funds will be sent somewhere, either the IBC address, local address or the community pool
+	err = k.deletePendingIbcAutoForward(ctx, forward.EventNonce, types.ERC721ContractNonce)
+	if err != nil {
+		// Fail this tx
+		panic(fmt.Sprintf("Discovered nonexistent Pending IBC Auto-Forward in the queue %s", forward.String()))
+	}
+
+	portId := k.ibcNftTransferKeeper.GetPort(ctx)
+
+	// This local gravity user receives the nft if the ibc transaction fails
+	var fallback sdk.AccAddress
+	fallback, err = types.IBCAddressFromBech32(forward.ForeignReceiver)
+	if err != nil {
+		panic(fmt.Sprintf("Invalid ForeignReceiver found in Pending IBC Auto-Forward queue: %s [[%+v]]", err.Error(), forward))
+	}
+
+	if err := k.nftKeeper.Transfer(ctx, forward.ClassId, forward.TokenId, fallback); err != nil {
+		nftToken := nft.NFT{
+			Id:      forward.TokenId,
+			ClassId: forward.ClassId,
+		}
+		return false, k.SendERC721ToCommunityPool(ctx, nftToken)
+	}
+
+	timeoutTime := thirtyDaysInFuture(ctx) // Set the ibc transfer to expire ~one month from now
+	msgTransfer := createERC721IbcMsgTransfer(portId, *forward, fallback.String(), uint64(timeoutTime.UnixNano()))
+
+	// Make the ibc-transfer attempt
+	wCtx := sdk.WrapSDKContext(ctx)
+	_, recoverableErr := k.ibcNftTransferKeeper.Transfer(wCtx, &msgTransfer)
+	ctx = sdk.UnwrapSDKContext(wCtx)
+
+	// Log + emit event
+	if recoverableErr == nil {
+		k.logEmitERC721IbcForwardSuccessEvent(ctx, *forward, msgTransfer)
+	} else {
+		// NFT have already been sent to the fallback user, emit a failure log
+		k.logEmitERC721IbcForwardFailureEvent(ctx, *forward, recoverableErr)
+	}
+	return false, nil // Error case has been handled, funds are in receiver's control locally or on IBC chain
+}
+
 // createIbcMsgTransfer creates a MsgTransfer for the given pending `forward` on port `portId` sent from `sender`,
 // with the given timeout timestamp and a zero timeout block height
 func createIbcMsgTransfer(portId string, forward types.PendingIbcAutoForward, sender string, timeoutTimestampNs uint64) ibctransfertypes.MsgTransfer {
@@ -255,6 +400,21 @@ func createIbcMsgTransfer(portId string, forward types.PendingIbcAutoForward, se
 		portId,
 		forward.IbcChannel,
 		*forward.Token,
+		sender,
+		forward.ForeignReceiver,
+		zeroHeight, // Do not use block height based timeout
+		timeoutTimestampNs,
+		"IBC Auto-Forwarded by Gravity Bridge",
+	)
+}
+
+func createERC721IbcMsgTransfer(portId string, forward types.PendingERC721IbcAutoForward, sender string, timeoutTimestampNs uint64) ibcnfttransfertypes.MsgTransfer {
+	zeroHeight := ibcclienttypes.Height{}
+	return *ibcnfttransfertypes.NewMsgTransfer(
+		portId,
+		forward.IbcChannel,
+		forward.ClassId,
+		[]string{forward.TokenId},
 		sender,
 		forward.ForeignReceiver,
 		zeroHeight, // Do not use block height based timeout
@@ -294,6 +454,30 @@ func (k Keeper) logEmitIbcForwardSuccessEvent(
 	})
 }
 
+// logEmitERC721IbcForwardSuccessEvent logs for successful IBC Auto-Forwarding and emits a
+// EventSendERC721ToCosmosExecutedIbcAutoForward type event
+func (k Keeper) logEmitERC721IbcForwardSuccessEvent(
+	ctx sdk.Context,
+	forward types.PendingERC721IbcAutoForward,
+	msgTransfer ibcnfttransfertypes.MsgTransfer,
+) {
+	k.logger(ctx).Info("SendERC721ToCosmos IBC Auto-Forward", "ibcReceiver", forward.ForeignReceiver,
+		"class-id", forward.ClassId, "token-id", forward.TokenId, "ibc-port", msgTransfer.SourcePort, "ibcChannel", forward.IbcChannel,
+		"timeoutHeight", msgTransfer.TimeoutHeight.String(), "timeoutTimestamp", msgTransfer.TimeoutTimestamp,
+		"claimNonce", forward.EventNonce, "cosmosBlockHeight", ctx.BlockHeight(),
+	)
+
+	ctx.EventManager().EmitTypedEvent(&types.EventSendERC721ToCosmosExecutedIbcAutoForward{
+		Nonce:         fmt.Sprint(forward.EventNonce),
+		Receiver:      forward.ForeignReceiver,
+		ClassId:       forward.ClassId,
+		TokenId:       forward.TokenId,
+		Channel:       forward.IbcChannel,
+		TimeoutTime:   fmt.Sprint(msgTransfer.TimeoutTimestamp),
+		TimeoutHeight: msgTransfer.TimeoutHeight.String(),
+	})
+}
+
 // logEmitIbcForwardFailureEvent logs failed IBC Auto-Forwarding and emits a EventSendToCosmosLocal type event
 func (k Keeper) logEmitIbcForwardFailureEvent(ctx sdk.Context, forward types.PendingIbcAutoForward, err error) {
 	var localReceiver sdk.AccAddress
@@ -309,5 +493,23 @@ func (k Keeper) logEmitIbcForwardFailureEvent(ctx sdk.Context, forward types.Pen
 		Receiver: forward.ForeignReceiver,
 		Token:    forward.Token.Denom,
 		Amount:   forward.Token.Amount.String(),
+	})
+}
+
+// logEmitERC721IbcForwardFailureEvent logs failed IBC Auto-Forwarding and emits a EventSendToCosmosLocal type event
+func (k Keeper) logEmitERC721IbcForwardFailureEvent(ctx sdk.Context, forward types.PendingERC721IbcAutoForward, err error) {
+	var localReceiver sdk.AccAddress
+	localReceiver, _ = types.IBCAddressFromBech32(forward.ForeignReceiver) // checked valid bech32 receiver earlier
+	k.logger(ctx).Error("SendToCosmos IBC Auto-Forward Failure: funds sent to local address",
+		"localReceiver", localReceiver, "class-id", forward.ClassId, "token-id", forward.TokenId,
+		"failedIbcPort", ibctransfertypes.PortID, "failedIbcChannel", forward.IbcChannel,
+		"claimNonce", forward.EventNonce, "cosmosBlockHeight", ctx.BlockHeight(), "err", err,
+	)
+
+	ctx.EventManager().EmitTypedEvent(&types.EventSendERC721ToCosmosLocal{
+		Nonce:    fmt.Sprint(forward.EventNonce),
+		Receiver: forward.ForeignReceiver,
+		ClassId:  forward.ClassId,
+		TokenId:  forward.TokenId,
 	})
 }

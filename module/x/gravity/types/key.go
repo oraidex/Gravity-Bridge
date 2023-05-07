@@ -173,6 +173,10 @@ var (
 	// PendingIbcAutoForwards indexes pending SendToCosmos sends via IBC, queued by event nonce
 	// [0x5b89a7c5dc9abd2a7abc2560d6eb42ea]
 	PendingIbcAutoForwards = HashString("IbcAutoForwardQueue")
+
+	// PendingERC721IbcAutoForwards indexes pending SendERC721ToCosmos sends via IBC, queued by event nonce
+	// [2d014709a3fb766362bdab029b0a51a2]
+	PendingERC721IbcAutoForwards = HashString("ERC721IbcAutoForwardQueue")
 )
 
 // GetOrchestratorAddressKey returns the following key format
@@ -380,9 +384,21 @@ func convertByteArrToString(value []byte) string {
 	return ret.String()
 }
 
+func GetPendingIbcAutoForwardsPrefixKey(nonceSource NonceSource) []byte {
+	switch nonceSource {
+	case GravityContractNonce:
+		return PendingIbcAutoForwards
+	case ERC721ContractNonce:
+		return PendingERC721IbcAutoForwards
+	default:
+		panic("invalid nonce source")
+	}
+}
+
 // GetPendingIbcAutoForwardKey returns the following key format
 // prefix		EventNonce
 // [0x0][0 0 0 0 0 0 0 1]
-func GetPendingIbcAutoForwardKey(eventNonce uint64) []byte {
-	return AppendBytes(PendingIbcAutoForwards, UInt64Bytes(eventNonce))
+func GetPendingIbcAutoForwardKey(eventNonce uint64, nonceSource NonceSource) []byte {
+	prefixKey := GetPendingIbcAutoForwardsPrefixKey(nonceSource)
+	return AppendBytes(prefixKey, UInt64Bytes(eventNonce))
 }

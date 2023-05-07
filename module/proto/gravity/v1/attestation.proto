@@ -109,9 +109,8 @@ message EventSendToCosmosLocal {
 message EventSendERC721ToCosmosLocal {
   string nonce = 1;
   string receiver = 2;
-  string contract = 3;
-  string class_id = 4;
-  string token_id = 5;
+  string class_id = 3;
+  string token_id = 4;
 }
 
 message EventSendToCosmosPendingIbcAutoForward {
@@ -125,10 +124,9 @@ message EventSendToCosmosPendingIbcAutoForward {
 message EventSendERC721ToCosmosPendingIbcAutoForward {
   string nonce = 1;
   string receiver = 2;
-  string contract = 3;
-  string class_id = 4;
-  string token_id = 5;
-  string channel = 6;
+  string class_id = 3;
+  string token_id = 4;
+  string channel = 5;
 }
 
 message EventSendToCosmosExecutedIbcAutoForward {
@@ -144,10 +142,9 @@ message EventSendToCosmosExecutedIbcAutoForward {
 message EventSendERC721ToCosmosExecutedIbcAutoForward {
   string nonce = 1;
   string receiver = 2;
-  string contract = 3;
-  string class_id = 4;
-  string token_id = 5;
-  string channel = 6;
-  string timeout_time = 7;
-  string timeout_height = 8;
+  string class_id = 3;
+  string token_id = 4;
+  string channel = 5;
+  string timeout_time = 6;
+  string timeout_height = 7;
 }
