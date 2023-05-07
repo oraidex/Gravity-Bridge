@@ -48,6 +48,9 @@ service Query {
   rpc LastEventNonceByAddr(QueryLastEventNonceByAddrRequest) returns (QueryLastEventNonceByAddrResponse) {
     option (google.api.http).get = "/gravity/v1beta/oracle/eventnonce/{address}";
   }
+  rpc LastERC721EventNonceByAddr(QueryLastERC721EventNonceByAddrRequest) returns (QueryLastERC721EventNonceByAddrResponse) {
+    option (google.api.http).get = "/gravity/v1beta/oracle/erc721_eventnonce/{address}";
+  }
   rpc BatchFees(QueryBatchFeeRequest) returns (QueryBatchFeeResponse) {
     option (google.api.http).get = "/gravity/v1beta/batchfees";
   }
@@ -77,6 +80,9 @@ service Query {
   }
   rpc GetLastObservedEthNonce(QueryLastObservedEthNonceRequest) returns (QueryLastObservedEthNonceResponse) {
     option (google.api.http).get = "/gravity/v1beta/query_last_observed_eth_nonce";
+  }
+  rpc GetLastObservedERC721EthNonce(QueryLastObservedERC721EthNonceRequest) returns (QueryLastObservedERC721EthNonceResponse) {
+    option (google.api.http).get = "/gravity/v1beta/query_last_observed_erc721_eth_nonce";
   }
   rpc GetAttestations(QueryAttestationsRequest) returns (QueryAttestationsResponse) {
     option (google.api.http).get = "/gravity/v1beta/query_attestations";
@@ -200,6 +206,13 @@ message QueryLastEventNonceByAddrResponse {
   uint64 event_nonce = 1;
 }
 
+message QueryLastERC721EventNonceByAddrRequest {
+  string address = 1;
+}
+message QueryLastERC721EventNonceByAddrResponse {
+  uint64 event_nonce = 1;
+}
+
 message QueryERC20ToDenomRequest {
   string erc20 = 1;
 }
@@ -241,6 +254,12 @@ message QueryLastObservedEthNonceRequest{
   bool use_v1_key = 1;
 }
 message QueryLastObservedEthNonceResponse{
+  // a response of 0 indicates that no Ethereum events have been observed, and thus
+  // the bridge is inactive
+  uint64 nonce = 1;
+}
+message QueryLastObservedERC721EthNonceRequest {}
+message QueryLastObservedERC721EthNonceResponse {
   // a response of 0 indicates that no Ethereum events have been observed, and thus
   // the bridge is inactive
   uint64 nonce = 1;
