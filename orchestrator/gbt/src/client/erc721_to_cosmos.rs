@@ -1,11 +1,8 @@
-
 use crate::args::Erc721ToCosmosOpts;
 use crate::utils::TIMEOUT;
 use ethereum_gravity::send_erc721_to_cosmos::send_erc721_to_cosmos;
 use ethereum_gravity::utils::get_valset_nonce;
-use gravity_utils::{
-    connection_prep::{check_for_eth, create_rpc_connections},
-};
+use gravity_utils::connection_prep::{check_for_eth, create_rpc_connections};
 
 pub async fn erc721_to_cosmos(args: Erc721ToCosmosOpts, prefix: String) {
     let gravity_address = args.gravity_contract_address;
@@ -26,10 +23,13 @@ pub async fn erc721_to_cosmos(args: Erc721ToCosmosOpts, prefix: String) {
         .expect("Incorrect Gravity Address or otherwise unable to contact Gravity");
 
     check_for_eth(ethereum_public_key, &web3).await;
-    
+
     info!(
         "Sending {} / {} to Cosmos from {} to {}",
-        token_id.clone(), erc721_address, ethereum_public_key, cosmos_dest
+        token_id.clone(),
+        erc721_address,
+        ethereum_public_key,
+        cosmos_dest
     );
     // we send erc721 token to the gravityerc721 contract to register a deposit
     let res = send_erc721_to_cosmos(

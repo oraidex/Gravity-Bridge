@@ -316,11 +316,27 @@ pub async fn main() {
             return;
         } else if test_type == "VALSET_STRESS" {
             info!("Starting Valset update stress test");
-            validator_set_stress_test(&web30, grpc_client, &contact, keys, gravity_address, gravityerc721_address).await;
+            validator_set_stress_test(
+                &web30,
+                grpc_client,
+                &contact,
+                keys,
+                gravity_address,
+                gravityerc721_address,
+            )
+            .await;
             return;
         } else if test_type == "VALSET_REWARDS" {
             info!("Starting Valset rewards test");
-            valset_rewards_test(&web30, grpc_client, &contact, keys, gravity_address, gravityerc721_address).await;
+            valset_rewards_test(
+                &web30,
+                grpc_client,
+                &contact,
+                keys,
+                gravity_address,
+                gravityerc721_address,
+            )
+            .await;
             return;
         } else if test_type == "V2_HAPPY_PATH" || test_type == "HAPPY_PATH_V2" {
             info!("Starting happy path for Gravity v2");
@@ -338,7 +354,15 @@ pub async fn main() {
             return;
         } else if test_type == "RELAY_MARKET" {
             info!("Starting relay market tests!");
-            relay_market_test(&web30, grpc_client, &contact, keys, gravity_address, gravityerc721_address).await;
+            relay_market_test(
+                &web30,
+                grpc_client,
+                &contact,
+                keys,
+                gravity_address,
+                gravityerc721_address,
+            )
+            .await;
             return;
         } else if test_type == "ORCHESTRATOR_KEYS" {
             info!("Starting orchestrator key update tests!");
@@ -414,15 +438,39 @@ pub async fn main() {
             return;
         } else if test_type == "SIGNATURE_SLASHING" {
             info!("Starting Signature Slashing test");
-            signature_slashing_test(&web30, grpc_client, &contact, keys, gravity_address, gravityerc721_address).await;
+            signature_slashing_test(
+                &web30,
+                grpc_client,
+                &contact,
+                keys,
+                gravity_address,
+                gravityerc721_address,
+            )
+            .await;
             return;
         } else if test_type == "SLASHING_DELEGATION" {
             info!("Starting Slashing Delegation test");
-            slashing_delegation_test(&web30, grpc_client, &contact, keys, gravity_address, gravityerc721_address).await;
+            slashing_delegation_test(
+                &web30,
+                grpc_client,
+                &contact,
+                keys,
+                gravity_address,
+                gravityerc721_address,
+            )
+            .await;
             return;
         } else if test_type == "IBC_METADATA" {
             info!("Starting IBC metadata proposal test");
-            ibc_metadata_proposal_test(gravity_address, gravityerc721_address, keys, grpc_client, &contact, &web30).await;
+            ibc_metadata_proposal_test(
+                gravity_address,
+                gravityerc721_address,
+                keys,
+                grpc_client,
+                &contact,
+                &web30,
+            )
+            .await;
             return;
         } else if test_type == "ERC721_HAPPY_PATH" {
             info!("Starting ERC 721 transfer test");

@@ -1,5 +1,7 @@
 use clarity::{Address, Uint256};
-use cosmos_gravity::utils::{get_last_event_nonce_with_retry, get_last_erc721_event_nonce_with_retry};
+use cosmos_gravity::utils::{
+    get_last_erc721_event_nonce_with_retry, get_last_event_nonce_with_retry,
+};
 use deep_space::address::Address as CosmosAddress;
 use gravity_proto::gravity::query_client::QueryClient as GravityQueryClient;
 use gravity_utils::get_with_retry::RETRY_TIME;
@@ -40,13 +42,15 @@ pub async fn get_last_checked_block(
     let latest_block = get_latest_safe_block(web3).await;
     let mut last_event_nonce: Uint256;
     if contract_type == ContractType::Gravity {
-        last_event_nonce = get_last_event_nonce_with_retry(&mut grpc_client, our_cosmos_address, prefix)
-            .await
-            .into();
+        last_event_nonce =
+            get_last_event_nonce_with_retry(&mut grpc_client, our_cosmos_address, prefix)
+                .await
+                .into();
     } else {
-        last_event_nonce = get_last_erc721_event_nonce_with_retry(&mut grpc_client, our_cosmos_address, prefix)
-            .await
-            .into();
+        last_event_nonce =
+            get_last_erc721_event_nonce_with_retry(&mut grpc_client, our_cosmos_address, prefix)
+                .await
+                .into();
     }
 
     // zero indicates this oracle has never submitted an event before since there is no
@@ -89,8 +93,7 @@ pub async fn get_last_checked_block(
                     Ok(send) => {
                         debug!(
                             "{} send event nonce {} last event nonce",
-                            send.event_nonce,
-                            last_event_nonce
+                            send.event_nonce, last_event_nonce
                         );
                         if upcast(send.event_nonce) == last_event_nonce
                             && event.block_number.is_some()
@@ -124,12 +127,21 @@ pub async fn get_last_checked_block(
             let gravityerc721_deployed_events = gravityerc721_deployed_events.unwrap();
             if gravityerc721_deployed_events.len() > 1 {
                 error!("More than one GravityERC721DeployedEvent found! This should never happen!");
-                metrics_errors_counter(2, "More than one GravityERC721DeployedEvent found! This should never happen!");
+                metrics_errors_counter(
+                    2,
+                    "More than one GravityERC721DeployedEvent found! This should never happen!",
+                );
             }
             if gravityerc721_deployed_events.len() == 1 {
-                let gravityerc721_deploy_height = gravityerc721_deployed_events[0].clone().block_number.unwrap();
+                let gravityerc721_deploy_height = gravityerc721_deployed_events[0]
+                    .clone()
+                    .block_number
+                    .unwrap();
 
-                info!("Found GravityERC721DeployedEvent at block {}", gravityerc721_deploy_height);
+                info!(
+                    "Found GravityERC721DeployedEvent at block {}",
+                    gravityerc721_deploy_height
+                );
                 return gravityerc721_deploy_height;
             }
         } else {

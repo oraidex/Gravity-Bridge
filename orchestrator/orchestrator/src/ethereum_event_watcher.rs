@@ -104,7 +104,7 @@ pub async fn check_for_events(
                 if res.is_err() {
                     error!("Failed to process GravityERC721 claims");
                     metrics_errors_counter(2, "Failed process erc721 claims");
-                    return Err(GravityError::CosmosGrpcError(res.unwrap_err()))
+                    return Err(GravityError::CosmosGrpcError(res.unwrap_err()));
                 }
 
                 let new_event_nonce = get_last_erc721_event_nonce_for_validator(

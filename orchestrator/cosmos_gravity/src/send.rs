@@ -221,7 +221,8 @@ pub async fn send_erc721_claims(
 ) -> Result<TxResponse, CosmosGrpcError> {
     let our_cosmos_address = our_cosmos_key.to_address(&contact.get_prefix()).unwrap();
 
-    let mut erc721_deposit_nonces_msgs: Vec<(u64, Msg)> = create_claim_msgs(erc721_deposits, our_cosmos_address);
+    let mut erc721_deposit_nonces_msgs: Vec<(u64, Msg)> =
+        create_claim_msgs(erc721_deposits, our_cosmos_address);
 
     erc721_deposit_nonces_msgs.sort_unstable_by(|a, b| a.0.cmp(&b.0));
 
@@ -265,7 +266,8 @@ pub async fn send_ethereum_claims(
 
     // Create claim Msgs, keeping their event_nonces for insertion into unordered_msgs
 
-    let erc20_deposit_nonces_msgs: Vec<(u64, Msg)> = create_claim_msgs(erc20_deposits, our_cosmos_address);
+    let erc20_deposit_nonces_msgs: Vec<(u64, Msg)> =
+        create_claim_msgs(erc20_deposits, our_cosmos_address);
     let withdraw_nonces_msgs: Vec<(u64, Msg)> = create_claim_msgs(withdraws, our_cosmos_address);
     let deploy_nonces_msgs: Vec<(u64, Msg)> = create_claim_msgs(erc20_deploys, our_cosmos_address);
     let logic_nonces_msgs: Vec<(u64, Msg)> = create_claim_msgs(logic_calls, our_cosmos_address);
@@ -287,7 +289,6 @@ pub async fn send_ethereum_claims(
     }
     // sorts ascending by default
     keys.sort_unstable();
-
 
     const MAX_ORACLE_MESSAGES: usize = 1000;
     let mut msgs = Vec::new();

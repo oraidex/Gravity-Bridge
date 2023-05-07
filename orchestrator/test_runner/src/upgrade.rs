@@ -8,13 +8,13 @@ use gravity_proto::cosmos_sdk_proto::cosmos::bank::v1beta1::Metadata;
 use gravity_proto::gravity::query_client::{QueryClient as GravityQueryClient, QueryClient};
 use gravity_proto::gravity::{
     ClaimType, EthereumClaim, MsgBatchSendToEthClaim, MsgErc20DeployedClaim,
-    MsgLogicCallExecutedClaim, MsgSendToCosmosClaim, MsgValsetUpdatedClaim,
-    QueryAttestationsRequest, MsgSendErc721ToCosmosClaim,
+    MsgLogicCallExecutedClaim, MsgSendErc721ToCosmosClaim, MsgSendToCosmosClaim,
+    MsgValsetUpdatedClaim, QueryAttestationsRequest,
 };
 use gravity_utils::types::{
     MSG_BATCH_SEND_TO_ETH_TYPE_URL, MSG_ERC20_DEPLOYED_CLAIM_TYPE_URL,
-    MSG_LOGIC_CALL_EXECUTED_CLAIM_TYPE_URL, MSG_SEND_TO_COSMOS_CLAIM_TYPE_URL,
-    MSG_VALSET_UPDATED_CLAIM_TYPE_URL, MSG_SEND_ERC721_TO_COSMOS_CLAIM_TYPE_URL,
+    MSG_LOGIC_CALL_EXECUTED_CLAIM_TYPE_URL, MSG_SEND_ERC721_TO_COSMOS_CLAIM_TYPE_URL,
+    MSG_SEND_TO_COSMOS_CLAIM_TYPE_URL, MSG_VALSET_UPDATED_CLAIM_TYPE_URL,
 };
 use std::time::Duration;
 use tokio::time::sleep as delay_for;
@@ -70,7 +70,7 @@ pub async fn upgrade_part_1(
         keys.clone(),
         ibc_keys.clone(),
         gravity_address,
-gravityerc721_address,
+        gravityerc721_address,
         erc20_addresses.clone(),
         false,
     )
@@ -343,7 +343,7 @@ fn unpack_and_print_claim_info(claim_any: prost_types::Any, i: usize) -> Box<dyn
             claim.get_type().to_string(),
             claim.get_eth_block_height(),
             claim.get_event_nonce()
-        ) 
+        )
     } else if claim_any.type_url == MSG_BATCH_SEND_TO_ETH_TYPE_URL {
         claim = Box::new(decode_any::<MsgBatchSendToEthClaim>(claim_any).unwrap());
         info!(

@@ -1,4 +1,7 @@
-use crate::query::{get_last_event_nonce_for_validator, get_min_chain_fee_basis_points, get_last_erc721_event_nonce_for_validator};
+use crate::query::{
+    get_last_erc721_event_nonce_for_validator, get_last_event_nonce_for_validator,
+    get_min_chain_fee_basis_points,
+};
 use deep_space::client::ChainStatus;
 use deep_space::error::CosmosGrpcError;
 use deep_space::utils::encode_any;
@@ -56,7 +59,8 @@ pub async fn get_last_erc721_event_nonce_with_retry(
             res
         );
         sleep(RETRY_TIME).await;
-        res = get_last_erc721_event_nonce_for_validator(client, our_cosmos_address, prefix.clone()).await;
+        res = get_last_erc721_event_nonce_for_validator(client, our_cosmos_address, prefix.clone())
+            .await;
     }
     res.unwrap()
 }

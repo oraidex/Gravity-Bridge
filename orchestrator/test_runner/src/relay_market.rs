@@ -34,7 +34,15 @@ pub async fn relay_market_test(
     gravityerc721_address: EthAddress,
 ) {
     let grpc_client = &mut grpc_client.clone();
-    test_batches(web30, grpc_client, contact, keys, gravity_address, gravityerc721_address).await
+    test_batches(
+        web30,
+        grpc_client,
+        contact,
+        keys,
+        gravity_address,
+        gravityerc721_address,
+    )
+    .await
 }
 
 async fn test_batches(
@@ -50,7 +58,14 @@ async fn test_batches(
     let mut default_config = GravityBridgeToolsConfig::default();
     default_config.orchestrator.relayer_enabled = true;
     default_config.relayer.relayer_loop_speed = 10;
-    start_orchestrators(keys.clone(), gravity_address, gravityerc721_address, false, default_config).await;
+    start_orchestrators(
+        keys.clone(),
+        gravity_address,
+        gravityerc721_address,
+        false,
+        default_config,
+    )
+    .await;
 
     test_good_batch(
         web30,
