@@ -10,37 +10,7 @@ trap 'failure ${LINENO} "$BASH_COMMAND"' ERR
 
 source scripts/serve_env.sh
 
-# Stop if it is already running
-if pgrep -x "$BINARY" >/dev/null; then
-    echo "Terminating $BINARY..."
-    pkill $BINARY
-    sleep 5 # To avoid removing the folder to be any issue
-fi
-
-# Also stop Stargaze if already running
-if pgrep -x "$STARGAZE_BINARY" >/dev/null; then
-    echo "Terminating $STARGAZE_BINARY..."
-    pkill $STARGAZE_BINARY
-    sleep 5 # To avoid removing the folder to be any issue
-fi
-
-# Also stop evm if already running
-lsof -ti :8545 | xargs --no-run-if-empty kill
-
-if [ -d $CHAIN_DIR ]; then
-  echo "Removing previous data from $CHAIN_DIR..."
-  rm -rf $CHAIN_DIR &> /dev/null
-fi
-
-if [ -d $STARGAZE_CHAIN_DIR ]; then
-  echo "Removing previous data from $STARGAZE_CHAIN_DIR..."
-  rm -rf $STARGAZE_CHAIN_DIR &> /dev/null
-fi
-
-if [ -d $GBT_DIR ]; then
-  echo "Removing previous data from $GBT_DIR..."
-  rm -rf $GBT_DIR &> /dev/null
-fi
+scripts/kill.sh
 
 # Add directories for gravity chain, exit if an error occurs
 if ! mkdir -p $CHAIN_DIR 2>/dev/null; then
@@ -51,6 +21,12 @@ fi
 # Add directories for stargaze chain, exit if an error occurs
 if ! mkdir -p $STARGAZE_CHAIN_DIR 2>/dev/null; then
     echo "Failed to create stargaze chain folder. Aborting..."
+    exit 1
+fi
+
+# Add directories for relayer, exit if an error occurs
+if ! mkdir -p $RELAYER_HOME_DIR/config 2>/dev/null; then
+    echo "Failed to create relayer folder. Aborting..."
     exit 1
 fi
 
@@ -90,6 +66,7 @@ echo "Changing config (defaults and ports in app.toml and config.toml files) for
 sed -i -e 's/"nativeHRP": "osmo"/"nativeHRP": "gravity"/g' $CHAIN_DIR/config/genesis.json
 sed -i -e 's/"bridge_ethereum_address": "0x0000000000000000000000000000000000000000",/"bridge_ethereum_address": "'"$GRAVITY_CONTRACT_ADDRESS"'",/g' $CHAIN_DIR/config/genesis.json
 sed -i -e 's/"bridge_erc721_ethereum_address": "",/"bridge_erc721_ethereum_address": "'"$GRAVITY_ERC721_CONTRACT_ADDRESS"'",/g' $CHAIN_DIR/config/genesis.json
+sed -i -e 's/"hrpIBCRecords": \[\]/"hrpIBCRecords": \[{"hrp": "nftprefixstars", "source_channel": "channel-0", "ics_to_height_offset": "10000", "ics_to_time_offset": "0s"}\]/g' $CHAIN_DIR/config/genesis.json
 sed -i -e 's/"voting_period": "172800s"/"voting_period": "60s"/g' $CHAIN_DIR/config/genesis.json
 sed -i -e 's#"tcp://0.0.0.0:26656"#"tcp://0.0.0.0:'"$P2P_PORT"'"#g' $CHAIN_DIR/config/config.toml
 sed -i -e 's#"tcp://127.0.0.1:26657"#"tcp://0.0.0.0:'"$RPC_PORT"'"#g' $CHAIN_DIR/config/config.toml
@@ -182,3 +159,41 @@ echo "Creating log file at $GBT_LOG_FILE_PATH"
 
 sleep 5
 echo "-------- Orchestrator started! --------"
+
+echo "Deploying ICS721 to Stargaze"
+$STARGAZE_BINARY tx wasm store ./scripts/cw-nfts/artifacts/cw721_base.wasm --node http://:$STARGAZE_RPC_PORT --home $STARGAZE_CHAIN_DIR --keyring-backend test --from kaare -y --fees 500000stake --gas 20000000 --chain-id $STARGAZE_CHAIN_ID -b block
+$STARGAZE_BINARY tx wasm store ./scripts/ics721/artifacts/cw_ics721_bridge.wasm --node http://:$STARGAZE_RPC_PORT --home $STARGAZE_CHAIN_DIR --keyring-backend test --from kaare -y --fees 500000stake --gas 20000000 --chain-id $STARGAZE_CHAIN_ID -b block
+#$STARGAZE_BINARY tx wasm instantiate 1 '{"name": "testnft", "symbol": "tnft", "minter": "stars1j0hkmu8rklcewz4g0wclxlzf4tzhlx00a9apjl"}' --label cw721 --admin stars1j0hkmu8rklcewz4g0wclxlzf4tzhlx00a9apjl --node http://:$STARGAZE_RPC_PORT --home $STARGAZE_CHAIN_DIR --keyring-backend test --from kaare -y --fees 500000stake --gas 20000000 --chain-id $STARGAZE_CHAIN_ID -b block
+#CW721_CONTRACT_ADDRESS=$($STARGAZE_BINARY query wasm list-contract-by-code 1 --node http://:$STARGAZE_RPC_PORT --home $STARGAZE_CHAIN_DIR -o json | jq -r '.contracts[0]')
+#echo $CW721_CONTRACT_ADDRESS
+$STARGAZE_BINARY tx wasm instantiate 2 '{"cw721_base_code_id": 1}' --label ics721 --admin stars1j0hkmu8rklcewz4g0wclxlzf4tzhlx00a9apjl --node http://:$STARGAZE_RPC_PORT --home $STARGAZE_CHAIN_DIR --keyring-backend test --from kaare -y --fees 500000stake --gas 20000000 --chain-id $STARGAZE_CHAIN_ID -b block
+ICS721_CONTRACT_ADDRESS=$($STARGAZE_BINARY query wasm list-contract-by-code 2 --node http://:$STARGAZE_RPC_PORT --home $STARGAZE_CHAIN_DIR -o json | jq -r '.contracts[0]')
+echo "ICS721 contract: $ICS721_CONTRACT_ADDRESS"
+
+echo "Starting relayer"
+cp scripts/rly-config.yaml $RELAYER_HOME_DIR/config/config.yaml
+rly keys restore gravity gravity_relay_account --home $RELAYER_HOME_DIR "$GRAVITY_RELAY_ACCOUNT"
+rly keys restore stargaze stargaze_relay_account --home $RELAYER_HOME_DIR "$STARGAZE_RELAY_ACCOUNT"
+rly paths new gravity-local-1 stargaze-local-1 gravity-stargaze-nft --src-port nft-transfer --dst-port wasm.$ICS721_CONTRACT_ADDRESS --version ics721-1 --home $RELAYER_HOME_DIR
+rly tx link-then-start gravity-stargaze-nft --src-port nft-transfer --dst-port wasm.$ICS721_CONTRACT_ADDRESS --version ics721-1 --home $RELAYER_HOME_DIR > $RELAYER_LOG_FILE_PATH 2>&1 &
+
+CONNECTION_OPEN=false
+i=0
+while [ $i -le 30 ]; do
+  echo "Checking if connection is open..."
+  CONNECTION_STATE=$($BINARY q ibc connection connections --output json | jq -r '.connections[] | select(.id == "connection-0") | .state')
+  if [ "$CONNECTION_STATE" == "STATE_OPEN" ]; then
+    CONNECTION_OPEN=true
+    break
+  fi
+  sleep 3
+  let i=i+1
+done
+
+if [ "$CONNECTION_OPEN" == false ]; then
+  echo "After multiple attempts, the ibc relayer connections are still not open. Sorry :P"
+  exit 1
+fi
+
+sleep 10 # Just for good measure
+echo "------- IBC is up! -------"
