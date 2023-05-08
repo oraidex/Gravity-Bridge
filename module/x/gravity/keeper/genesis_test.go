@@ -2,6 +2,7 @@ package keeper
 
 import (
 	"fmt"
+	"github.com/cosmos/cosmos-sdk/x/nft"
 	"sort"
 	"testing"
 	"time"
@@ -27,7 +28,6 @@ func TestBatchAndTxImportExport(t *testing.T) {
 	ctx := input.Context
 	batchSize := 100
 	accAddresses := []string{ // Warning: this must match the length of ctrAddresses
-
 		"gravity1dg55rtevlfxh46w88yjpdd08sqhh5cc3z8yqu6",
 		"gravity164knshrzuuurf05qxf3q5ewpfnwzl4gj3t84vv",
 		"gravity193fw83ynn76328pty4yl7473vg9x86aly623wk",
@@ -50,6 +50,13 @@ func TestBatchAndTxImportExport(t *testing.T) {
 		"0x429881672B9AE42b8EbA0E26cD9C73711b891Ca8",
 		"0x429881672B9AE42b8EbA0E26cD9C73711b891Ca9",
 	}
+	erc721CtrAddresses := []string{ // Warning: this must match the length of accAddresses
+		"0x429881672B9AE42b8EbA0E26cD9C73711b891Cb5",
+		"0x429881672b9AE42b8eBA0e26cd9c73711b891cb6",
+		"0x429881672b9aE42b8eba0e26cD9c73711B891Cb7",
+		"0x429881672B9AE42b8EbA0E26cD9C73711b891Cb8",
+		"0x429881672B9AE42b8EbA0E26cD9C73711b891Cb9",
+	}
 
 	// SETUP ACCOUNTS
 	// ==================
@@ -71,6 +78,12 @@ func TestBatchAndTxImportExport(t *testing.T) {
 		require.NoError(t, err)
 		contracts[i] = contract
 	}
+	erc721Contracts := make([]*types.EthAddress, len(erc721CtrAddresses))
+	for i := range erc721Contracts {
+		contract, err := types.NewEthAddress(erc721CtrAddresses[i])
+		require.NoError(t, err)
+		erc721Contracts[i] = contract
+	}
 	tokens := make([]*types.InternalERC20Token, len(contracts))
 	vouchers := make([]*sdk.Coins, len(contracts))
 	for i, v := range contracts {
@@ -84,14 +97,34 @@ func TestBatchAndTxImportExport(t *testing.T) {
 		require.NoError(t, input.BankKeeper.MintCoins(ctx, types.ModuleName, allVouchers))
 	}
 
+	classes := make([]nft.Class, len(erc721Contracts))
+	nfts := make([]nft.NFT, len(erc721Contracts))
+	for i, v := range erc721Contracts {
+		class := nft.Class{
+			Id:       types.GravityERC721ClassId(*v),
+		}
+		classes[i] = class
+
+		nfts[i] = nft.NFT{
+			Id: "1",
+			ClassId: class.Id,
+		}
+
+		// Create class
+		require.NoError(t, input.NftKeeper.SaveClass(ctx, class))
+	}
+
 	// give sender i a balance of token i
+	// mint nft id 1 class i for sender v
 	for i, v := range senders {
 		input.AccountKeeper.NewAccountWithAddress(ctx, *v)
 		require.NoError(t, input.BankKeeper.SendCoinsFromModuleToAccount(ctx, types.ModuleName, *v, *vouchers[i]))
+		require.NoError(t, input.NftKeeper.Mint(ctx, nfts[i], *v))
 	}
 
 	// CREATE TRANSACTIONS
 	// ==================
+	// TODO: ERC721 when return support
 	numTxs := 5000 // should end up with 1000 txs per contract
 	txs := make([]*types.InternalOutgoingTransferTx, numTxs)
 	fees := []int{1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20}
@@ -129,6 +162,7 @@ func TestBatchAndTxImportExport(t *testing.T) {
 	// CREATE BATCHES
 	// ==================
 	// Want to create batches for half of the transactions for each contract
+	// TODO: ERC721 when return support
 	// with 100 tx in each batch, 1000 txs per contract, we want 5 batches per contract to batch 500 txs per contract
 	batches := make([]*types.InternalOutgoingTxBatch, 5*len(contracts))
 	for i, v := range contracts {
@@ -143,24 +177,37 @@ func TestBatchAndTxImportExport(t *testing.T) {
 	stake := "stake"
 	foreignHrp := "astro"
 	sourceChannel := "channel-0"
+	ics721SourceChannel := "channel-0"
 	rec := bech32ibctypes.HrpIbcRecord{
 		Hrp:               foreignHrp,
 		SourceChannel:     sourceChannel,
 		IcsToHeightOffset: 1000,
 		IcsToTimeOffset:   1000,
 	}
-	input.GravityKeeper.bech32IbcKeeper.SetHrpIbcRecords(ctx, []bech32ibctypes.HrpIbcRecord{rec})
+	ics721Rec := bech32ibctypes.HrpIbcRecord{
+		Hrp:               types.AccountPrefixForERC721Hrp(foreignHrp),
+		SourceChannel:     ics721SourceChannel,
+		IcsToHeightOffset: 1000,
+		IcsToTimeOffset:   1000,
+	}
+
+	input.GravityKeeper.bech32IbcKeeper.SetHrpIbcRecords(ctx, []bech32ibctypes.HrpIbcRecord{rec, ics721Rec})
 	hrpRecords := input.GravityKeeper.bech32IbcKeeper.GetHrpIbcRecords(ctx)
-	require.Equal(t, len(hrpRecords), 1)
+	require.Equal(t, len(hrpRecords), 2)
 	require.Equal(t, hrpRecords[0], rec)
+	require.Equal(t, hrpRecords[1], ics721Rec)
 	forwards := input.GravityKeeper.PendingIbcAutoForwards(ctx, 0)
 	require.Equal(t, 0, len(forwards))
+	erc721Forwards := input.GravityKeeper.PendingERC721IbcAutoForwards(ctx, 0)
+	require.Equal(t, 0, len(erc721Forwards))
 
 	// Create pending forwards which must be preserved
 	forwards = make([]*types.PendingIbcAutoForward, len(senders))
+	erc721Forwards = make([]*types.PendingERC721IbcAutoForward, len(senders))
 	for i, v := range senders {
 		foreignRcv, err := bech32.ConvertAndEncode(foreignHrp, *v)
 		require.NoError(t, err)
+
 		c := contracts[i%len(contracts)]
 		token, err := types.NewInternalERC20Token(sdk.NewInt(99999999), c.GetAddress().Hex())
 		require.NoError(t, err)
@@ -177,11 +224,29 @@ func TestBatchAndTxImportExport(t *testing.T) {
 		err = input.GravityKeeper.addPendingIbcAutoForward(ctx, fwd, stake)
 		require.NoError(t, err)
 		forwards[i] = &fwd
+
+		erc721Index := i%len(erc721Contracts)
+		//erc721Contract := erc721Contracts[erc721Index]
+		nftToken := nfts[erc721Index]
+		// Transfer nft to module account
+		modAcc := input.AccountKeeper.GetModuleAccount(ctx, types.ModuleName)
+		require.NoError(t, input.NftKeeper.Transfer(ctx, nftToken.ClassId, nftToken.Id, modAcc.GetAddress()))
+		erc721Fwd := types.PendingERC721IbcAutoForward{
+			ForeignReceiver: foreignRcv,
+			ClassId:        nftToken.ClassId,
+			TokenId:         nftToken.Id,
+			IbcChannel:      ics721SourceChannel,
+			EventNonce:      uint64(i + 1),
+		}
+		input.GravityKeeper.setLastObservedEventNonce(ctx, erc721Fwd.EventNonce, types.ERC721ContractNonce)
+		err = input.GravityKeeper.addPendingERC721PendingIbcAutoForward(ctx, erc721Fwd)
+		require.NoError(t, err)
+		erc721Forwards[i] = &erc721Fwd
 	}
 
-	checkAllTransactionsExist(t, input.GravityKeeper, ctx, txs, forwards)
+	checkAllTransactionsExist(t, input.GravityKeeper, ctx, txs, forwards, erc721Forwards)
 	exportImport(t, &input)
-	checkAllTransactionsExist(t, input.GravityKeeper, ctx, txs, forwards)
+	checkAllTransactionsExist(t, input.GravityKeeper, ctx, txs, forwards, erc721Forwards)
 
 	// Clear the pending ibc auto forwards so the invariant won't fail
 	input.GravityKeeper.IteratePendingIbcAutoForwards(ctx, func(_ []byte, fwd *types.PendingIbcAutoForward) bool {
@@ -189,10 +254,15 @@ func TestBatchAndTxImportExport(t *testing.T) {
 		require.NoError(t, input.BankKeeper.BurnCoins(ctx, types.ModuleName, sdk.NewCoins(*fwd.Token)))
 		return false
 	})
+	input.GravityKeeper.IteratePendingERC721IbcAutoForwards(ctx, func(_ []byte, fwd *types.PendingERC721IbcAutoForward) bool {
+		require.NoError(t, input.GravityKeeper.deletePendingIbcAutoForward(ctx, fwd.EventNonce, types.ERC721ContractNonce))
+		require.NoError(t, input.NftKeeper.Burn(ctx, fwd.ClassId, fwd.TokenId))
+		return false
+	})
 }
 
 // Requires that all transactions in txs exist in keeper
-func checkAllTransactionsExist(t *testing.T, keeper Keeper, ctx sdk.Context, txs []*types.InternalOutgoingTransferTx, forwards []*types.PendingIbcAutoForward) {
+func checkAllTransactionsExist(t *testing.T, keeper Keeper, ctx sdk.Context, txs []*types.InternalOutgoingTransferTx, forwards []*types.PendingIbcAutoForward, erc721Forwards []*types.PendingERC721IbcAutoForward) {
 	unbatched := keeper.GetUnbatchedTransactions(ctx)
 	batches := keeper.GetOutgoingTxBatches(ctx)
 	// Collect all txs into an array
@@ -224,12 +294,21 @@ func checkAllTransactionsExist(t *testing.T, keeper Keeper, ctx sdk.Context, txs
 		// The order should be preserved because of the type of iterator and the construction of `forwards`
 		require.Equal(t, fwd, forwards[i])
 	}
+
+	got721Fwds := keeper.PendingERC721IbcAutoForwards(ctx, 0)
+	require.Equal(t, len(erc721Forwards), len(got721Fwds))
+	for i, fwd := range got721Fwds {
+		// The order should be preserved because of the type of iterator and the construction of `forwards`
+		require.Equal(t, fwd, erc721Forwards[i])
+	}
 }
 
 // Exports and then imports all bridge state, overwrites the `input` test environment to simulate chain restart
 func exportImport(t *testing.T, input *TestInput) {
 	bankGenesis := input.BankKeeper.ExportGenesis(input.Context)                                     // Required for ibc auto forwards
 	bech32ibcGenesis := bech32ibc.ExportGenesis(input.Context, *input.GravityKeeper.bech32IbcKeeper) // Required for ibc auto forwards
+	nftGenesis := input.NftKeeper.ExportGenesis(input.Context) // Required for ibc auto forwards
+
 	genesisState := ExportGenesis(input.Context, input.GravityKeeper)
 	newEnv := CreateTestEnv(t)
 	input = &newEnv
@@ -239,7 +318,10 @@ func exportImport(t *testing.T, input *TestInput) {
 	require.Empty(t, batches)
 	forwards := input.GravityKeeper.PendingIbcAutoForwards(input.Context, 0)
 	require.Empty(t, forwards)
+	erc721Forwards := input.GravityKeeper.PendingERC721IbcAutoForwards(input.Context, 0)
+	require.Empty(t, erc721Forwards)
 	bech32ibc.InitGenesis(input.Context, *input.GravityKeeper.bech32IbcKeeper, *bech32ibcGenesis)
 	input.BankKeeper.InitGenesis(input.Context, bankGenesis)
+	input.NftKeeper.InitGenesis(input.Context, nftGenesis)
 	InitGenesis(input.Context, input.GravityKeeper, genesisState)
 }

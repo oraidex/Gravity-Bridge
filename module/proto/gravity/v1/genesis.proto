@@ -159,6 +159,8 @@ message GenesisState {
   repeated ERC20ToDenom              erc20_to_denoms     = 11 [(gogoproto.nullable) = false];
   repeated OutgoingTransferTx        unbatched_transfers = 12 [(gogoproto.nullable) = false];
   repeated PendingIbcAutoForward     pending_ibc_auto_forwards = 13 [(gogoproto.nullable) = false];
+  repeated PendingERC721IbcAutoForward     pending_erc721_ibc_auto_forwards = 14 [(gogoproto.nullable) = false];
+  repeated Attestation               erc721_attestations        = 15 [(gogoproto.nullable) = false];
 }
 
 // GravityCounters contains the many noces and counters required to maintain the bridge state in the genesis

@@ -218,7 +218,7 @@ func TestMsgSendERC721ToCosmosClaim(t *testing.T) {
 
 	contractEthAddress, err := types.NewEthAddress(tokenETHAddr)
 	require.NoError(t, err)
-	classId := types.GravityERC721Denom(*contractEthAddress)
+	classId := types.GravityERC721ClassId(*contractEthAddress)
 
 	// send attestations from all five validators
 	for _, v := range keeper.OrchAddrs {

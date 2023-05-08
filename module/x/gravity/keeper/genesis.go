@@ -93,8 +93,22 @@ func InitGenesis(ctx sdk.Context, k Keeper, data types.GenesisState) {
 		if err != nil {
 			panic(fmt.Errorf("error when computing ClaimHash for %v", hash))
 		}
-		// TODO: ERC721 attestations??
 		k.SetAttestation(ctx, claim.GetEventNonce(), hash, &att, types.GravityContractNonce)
+	}
+	// reset erc721 attestations in state
+	for _, att := range data.Erc721Attestations {
+		att := att
+		claim, err := k.UnpackAttestationClaim(&att)
+		if err != nil {
+			panic("couldn't cast to claim")
+		}
+
+		// TODO: block height?
+		hash, err := claim.ClaimHash()
+		if err != nil {
+			panic(fmt.Errorf("error when computing ClaimHash for %v", hash))
+		}
+		k.SetAttestation(ctx, claim.GetEventNonce(), hash, &att, types.ERC721ContractNonce)
 	}
 
 	// reset attestation state of specific validators
@@ -121,10 +135,40 @@ func InitGenesis(ctx sdk.Context, k Keeper, data types.GenesisState) {
 			if err != nil {
 				panic(err)
 			}
-			// TODO: ERC721 nonce?
 			last := k.GetLastEventNonceByValidator(ctx, val, types.GravityContractNonce)
 			if claim.GetEventNonce() > last {
 				k.SetLastEventNonceByValidator(ctx, val, claim.GetEventNonce(), types.GravityContractNonce)
+			}
+		}
+	}
+
+	// reset erc721 attestation state of specific validators
+	// this must be done after the above to be correct
+	for _, att := range data.Erc721Attestations {
+		att := att
+		claim, err := k.UnpackAttestationClaim(&att)
+		if err != nil {
+			panic("couldn't cast to claim")
+		}
+		/*
+			reconstruct the latest event nonce for every validator
+			if somehow this genesis state is saved when all attestations
+			have been cleaned up GetLastEventNonceByValidator handles that case
+
+			if we were to save and load the last event nonce for every validator
+			then we would need to carry that state forever across all chain restarts
+			but since we've already had to handle the edge case of new validators joining
+			while all attestations have already been cleaned up we can do this instead and
+			not carry around every validator's event nonce counter forever.
+		*/
+		for _, vote := range att.Votes {
+			val, err := sdk.ValAddressFromBech32(vote)
+			if err != nil {
+				panic(err)
+			}
+			last := k.GetLastEventNonceByValidator(ctx, val, types.ERC721ContractNonce)
+			if claim.GetEventNonce() > last {
+				k.SetLastEventNonceByValidator(ctx, val, claim.GetEventNonce(), types.ERC721ContractNonce)
 			}
 		}
 	}
@@ -184,6 +228,13 @@ func InitGenesis(ctx sdk.Context, k Keeper, data types.GenesisState) {
 			panic(fmt.Errorf("unable to restore pending ibc auto forward (%v) to store: %v", forward, err))
 		}
 	}
+
+	for _, forward := range data.PendingErc721IbcAutoForwards {
+		err := k.addPendingERC721PendingIbcAutoForward(ctx, forward)
+		if err != nil {
+			panic(fmt.Errorf("unable to restore pending ibc auto forward (%v) to store: %v", forward, err))
+		}
+	}
 }
 
 func hasDuplicates(d []types.MsgSetOrchestratorAddress) bool {
@@ -202,25 +253,31 @@ func hasDuplicates(d []types.MsgSetOrchestratorAddress) bool {
 // from the current state of the chain
 func ExportGenesis(ctx sdk.Context, k Keeper) types.GenesisState {
 	var (
-		p                  = k.GetParams(ctx)
-		calls              = k.GetOutgoingLogicCalls(ctx)
-		batches            = k.GetOutgoingTxBatches(ctx)
-		valsets            = k.GetValsets(ctx)
-		attmap, attKeys    = k.GetAttestationMapping(ctx, types.GravityContractNonce)
-		// TODO: ERC721 attestations??
-		vsconfs            = []types.MsgValsetConfirm{}
-		batchconfs         = []types.MsgConfirmBatch{}
-		callconfs          = []types.MsgConfirmLogicCall{}
-		attestations       = []types.Attestation{}
-		delegates          = k.GetDelegateKeys(ctx)
-		erc20ToDenoms      = []types.ERC20ToDenom{}
-		unbatchedTransfers = k.GetUnbatchedTransactions(ctx)
-		// TODO: ERC721 pending forwards??
-		pendingForwards    = k.PendingIbcAutoForwards(ctx, 0)
+		p                           = k.GetParams(ctx)
+		calls                       = k.GetOutgoingLogicCalls(ctx)
+		batches                     = k.GetOutgoingTxBatches(ctx)
+		valsets                     = k.GetValsets(ctx)
+		attmap, attKeys             = k.GetAttestationMapping(ctx, types.GravityContractNonce)
+		erc721AttMap, erc721AttKeys = k.GetAttestationMapping(ctx, types.ERC721ContractNonce)
+		vsconfs                     = []types.MsgValsetConfirm{}
+		batchconfs                  = []types.MsgConfirmBatch{}
+		callconfs                   = []types.MsgConfirmLogicCall{}
+		attestations                = []types.Attestation{}
+		erc721Attestations                = []types.Attestation{}
+		delegates                   = k.GetDelegateKeys(ctx)
+		erc20ToDenoms               = []types.ERC20ToDenom{}
+		unbatchedTransfers          = k.GetUnbatchedTransactions(ctx)
+		pendingForwards             = k.PendingIbcAutoForwards(ctx, 0)
+		erc721PendingForwards       = k.PendingERC721IbcAutoForwards(ctx, 0)
 	)
 	var forwards []types.PendingIbcAutoForward
 	for _, forward := range pendingForwards {
 		forwards = append(forwards, *forward)
+	}
+
+	var erc721Forwards []types.PendingERC721IbcAutoForward
+	for _, forward := range erc721PendingForwards {
+		erc721Forwards = append(erc721Forwards, *forward)
 	}
 
 	// export valset confirmations from state
@@ -251,6 +308,12 @@ func ExportGenesis(ctx sdk.Context, k Keeper) types.GenesisState {
 		attestations = append(attestations, attmap[key]...)
 	}
 
+	// export erc721 attestations from state
+	for _, key := range erc721AttKeys {
+		// TODO: set height = 0?
+		erc721Attestations = append(erc721Attestations, erc721AttMap[key]...)
+	}
+
 	// export erc20 to denom relations
 	k.IterateERC20ToDenom(ctx, func(key []byte, erc20ToDenom *types.ERC20ToDenom) bool {
 		erc20ToDenoms = append(erc20ToDenoms, *erc20ToDenom)
@@ -274,16 +337,18 @@ func ExportGenesis(ctx sdk.Context, k Keeper) types.GenesisState {
 			LastTxPoolId:              k.getID(ctx, types.KeyLastTXPoolID),
 			LastBatchId:               k.getID(ctx, types.KeyLastOutgoingBatchID),
 		},
-		Valsets:                valsets,
-		ValsetConfirms:         vsconfs,
-		Batches:                extBatches,
-		BatchConfirms:          batchconfs,
-		LogicCalls:             calls,
-		LogicCallConfirms:      callconfs,
-		Attestations:           attestations,
-		DelegateKeys:           delegates,
-		Erc20ToDenoms:          erc20ToDenoms,
-		UnbatchedTransfers:     unbatchedTxs,
-		PendingIbcAutoForwards: forwards,
+		Valsets:                      valsets,
+		ValsetConfirms:               vsconfs,
+		Batches:                      extBatches,
+		BatchConfirms:                batchconfs,
+		LogicCalls:                   calls,
+		LogicCallConfirms:            callconfs,
+		Attestations:                 attestations,
+		DelegateKeys:                 delegates,
+		Erc20ToDenoms:                erc20ToDenoms,
+		UnbatchedTransfers:           unbatchedTxs,
+		PendingIbcAutoForwards:       forwards,
+		PendingErc721IbcAutoForwards: erc721Forwards,
+		Erc721Attestations:           erc721Attestations,
 	}
 }

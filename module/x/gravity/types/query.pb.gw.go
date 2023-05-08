@@ -2446,7 +2446,7 @@ var (
 
 	pattern_Query_GetAttestations_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2}, []string{"gravity", "v1beta", "query_attestations"}, "", runtime.AssumeColonVerbOpt(true)))
 
-	pattern_Query_GetERC721Attestations_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2}, []string{"gravity", "v1beta", "query_attestations"}, "", runtime.AssumeColonVerbOpt(true)))
+	pattern_Query_GetERC721Attestations_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2}, []string{"gravity", "v1beta", "query_erc721_attestations"}, "", runtime.AssumeColonVerbOpt(true)))
 
 	pattern_Query_GetDelegateKeyByValidator_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2}, []string{"gravity", "v1beta", "query_delegate_keys_by_validator"}, "", runtime.AssumeColonVerbOpt(true)))
 
