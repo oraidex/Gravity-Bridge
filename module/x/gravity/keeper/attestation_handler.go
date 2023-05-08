@@ -244,8 +244,7 @@ func (a AttestationHandler) handleSendERC721ToCosmos(ctx sdk.Context, claim type
 		invalidAddress = true
 	}
 
-	// TODO Check if nft is Cosmos-originated asset and get denom (see handleSendToCosmos for more ideas)
-	// until then we can just get the denom directly
+	// TODO: Check if nft is Cosmos-originated asset and get denom (see handleSendToCosmos for more ideas), until then we can just get the denom directly
 	denom := types.GravityERC721Denom(*tokenAddress)
 	nftToken := nft.NFT{
 		ClassId: denom,
