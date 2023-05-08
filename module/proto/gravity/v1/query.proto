@@ -88,7 +88,7 @@ service Query {
     option (google.api.http).get = "/gravity/v1beta/query_attestations";
   }
   rpc GetERC721Attestations(QueryERC721AttestationsRequest) returns (QueryERC721AttestationsResponse) {
-    option (google.api.http).get = "/gravity/v1beta/query_attestations";
+    option (google.api.http).get = "/gravity/v1beta/query_erc721_attestations";
   }
   rpc GetDelegateKeyByValidator(QueryDelegateKeysByValidatorAddress)
       returns (QueryDelegateKeysByValidatorAddressResponse) {
