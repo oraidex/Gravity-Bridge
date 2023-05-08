@@ -216,7 +216,7 @@ func ExportGenesis(ctx sdk.Context, k Keeper) types.GenesisState {
 		erc20ToDenoms      = []types.ERC20ToDenom{}
 		unbatchedTransfers = k.GetUnbatchedTransactions(ctx)
 		// TODO: ERC721 pending forwards??
-		pendingForwards    = k.PendingIbcAutoForwards(ctx, 0, types.GravityContractNonce)
+		pendingForwards    = k.PendingIbcAutoForwards(ctx, 0)
 	)
 	var forwards []types.PendingIbcAutoForward
 	for _, forward := range pendingForwards {

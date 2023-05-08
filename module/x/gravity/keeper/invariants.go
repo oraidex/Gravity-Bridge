@@ -130,7 +130,7 @@ func sumUnbatchedTxModuleBalances(ctx sdk.Context, k Keeper, expectedBals map[st
 
 // TODO: ERC721 nonce source
 func sumPendingIbcAutoForwards(ctx sdk.Context, k Keeper, expectedBals map[string]*sdk.Int) map[string]*sdk.Int {
-	for _, forward := range k.PendingIbcAutoForwards(ctx, uint64(0), types.GravityContractNonce) {
+	for _, forward := range k.PendingIbcAutoForwards(ctx, uint64(0)) {
 		if _, ok := expectedBals[forward.Token.Denom]; !ok {
 			zero := sdk.ZeroInt()
 			expectedBals[forward.Token.Denom] = &zero
@@ -425,7 +425,7 @@ func ValidateStore(ctx sdk.Context, k Keeper) error {
 	})
 
 	// PendingIbcAutoForwards
-	k.IteratePendingIbcAutoForwards(ctx, types.GravityContractNonce, func(key []byte, forward *types.PendingIbcAutoForward) (stop bool) {
+	k.IteratePendingIbcAutoForwards(ctx, func(key []byte, forward *types.PendingIbcAutoForward) (stop bool) {
 		if err = forward.ValidateBasic(); err != nil {
 			err = fmt.Errorf("Discovered invalid PendingIbcAutoForward %v under key %v: %v", forward, key, err)
 			return true
@@ -576,7 +576,7 @@ func CheckValsets(ctx sdk.Context, k Keeper) error {
 // CheckPendingIbcAutoForwards checks each forward is appropriate and also that the transfer module holds enough of each token
 func CheckPendingIbcAutoForwards(ctx sdk.Context, k Keeper) error {
 	nativeHrp := sdk.GetConfig().GetBech32AccountAddrPrefix()
-	pendingForwards := k.PendingIbcAutoForwards(ctx, 0, types.GravityContractNonce)
+	pendingForwards := k.PendingIbcAutoForwards(ctx, 0)
 	for _, fwd := range pendingForwards {
 		// Check the foreign address
 		hrp, _, err := bech32.DecodeAndConvert(fwd.ForeignReceiver)

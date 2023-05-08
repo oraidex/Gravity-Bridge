@@ -17,6 +17,7 @@ fi
 cd cw-nfts
 git pull
 # Make sure you have cargo make installed: $ cargo install --force cargo-make
+cargo install cargo-make
 cargo make optimize
 cd ..
 

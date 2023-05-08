@@ -259,10 +259,6 @@ func (a AttestationHandler) handleSendERC721ToCosmos(ctx sdk.Context, claim type
 	}
 
 	if !invalidAddress { // address appears valid, attempt to send minted/locked coins to receiver
-		if err := a.keeper.nftKeeper.Transfer(ctx, denom, claim.TokenId, receiverAddress); err != nil {
-			// Well, fuck
-			return err
-		}
 		// Failure to send will result in NFT transfer to community pool
 		ibcForwardQueued, err := a.sendERC721ToCosmosAccount(ctx, claim, receiverAddress, nftToken)
 		_ = ibcForwardQueued

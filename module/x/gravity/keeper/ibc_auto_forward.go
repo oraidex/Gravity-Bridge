@@ -138,10 +138,25 @@ func (k Keeper) GetNextPendingERC721IbcAutoForward(ctx sdk.Context) *types.Pendi
 }
 
 // PendingIbcAutoForwards returns an ordered slice of the queued IBC Auto-Forward sends to IBC-enabled chains
-func (k Keeper) PendingIbcAutoForwards(ctx sdk.Context, limit uint64, nonceSource types.NonceSource) []*types.PendingIbcAutoForward {
+func (k Keeper) PendingIbcAutoForwards(ctx sdk.Context, limit uint64) []*types.PendingIbcAutoForward {
 	forwards := make([]*types.PendingIbcAutoForward, 0)
 
-	k.IteratePendingIbcAutoForwards(ctx, nonceSource, func(key []byte, forward *types.PendingIbcAutoForward) (stop bool) {
+	k.IteratePendingIbcAutoForwards(ctx, func(key []byte, forward *types.PendingIbcAutoForward) (stop bool) {
+		forwards = append(forwards, forward)
+		if limit != 0 && uint64(len(forwards)) >= limit {
+			return true
+		}
+		return false
+	})
+
+	return forwards
+}
+
+// PendingIbcAutoForwards returns an ordered slice of the queued IBC Auto-Forward sends to IBC-enabled chains
+func (k Keeper) PendingERC721IbcAutoForwards(ctx sdk.Context, limit uint64) []*types.PendingERC721IbcAutoForward {
+	forwards := make([]*types.PendingERC721IbcAutoForward, 0)
+
+	k.IteratePendingERC721IbcAutoForwards(ctx, func(key []byte, forward *types.PendingERC721IbcAutoForward) (stop bool) {
 		forwards = append(forwards, forward)
 		if limit != 0 && uint64(len(forwards)) >= limit {
 			return true
@@ -154,13 +169,30 @@ func (k Keeper) PendingIbcAutoForwards(ctx sdk.Context, limit uint64, nonceSourc
 
 // IteratePendingIbcAutoForwards executes the given callback on each PendingIbcAutoForward in the store
 // cb should return true to stop iteration, false to continue
-func (k Keeper) IteratePendingIbcAutoForwards(ctx sdk.Context, nonceSource types.NonceSource, cb func(key []byte, forward *types.PendingIbcAutoForward) (stop bool)) {
+func (k Keeper) IteratePendingIbcAutoForwards(ctx sdk.Context, cb func(key []byte, forward *types.PendingIbcAutoForward) (stop bool)) {
 	store := ctx.KVStore(k.storeKey)
-	prefixStore := prefix.NewStore(store, types.GetPendingIbcAutoForwardsPrefixKey(nonceSource))
+	prefixStore := prefix.NewStore(store, types.GetPendingIbcAutoForwardsPrefixKey(types.GravityContractNonce))
 	iter := prefixStore.Iterator(nil, nil)
 	defer iter.Close()
 	for ; iter.Valid(); iter.Next() {
 		forward := new(types.PendingIbcAutoForward)
+		k.cdc.MustUnmarshal(iter.Value(), forward)
+
+		if cb(iter.Key(), forward) {
+			break
+		}
+	}
+}
+
+// IteratePendingIbcAutoForwards executes the given callback on each PendingIbcAutoForward in the store
+// cb should return true to stop iteration, false to continue
+func (k Keeper) IteratePendingERC721IbcAutoForwards(ctx sdk.Context, cb func(key []byte, forward *types.PendingERC721IbcAutoForward) (stop bool)) {
+	store := ctx.KVStore(k.storeKey)
+	prefixStore := prefix.NewStore(store, types.GetPendingIbcAutoForwardsPrefixKey(types.ERC721ContractNonce))
+	iter := prefixStore.Iterator(nil, nil)
+	defer iter.Close()
+	for ; iter.Valid(); iter.Next() {
+		forward := new(types.PendingERC721IbcAutoForward)
 		k.cdc.MustUnmarshal(iter.Value(), forward)
 
 		if cb(iter.Key(), forward) {
