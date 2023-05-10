@@ -64,7 +64,7 @@ func TestBatches(t *testing.T) {
 
 	// when
 	ctx = ctx.WithBlockTime(now)
-	input.GravityKeeper.SetLastObservedEthereumBlockHeight(ctx, 1234567)
+	input.GravityKeeper.SetLastObservedEthereumBlockHeight(ctx, 1234567, types.GravityContractNonce)
 	// maxElements must be greater then 0, otherwise the batch would not be created
 	noBatch, err = input.GravityKeeper.BuildOutgoingTXBatch(ctx, *myTokenContractAddr, 0)
 	require.Nil(t, noBatch)
@@ -186,7 +186,7 @@ func TestBatches(t *testing.T) {
 	secondBatch, err := input.GravityKeeper.BuildOutgoingTXBatch(ctx, *myTokenContractAddr, 2)
 	require.NoError(t, err)
 
-	input.GravityKeeper.SetLastObservedEthereumBlockHeight(ctx, 1234567)
+	input.GravityKeeper.SetLastObservedEthereumBlockHeight(ctx, 1234567, types.GravityContractNonce)
 	// check that the more profitable batch has the right txs in it
 	// Should only have 5: and 6: above
 	expSecondBatch := types.OutgoingTxBatch{
@@ -434,7 +434,7 @@ func TestBatchesFullCoins(t *testing.T) {
 
 	// create the more profitable batch
 	ctx = ctx.WithBlockTime(now)
-	input.GravityKeeper.SetLastObservedEthereumBlockHeight(ctx, 1234567)
+	input.GravityKeeper.SetLastObservedEthereumBlockHeight(ctx, 1234567, types.GravityContractNonce)
 	// tx batch size is 2, so that some of them stay behind
 	secondBatch, err := input.GravityKeeper.BuildOutgoingTXBatch(ctx, *tokenContract, 2)
 	require.NoError(t, err)
@@ -562,7 +562,7 @@ func TestManyBatches(t *testing.T) {
 	// set senders balance
 	input.AccountKeeper.NewAccountWithAddress(ctx, mySender)
 	require.NoError(t, input.BankKeeper.SendCoinsFromModuleToAccount(ctx, types.ModuleName, mySender, allVouchers))
-	input.GravityKeeper.SetLastObservedEthereumBlockHeight(ctx, 1234567)
+	input.GravityKeeper.SetLastObservedEthereumBlockHeight(ctx, 1234567, types.GravityContractNonce)
 
 	// CREATE FIRST BATCH
 	// ==================

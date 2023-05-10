@@ -87,7 +87,8 @@ func (k Keeper) getBatchTimeoutHeight(ctx sdk.Context) uint64 {
 	currentCosmosHeight := ctx.BlockHeight()
 	// we store the last observed Cosmos and Ethereum heights, we do not concern ourselves if these values are zero because
 	// no batch can be produced if the last Ethereum block height is not first populated by a deposit event.
-	heights := k.GetLastObservedEthereumBlockHeight(ctx)
+	// TODO: WHEN ERC721 OUTGOING SUPPORT
+	heights := k.GetLastObservedEthereumBlockHeight(ctx, types.GravityContractNonce)
 	if heights.CosmosBlockHeight == 0 || heights.EthereumBlockHeight == 0 {
 		return 0
 	}

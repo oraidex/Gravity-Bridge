@@ -42,6 +42,7 @@ func GetQueryCmd() *cobra.Command {
 		CmdGetAttestations(),
 		CmdGetERC721Attestations(),
 		CmdGetLastObservedEthBlock(),
+		CmdGetLastObservedERC721EthBlock(),
 		CmdGetLastObservedEthNonce(),
 		GetCmdQueryParams(),
 	}...)
@@ -505,6 +506,42 @@ func CmdGetLastObservedEthBlock() *cobra.Command {
 	cmd.Flags().Bool(FlagUseV1Key, false, "if querying with --height less than 1282013 this flag must be provided to locate the Last Observed Ethereum Height")
 	return cmd
 }
+
+// CmdGetLastObservedERC721EthBlock fetches the Ethereum block height for the most recent "observed" Attestation, indicating
+// the state of Cosmos consensus on the submitted Ethereum events
+// nolint: dupl
+func CmdGetLastObservedERC721EthBlock() *cobra.Command {
+	short := "Query the last observed Ethereum block height"
+	long := short + "\n\n" +
+		"This value is expected to lag the actual Ethereum block height significantly due to 1. Ethereum Finality and 2. Consensus mirroring the state on Ethereum" + "\n" +
+		"Note that when querying with --height less than 1282013 '--use-v1-key' must be provided to locate the value"
+
+	// nolint: exhaustruct
+	cmd := &cobra.Command{
+		Use:   "last-observed-erc721-eth-block",
+		Short: short,
+		Long:  long,
+		Args:  cobra.NoArgs,
+		RunE: func(cmd *cobra.Command, args []string) error {
+			clientCtx, err := client.GetClientQueryContext(cmd)
+			if err != nil {
+				return err
+			}
+			queryClient := types.NewQueryClient(clientCtx)
+
+			res, err := queryClient.GetLastObservedERC721EthBlock(cmd.Context(), &types.QueryLastObservedERC721EthBlockRequest{})
+			if err != nil {
+				return err
+			}
+
+			return clientCtx.PrintProto(res)
+		},
+	}
+	flags.AddQueryFlagsToCmd(cmd)
+	cmd.Flags().Bool(FlagUseV1Key, false, "if querying with --height less than 1282013 this flag must be provided to locate the Last Observed Ethereum Height")
+	return cmd
+}
+
 
 // CmdGetLastObservedEthNonce fetches the Ethereum event nonce for the most recent "observed" Attestation, indicating
 // // the state of Cosmos consensus on the submitted Ethereum events
