@@ -14,3 +14,9 @@ Regenerate proto after updated proto files
 cd proto_build
 cargo run
 ```
+
+## Build release
+
+```bash
+cargo build -p gbt -r
+```
