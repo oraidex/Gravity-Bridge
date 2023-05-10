@@ -213,12 +213,39 @@ pub async fn send_logic_call_confirm(
         .await
 }
 
+pub async fn send_erc721_claims(
+    contact: &Contact,
+    our_cosmos_key: impl PrivateKey,
+    erc721_deposits: Vec<SendERC721ToCosmosEvent>,
+    fee: Coin,
+) -> Result<TxResponse, CosmosGrpcError> {
+    let our_cosmos_address = our_cosmos_key.to_address(&contact.get_prefix()).unwrap();
+
+    let mut erc721_deposit_nonces_msgs: Vec<(u64, Msg)> =
+        create_claim_msgs(erc721_deposits, our_cosmos_address);
+
+    erc721_deposit_nonces_msgs.sort_unstable_by(|a, b| a.0.cmp(&b.0));
+
+    const MAX_ORACLE_MESSAGES: usize = 1000;
+    while erc721_deposit_nonces_msgs.len() > MAX_ORACLE_MESSAGES {
+        // pops messages off of the end
+        erc721_deposit_nonces_msgs.pop();
+    }
+    let mut msgs = Vec::new();
+    for i in erc721_deposit_nonces_msgs {
+        msgs.push(i.1);
+    }
+    contact
+        .send_message(&msgs, None, &[fee], Some(TIMEOUT), our_cosmos_key)
+        .await
+}
+
 /// Creates and submits Ethereum event claims from the input EthereumEvent collections
 #[allow(clippy::too_many_arguments)]
 pub async fn send_ethereum_claims(
     contact: &Contact,
     our_cosmos_key: impl PrivateKey,
-    deposits: Vec<SendToCosmosEvent>,
+    erc20_deposits: Vec<SendToCosmosEvent>,
     withdraws: Vec<TransactionBatchExecutedEvent>,
     erc20_deploys: Vec<Erc20DeployedEvent>,
     logic_calls: Vec<LogicCallExecutedEvent>,
@@ -239,14 +266,15 @@ pub async fn send_ethereum_claims(
 
     // Create claim Msgs, keeping their event_nonces for insertion into unordered_msgs
 
-    let deposit_nonces_msgs: Vec<(u64, Msg)> = create_claim_msgs(deposits, our_cosmos_address);
+    let erc20_deposit_nonces_msgs: Vec<(u64, Msg)> =
+        create_claim_msgs(erc20_deposits, our_cosmos_address);
     let withdraw_nonces_msgs: Vec<(u64, Msg)> = create_claim_msgs(withdraws, our_cosmos_address);
     let deploy_nonces_msgs: Vec<(u64, Msg)> = create_claim_msgs(erc20_deploys, our_cosmos_address);
     let logic_nonces_msgs: Vec<(u64, Msg)> = create_claim_msgs(logic_calls, our_cosmos_address);
     let valset_nonces_msgs: Vec<(u64, Msg)> = create_claim_msgs(valsets, our_cosmos_address);
 
     // Collect all of the claims into an iterator, then add them to unordered_msgs
-    deposit_nonces_msgs
+    erc20_deposit_nonces_msgs
         .into_iter()
         .chain(withdraw_nonces_msgs.into_iter())
         .chain(deploy_nonces_msgs.into_iter())
@@ -265,7 +293,7 @@ pub async fn send_ethereum_claims(
     const MAX_ORACLE_MESSAGES: usize = 1000;
     let mut msgs = Vec::new();
     for i in keys {
-        // pushes messages with a later nonce onto the end
+        // apushes messages with a later nonce onto the end
         msgs.push(unordered_msgs.remove_entry(&i).unwrap().1);
     }
     // prevents the message buffer from getting too big if a lot of events

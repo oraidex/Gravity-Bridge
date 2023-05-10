@@ -29,6 +29,7 @@ pub async fn pause_bridge_test(
     keys: Vec<ValidatorKeys>,
     gravity_address: EthAddress,
     erc20_address: EthAddress,
+    gravityerc721_address: EthAddress,
 ) {
     let mut grpc_client = grpc_client.clone();
 
@@ -39,7 +40,14 @@ pub async fn pause_bridge_test(
     assert!(params.bridge_active);
 
     let no_relay_market_config = create_no_batch_requests_config();
-    start_orchestrators(keys.clone(), gravity_address, false, no_relay_market_config).await;
+    start_orchestrators(
+        keys.clone(),
+        gravity_address,
+        gravityerc721_address,
+        false,
+        no_relay_market_config,
+    )
+    .await;
 
     // generate an address for coin sending tests, this ensures test imdepotency
     let user_keys = get_user_key(None);

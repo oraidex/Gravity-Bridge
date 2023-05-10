@@ -223,7 +223,7 @@ pub async fn main() {
     // the address of the deployed Gravity contract
     let gravity_address = contracts.gravity_contract;
     // the address of the deployed GravityERC721 contract
-    let gravity_erc721_address = contracts.gravity_erc721_contract;
+    let gravityerc721_address = contracts.gravity_erc721_contract;
     // addresses of deployed ERC20 token contracts to be used for testing
     let erc20_addresses = contracts.erc20_addresses.clone();
     // addresses of deployed ERC721 token contracts to be used for testing
@@ -290,6 +290,7 @@ pub async fn main() {
                 &contact,
                 keys,
                 gravity_address,
+                gravityerc721_address,
                 erc20_addresses[0],
                 true,
             )
@@ -308,17 +309,34 @@ pub async fn main() {
                 grpc_client,
                 keys,
                 gravity_address,
+                gravityerc721_address,
                 erc20_addresses,
             )
             .await;
             return;
         } else if test_type == "VALSET_STRESS" {
             info!("Starting Valset update stress test");
-            validator_set_stress_test(&web30, grpc_client, &contact, keys, gravity_address).await;
+            validator_set_stress_test(
+                &web30,
+                grpc_client,
+                &contact,
+                keys,
+                gravity_address,
+                gravityerc721_address,
+            )
+            .await;
             return;
         } else if test_type == "VALSET_REWARDS" {
             info!("Starting Valset rewards test");
-            valset_rewards_test(&web30, grpc_client, &contact, keys, gravity_address).await;
+            valset_rewards_test(
+                &web30,
+                grpc_client,
+                &contact,
+                keys,
+                gravity_address,
+                gravityerc721_address,
+            )
+            .await;
             return;
         } else if test_type == "V2_HAPPY_PATH" || test_type == "HAPPY_PATH_V2" {
             info!("Starting happy path for Gravity v2");
@@ -328,6 +346,7 @@ pub async fn main() {
                 &contact,
                 keys,
                 gravity_address,
+                gravityerc721_address,
                 false,
                 None,
             )
@@ -335,7 +354,15 @@ pub async fn main() {
             return;
         } else if test_type == "RELAY_MARKET" {
             info!("Starting relay market tests!");
-            relay_market_test(&web30, grpc_client, &contact, keys, gravity_address).await;
+            relay_market_test(
+                &web30,
+                grpc_client,
+                &contact,
+                keys,
+                gravity_address,
+                gravityerc721_address,
+            )
+            .await;
             return;
         } else if test_type == "ORCHESTRATOR_KEYS" {
             info!("Starting orchestrator key update tests!");
@@ -353,6 +380,7 @@ pub async fn main() {
                 &web30,
                 keys,
                 gravity_address,
+                gravityerc721_address,
                 erc20_addresses[0],
             )
             .await;
@@ -364,6 +392,7 @@ pub async fn main() {
                 &contact,
                 keys,
                 gravity_address,
+                gravityerc721_address,
                 erc20_addresses[0],
                 grpc_client,
             )
@@ -377,6 +406,7 @@ pub async fn main() {
                 &contact,
                 keys,
                 gravity_address,
+                gravityerc721_address,
                 erc20_addresses[0],
             )
             .await;
@@ -389,6 +419,7 @@ pub async fn main() {
                 &contact,
                 keys,
                 gravity_address,
+                gravityerc721_address,
                 erc20_addresses[0],
             )
             .await;
@@ -407,15 +438,39 @@ pub async fn main() {
             return;
         } else if test_type == "SIGNATURE_SLASHING" {
             info!("Starting Signature Slashing test");
-            signature_slashing_test(&web30, grpc_client, &contact, keys, gravity_address).await;
+            signature_slashing_test(
+                &web30,
+                grpc_client,
+                &contact,
+                keys,
+                gravity_address,
+                gravityerc721_address,
+            )
+            .await;
             return;
         } else if test_type == "SLASHING_DELEGATION" {
             info!("Starting Slashing Delegation test");
-            slashing_delegation_test(&web30, grpc_client, &contact, keys, gravity_address).await;
+            slashing_delegation_test(
+                &web30,
+                grpc_client,
+                &contact,
+                keys,
+                gravity_address,
+                gravityerc721_address,
+            )
+            .await;
             return;
         } else if test_type == "IBC_METADATA" {
             info!("Starting IBC metadata proposal test");
-            ibc_metadata_proposal_test(gravity_address, keys, grpc_client, &contact, &web30).await;
+            ibc_metadata_proposal_test(
+                gravity_address,
+                gravityerc721_address,
+                keys,
+                grpc_client,
+                &contact,
+                &web30,
+            )
+            .await;
             return;
         } else if test_type == "ERC721_HAPPY_PATH" {
             info!("Starting ERC 721 transfer test");
@@ -424,7 +479,7 @@ pub async fn main() {
                 &contact,
                 keys,
                 gravity_address,
-                gravity_erc721_address,
+                gravityerc721_address,
                 erc721_addresses[0],
                 false,
             )
@@ -445,6 +500,7 @@ pub async fn main() {
                 keys,
                 ibc_keys,
                 gravity_address,
+                gravityerc721_address,
                 erc20_addresses,
             )
             .await;
@@ -464,6 +520,7 @@ pub async fn main() {
                 keys,
                 ibc_keys,
                 gravity_address,
+                gravityerc721_address,
                 erc20_addresses,
             )
             .await;
@@ -488,6 +545,7 @@ pub async fn main() {
                 keys,
                 ibc_keys,
                 gravity_address,
+                gravityerc721_address,
                 erc20_addresses[0],
             )
             .await;
@@ -501,6 +559,7 @@ pub async fn main() {
                 keys,
                 ibc_keys,
                 gravity_address,
+                gravityerc721_address,
                 erc20_addresses[0],
             )
             .await;
@@ -514,6 +573,7 @@ pub async fn main() {
                 grpc_client,
                 keys,
                 gravity_address,
+                gravityerc721_address,
                 erc20_addresses,
             )
             .await;
@@ -530,12 +590,13 @@ pub async fn main() {
                 grpc_client,
                 keys,
                 gravity_address,
+                gravityerc721_address,
                 erc20_addresses,
             )
             .await;
             return;
         } else if test_type == "RUN_ORCH_ONLY" {
-            orch_only_test(keys, gravity_address).await;
+            orch_only_test(keys, gravity_address, gravityerc721_address).await;
             sleep(Duration::from_secs(1_000_000_000)).await;
             return;
         } else if !test_type.is_empty() {
@@ -555,6 +616,7 @@ pub async fn main() {
         &contact,
         keys,
         gravity_address,
+        gravityerc721_address,
         erc20_addresses[0],
         false,
     )
