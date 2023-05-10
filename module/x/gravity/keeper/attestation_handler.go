@@ -245,7 +245,7 @@ func (a AttestationHandler) handleSendERC721ToCosmos(ctx sdk.Context, claim type
 	}
 
 	// TODO: Check if nft is Cosmos-originated asset and get denom (see handleSendToCosmos for more ideas), until then we can just get the denom directly
-	denom := types.GravityERC721Denom(*tokenAddress)
+	denom := types.GravityERC721ClassId(*tokenAddress)
 	nftToken := nft.NFT{
 		ClassId: denom,
 		Id:      claim.TokenId,
@@ -259,10 +259,6 @@ func (a AttestationHandler) handleSendERC721ToCosmos(ctx sdk.Context, claim type
 	}
 
 	if !invalidAddress { // address appears valid, attempt to send minted/locked coins to receiver
-		if err := a.keeper.nftKeeper.Transfer(ctx, denom, claim.TokenId, receiverAddress); err != nil {
-			// Well, fuck
-			return err
-		}
 		// Failure to send will result in NFT transfer to community pool
 		ibcForwardQueued, err := a.sendERC721ToCosmosAccount(ctx, claim, receiverAddress, nftToken)
 		_ = ibcForwardQueued
@@ -622,12 +618,17 @@ func (a AttestationHandler) sendERC721ToCosmosAccount(ctx sdk.Context, claim typ
 	if accountPrefix == nativePrefix { // Send to a native gravity account
 		return false, a.sendERC721ToLocalAddress(ctx, claim, receiver, nftToken)
 	} else { // Try to send tokens to IBC chain, fall back to native send on errors
-		panic("not implemented just yet! need to figure out if I can skip that pesky ibc-forwarding queue crap")
-		/*hrpIbcRecord, err := a.keeper.bech32IbcKeeper.GetHrpIbcRecord(ctx, accountPrefix)
+		// TODO: FINISH
+		// panic("not implemented just yet! need to figure out if I can skip that pesky ibc-forwarding queue crap")
+		// TODO: The hrp hack here is ugly as shit, but the hrp thing doesn't seem to allow more than one ibc channel per account prefix...
+		hrpPrefix := types.AccountPrefixForERC721Hrp(accountPrefix)
+		hrpIbcRecord, err := a.keeper.bech32IbcKeeper.GetHrpIbcRecord(ctx, hrpPrefix)
 		if err != nil {
 			hash, _ := claim.ClaimHash()
 			a.keeper.logger(ctx).Error("Unregistered foreign prefix",
-				"cause", err.Error(), "address", receiver,
+				"cause", err.Error(),
+				"address", receiver,
+				"hrp prefix", hrpPrefix,
 				"claim type", claim.GetType(),
 				"id", types.GetAttestationKey(claim.GetEventNonce(), hash, types.GravityContractNonce),
 				"nonce", fmt.Sprint(claim.GetEventNonce()),
@@ -635,10 +636,28 @@ func (a AttestationHandler) sendERC721ToCosmosAccount(ctx sdk.Context, claim typ
 
 			// Fall back to sending tokens to native account
 			return false, sdkerrors.Wrap(
-				a.sendERC721ToLocalAddress(ctx, claim, receiver, class),
+				a.sendERC721ToLocalAddress(ctx, claim, receiver, nftToken),
 				"Unregistered foreign prefix, send via x/nft",
 			)
-		}*/
+		}
+
+		// Add the SendERC721ToCosmos to the Pending IBC Auto-Forward Queue, which when processed will send the funds to a
+		// local address before sending via IBC
+		err = a.addERC721ToIbcAutoForwardQueue(ctx, receiver, accountPrefix, nftToken, hrpIbcRecord.SourceChannel, claim)
+
+		if err != nil {
+			a.keeper.logger(ctx).Error(
+				"SendERC721ToCosmos IBC auto forwarding failed, sending to local gravity account instead",
+				"cosmos-receiver", claim.CosmosReceiver, "class-id", nftToken.ClassId, "token-id", nftToken.Id,
+				"ethereum-contract", claim.TokenContract, "sender", claim.EthereumSender, "event-nonce", claim.EventNonce,
+			)
+			// Fall back to sending tokens to native account
+			return false, sdkerrors.Wrap(
+				a.sendERC721ToLocalAddress(ctx, claim, receiver, nftToken),
+				"Unregistered foreign prefix, send via x/nft",
+			)
+		}
+		return true, nil
 	}
 }
 
@@ -767,7 +786,6 @@ func (a AttestationHandler) sendERC721ToLocalAddress(
 		if err := ctx.EventManager().EmitTypedEvent(&types.EventSendERC721ToCosmosLocal{
 			Nonce:    fmt.Sprint(claim.EventNonce),
 			Receiver: receiver.String(),
-			Contract: claim.TokenContract,
 			ClassId:  nftToken.ClassId,
 			TokenId:  nftToken.Id,
 		}); err != nil {
@@ -806,4 +824,31 @@ func (a AttestationHandler) addToIbcAutoForwardQueue(
 
 	// forward will be validated when adding to queue, error only returned if unable to send funds to local user
 	return a.keeper.addPendingIbcAutoForward(ctx, forward, claim.TokenContract)
+}
+
+func (a AttestationHandler) addERC721ToIbcAutoForwardQueue(
+	ctx sdk.Context,
+	receiver sdk.AccAddress,
+	accountPrefix string,
+	nftToken nft.NFT,
+	channel string,
+	claim types.MsgSendERC721ToCosmosClaim,
+) error {
+	if strings.TrimSpace(accountPrefix) == "" {
+		panic("invalid call to addToIbcAutoForwardQueue: provided accountPrefix is empty!")
+	}
+	acctPrefix, err := types.GetPrefixFromBech32(claim.CosmosReceiver)
+	if err != nil || acctPrefix != accountPrefix {
+		panic(fmt.Sprintf("invalid call to addToIbcAutoForwardQueue: invalid or inaccurate accountPrefix %s for receiver %s!", accountPrefix, claim.CosmosReceiver))
+	}
+
+	forward := types.PendingERC721IbcAutoForward{
+		ForeignReceiver: claim.CosmosReceiver,
+		ClassId:         nftToken.ClassId,
+		TokenId:         nftToken.Id,
+		IbcChannel:      channel,
+		EventNonce:      claim.EventNonce,
+	}
+
+	return a.keeper.addPendingERC721PendingIbcAutoForward(ctx, forward)
 }

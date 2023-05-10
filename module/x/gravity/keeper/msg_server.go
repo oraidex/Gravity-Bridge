@@ -459,7 +459,11 @@ func (k msgServer) SendERC721ToCosmosClaim(c context.Context, msg *types.MsgSend
 func (k msgServer) ExecuteIbcAutoForwards(c context.Context, msg *types.MsgExecuteIbcAutoForwards) (*types.MsgExecuteIbcAutoForwardsResponse, error) {
 	ctx := sdk.UnwrapSDKContext(c)
 
-	if err := k.ProcessPendingIbcAutoForwards(ctx, msg.GetForwardsToClear()); err != nil {
+	if err := k.ProcessPendingIbcAutoForwards(ctx, msg.GetForwardsToClear(), types.GravityContractNonce); err != nil {
+		return nil, err
+	}
+
+	if err := k.ProcessPendingIbcAutoForwards(ctx, msg.GetForwardsToClear(), types.ERC721ContractNonce); err != nil {
 		return nil, err
 	}
 

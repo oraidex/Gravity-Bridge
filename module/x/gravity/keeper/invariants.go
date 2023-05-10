@@ -128,6 +128,7 @@ func sumUnbatchedTxModuleBalances(ctx sdk.Context, k Keeper, expectedBals map[st
 	return expectedBals
 }
 
+// TODO: ERC721 nonce source
 func sumPendingIbcAutoForwards(ctx sdk.Context, k Keeper, expectedBals map[string]*sdk.Int) map[string]*sdk.Int {
 	for _, forward := range k.PendingIbcAutoForwards(ctx, uint64(0)) {
 		if _, ok := expectedBals[forward.Token.Denom]; !ok {

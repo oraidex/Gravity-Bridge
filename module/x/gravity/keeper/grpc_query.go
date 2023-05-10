@@ -445,7 +445,6 @@ func (k Keeper) GetAttestations(
 	filter := req.Height > 0 || req.Nonce > 0 || req.ClaimType != ""
 
 
-	// TODO: ADD NONCE TYPE TO QUERY
 	iterator(ctx, types.GravityContractNonce, reverse, func(_ []byte, att types.Attestation) (abort bool) {
 		claim, err := k.UnpackAttestationClaim(&att)
 		if err != nil {
@@ -488,6 +487,68 @@ func (k Keeper) GetAttestations(
 	}
 
 	return &types.QueryAttestationsResponse{Attestations: attestations}, nil
+}
+
+func (k Keeper) GetERC721Attestations(c context.Context, req *types.QueryERC721AttestationsRequest) (*types.QueryERC721AttestationsResponse, error) {
+	ctx := sdk.UnwrapSDKContext(c)
+
+	limit := req.Limit
+	if limit == 0 || limit > QUERY_ATTESTATIONS_LIMIT {
+		limit = QUERY_ATTESTATIONS_LIMIT
+	}
+
+	var (
+		attestations []types.Attestation
+		count        uint64
+		iterErr      error
+	)
+
+	reverse := strings.EqualFold(req.OrderBy, "desc")
+	filter := req.Height > 0 || req.Nonce > 0 || req.ClaimType != ""
+
+
+	k.IterateAttestations(ctx, types.ERC721ContractNonce, reverse, func(_ []byte, att types.Attestation) (abort bool) {
+		claim, err := k.UnpackAttestationClaim(&att)
+		if err != nil {
+			iterErr = sdkerrors.Wrap(sdkerrors.ErrUnpackAny, "failed to unmarshal Ethereum claim")
+			return true
+		}
+
+		var match bool
+		switch {
+		case filter && claim.GetEthBlockHeight() == req.Height:
+			attestations = append(attestations, att)
+			match = true
+
+		case filter && claim.GetEventNonce() == req.Nonce:
+			attestations = append(attestations, att)
+			match = true
+
+		case filter && claim.GetType().String() == req.ClaimType:
+			attestations = append(attestations, att)
+			match = true
+
+		case !filter:
+			// No filter provided, so we include the attestation. This is equivalent
+			// to providing no query params or just limit and/or order_by.
+			attestations = append(attestations, att)
+			match = true
+		}
+
+		if match {
+			count++
+			if count >= limit {
+				return true
+			}
+		}
+
+		return false
+	})
+	if iterErr != nil {
+		return nil, iterErr
+	}
+
+	return &types.QueryERC721AttestationsResponse{Attestations: attestations}, nil
 }
 
 // This is the pre-Mercury Attestation iterator, which used an old prefix
@@ -625,4 +686,10 @@ func (k Keeper) GetPendingIbcAutoForwards(
 	ctx := sdk.UnwrapSDKContext(c)
 	pendingForwards := k.PendingIbcAutoForwards(ctx, req.Limit)
 	return &types.QueryPendingIbcAutoForwardsResponse{PendingIbcAutoForwards: pendingForwards}, nil
+}
+
+func (k Keeper) GetPendingERC721IbcAutoForwards(c context.Context, req *types.QueryPendingERC721IbcAutoForwardsRequest) (*types.QueryPendingERC721IbcAutoForwardsResponse, error) {
+	ctx := sdk.UnwrapSDKContext(c)
+	pendingForwards := k.PendingERC721IbcAutoForwards(ctx, req.Limit)
+	return &types.QueryPendingERC721IbcAutoForwardsResponse{PendingErc721IbcAutoForwards: pendingForwards}, nil
 }

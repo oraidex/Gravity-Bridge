@@ -179,8 +179,8 @@ func GravityDenom(tokenContract EthAddress) string {
 	return fmt.Sprintf("%s%s%s", GravityDenomPrefix, GravityDenomSeparator, tokenContract.GetAddress().Hex())
 }
 
-// GravityERC721Denom converts an EthAddress to a gravity cosmos denom for ERC721 tokens
-func GravityERC721Denom(tokenContract EthAddress) string {
+// GravityERC721ClassId converts an EthAddress to a gravity cosmos class id for ERC721 tokens
+func GravityERC721ClassId(tokenContract EthAddress) string {
 	return fmt.Sprintf("%s%s%s", GravityERC721DenomPrefix, GravityDenomSeparator, tokenContract.GetAddress().Hex())
 }
 

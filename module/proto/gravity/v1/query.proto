@@ -87,6 +87,9 @@ service Query {
   rpc GetAttestations(QueryAttestationsRequest) returns (QueryAttestationsResponse) {
     option (google.api.http).get = "/gravity/v1beta/query_attestations";
   }
+  rpc GetERC721Attestations(QueryERC721AttestationsRequest) returns (QueryERC721AttestationsResponse) {
+    option (google.api.http).get = "/gravity/v1beta/query_erc721_attestations";
+  }
   rpc GetDelegateKeyByValidator(QueryDelegateKeysByValidatorAddress)
       returns (QueryDelegateKeysByValidatorAddressResponse) {
     option (google.api.http).get = "/gravity/v1beta/query_delegate_keys_by_validator";
@@ -103,6 +106,9 @@ service Query {
     option (google.api.http).get = "/gravity/v1beta/query_pending_send_to_eth";
   }
   rpc GetPendingIbcAutoForwards(QueryPendingIbcAutoForwards) returns (QueryPendingIbcAutoForwardsResponse) {
+    option (google.api.http).get = "/gravity/v1beta/query_pending_ibc_auto_forwards";
+  }
+  rpc GetPendingERC721IbcAutoForwards(QueryPendingERC721IbcAutoForwardsRequest) returns (QueryPendingERC721IbcAutoForwardsResponse) {
     option (google.api.http).get = "/gravity/v1beta/query_pending_ibc_auto_forwards";
   }
 }
@@ -289,8 +295,25 @@ message QueryAttestationsRequest {
   // Note that queries before the Mercury upgrade at height 1282013 must set this to true
   bool use_v1_key = 6;
 }
-
 message QueryAttestationsResponse {
+  repeated Attestation attestations = 1 [(gogoproto.nullable) = false];
+}
+
+message QueryERC721AttestationsRequest {
+  // limit defines how many attestations to limit in the response.
+  uint64 limit = 1;
+  // order_by provides ordering of atteststions by nonce in the response. Either
+  // 'asc' or 'desc' can be provided. If no value is provided, it defaults to
+  // 'asc'.
+  string order_by = 2;
+  // claim_type allows filtering attestations by Ethereum claim type.
+  string claim_type = 3;
+  // nonce allows filtering attestations by Ethereum claim nonce.
+  uint64 nonce = 4;
+  // height allows filtering attestations by Ethereum claim height.
+  uint64 height = 5;
+}
+message QueryERC721AttestationsResponse {
   repeated Attestation attestations = 1 [(gogoproto.nullable) = false];
 }
 
@@ -330,7 +353,14 @@ message QueryPendingIbcAutoForwards{
   // limit defines the number of pending forwards to return, in order of their SendToCosmos.EventNonce
   uint64 limit = 1;
 }
-
 message QueryPendingIbcAutoForwardsResponse{
   repeated PendingIbcAutoForward pending_ibc_auto_forwards = 1;
+}
+
+message QueryPendingERC721IbcAutoForwardsRequest{
+  // limit defines the number of pending forwards to return, in order of their SendToCosmos.EventNonce
+  uint64 limit = 1;
+}
+message QueryPendingERC721IbcAutoForwardsResponse{
+  repeated PendingERC721IbcAutoForward pending_erc721_ibc_auto_forwards = 1;
 }

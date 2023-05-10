@@ -18,3 +18,4 @@ artifacts
 
 #build artifacts
 /module/artifacts
+solidity/contract-deployer
