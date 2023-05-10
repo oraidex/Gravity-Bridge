@@ -8,5 +8,8 @@
     "solidity.packageDefaultDependenciesDirectory": "solidity/node_modules",
     "files.associations": {
         "validator-eth-keys": "cpp"
+    },
+    "rust-analyzer.cargo.extraEnv": {
+        "CARGO_TARGET_DIR": "${userHome}/.cargo/target/analyzer"
     }
 }
