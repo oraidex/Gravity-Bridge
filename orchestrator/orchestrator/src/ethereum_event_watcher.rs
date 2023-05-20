@@ -49,7 +49,7 @@ pub async fn check_for_events(
 ) -> Result<CheckedNonces, GravityError> {
     let our_cosmos_address = our_private_key.to_address(&contact.get_prefix()).unwrap();
     let latest_block = get_latest_safe_block(web3).await;
-    trace!(
+    info!(
         "Checking for events starting {} safe {}",
         starting_block,
         latest_block
@@ -74,11 +74,11 @@ pub async fn check_for_events(
                 vec![SENT_ERC721_TO_COSMOS_EVENT_SIG],
             )
             .await;
-        trace!("ERC721 deposits {:?}", erc721_deposits);
+        info!("ERC721 deposits {:?}", erc721_deposits);
 
         if let (Ok(erc721_deposits),) = (erc721_deposits,) {
             let erc721_deposits = SendERC721ToCosmosEvent::from_logs(&erc721_deposits)?;
-            trace!("parsed erc721 deposits {:?}", erc721_deposits);
+            info!("parsed erc721 deposits {:?}", erc721_deposits);
 
             // note that starting block overlaps with our last checked block, because we have to deal with
             // the possibility that the relayer was killed after relaying only one of multiple events in a single
@@ -162,7 +162,7 @@ pub async fn check_for_events(
                 vec![SENT_TO_COSMOS_EVENT_SIG],
             )
             .await;
-        trace!("ERC20 deposits {:?}", erc20_deposits);
+        info!("ERC20 deposits {:?}", erc20_deposits);
 
         let batches = web3
             .check_for_events(
@@ -172,7 +172,7 @@ pub async fn check_for_events(
                 vec![TRANSACTION_BATCH_EXECUTED_EVENT_SIG],
             )
             .await;
-        trace!("Batches {:?}", batches);
+        info!("Batches {:?}", batches);
 
         let valsets = web3
             .check_for_events(
@@ -182,7 +182,7 @@ pub async fn check_for_events(
                 vec![VALSET_UPDATED_EVENT_SIG],
             )
             .await;
-        trace!("Valsets {:?}", valsets);
+        info!("Valsets {:?}", valsets);
 
         let erc20_deployed = web3
             .check_for_events(
@@ -192,7 +192,7 @@ pub async fn check_for_events(
                 vec![ERC20_DEPLOYED_EVENT_SIG],
             )
             .await;
-        trace!("ERC20 Deployments {:?}", erc20_deployed);
+        info!("ERC20 Deployments {:?}", erc20_deployed);
 
         let logic_call_executed = web3
             .check_for_events(
@@ -202,7 +202,7 @@ pub async fn check_for_events(
                 vec![LOGIC_CALL_EVENT_SIG],
             )
             .await;
-        trace!("Logic call executions {:?}", logic_call_executed);
+        info!("Logic call executions {:?}", logic_call_executed);
 
         if let (Ok(valsets), Ok(batches), Ok(erc20_deposits), Ok(deploys), Ok(logic_calls)) = (
             valsets,
@@ -212,15 +212,15 @@ pub async fn check_for_events(
             logic_call_executed,
         ) {
             let valsets = ValsetUpdatedEvent::from_logs(&valsets)?;
-            trace!("parsed valsets {:?}", valsets);
+            info!("parsed valsets {:?}", valsets);
             let withdraws = TransactionBatchExecutedEvent::from_logs(&batches)?;
-            trace!("parsed batches {:?}", batches);
+            info!("parsed batches {:?}", batches);
             let erc20_deposits = SendToCosmosEvent::from_logs(&erc20_deposits)?;
-            trace!("parsed erc20 deposits {:?}", erc20_deposits);
+            info!("parsed erc20 deposits {:?}", erc20_deposits);
             let erc20_deploys = Erc20DeployedEvent::from_logs(&deploys)?;
-            trace!("parsed erc20 deploys {:?}", erc20_deploys);
+            info!("parsed erc20 deploys {:?}", erc20_deploys);
             let logic_calls = LogicCallExecutedEvent::from_logs(&logic_calls)?;
-            trace!("logic call executions {:?}", logic_calls);
+            info!("logic call executions {:?}", logic_calls);
 
             // note that starting block overlaps with our last checked block, because we have to deal with
             // the possibility that the relayer was killed after relaying only one of multiple events in a single
@@ -409,7 +409,8 @@ pub async fn get_latest_safe_block(web3: &Web3) -> Uint256 {
         // Rinkeby and Goerli use Clique (POA) Consensus, finality takes
         // up to num validators blocks. Number is higher than Ethereum based
         // on experience with operational issues
-        4 | 5 => block_number - 10u8.into(),
+        // 67 is used by Sepolia
+        4 | 5 | 67 => block_number - 10u8.into(),
         // assume the safe option where we don't know
         _ => block_number - 96u8.into(),
     }
