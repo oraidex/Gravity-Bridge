@@ -398,9 +398,6 @@ pub async fn check_for_events(
 pub async fn get_latest_safe_block(web3: &Web3) -> Uint256 {
     let net_version = get_net_version_with_retry(web3).await;
     let block_number = get_block_number_with_retry(web3).await;
-    info!(
-        "Latest block number {} on chain id {}",
-        block_number, net_version);
 
     match net_version {
         // Mainline Ethereum, Ethereum classic, or the Ropsten, Kotti, Mordor testnets
