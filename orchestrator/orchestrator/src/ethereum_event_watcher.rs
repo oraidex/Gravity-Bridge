@@ -409,7 +409,8 @@ pub async fn get_latest_safe_block(web3: &Web3) -> Uint256 {
         // Rinkeby and Goerli use Clique (POA) Consensus, finality takes
         // up to num validators blocks. Number is higher than Ethereum based
         // on experience with operational issues
-        4 | 5 => block_number - 10u8.into(),
+        // 67 is used by Sepolia
+        4 | 5 | 67 => block_number - 10u8.into(),
         // assume the safe option where we don't know
         _ => block_number - 96u8.into(),
     }

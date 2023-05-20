@@ -38,7 +38,6 @@ contract GravityERC721 is ERC721Holder, ReentrancyGuard {
 		uint256 _tokenId
 	) external nonReentrant {
 		ERC721(_tokenContract).safeTransferFrom(msg.sender, address(this), _tokenId);
-		state_lastERC721EventNonce = state_lastERC721EventNonce + 1;
 
 		emit SendERC721ToCosmosEvent(
 			_tokenContract,
@@ -48,6 +47,7 @@ contract GravityERC721 is ERC721Holder, ReentrancyGuard {
 			state_lastERC721EventNonce,
 			ERC721(_tokenContract).tokenURI(_tokenId)
 		);
+		state_lastERC721EventNonce = state_lastERC721EventNonce + 1;
 	}
 
 	function withdrawERC721 (
