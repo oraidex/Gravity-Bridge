@@ -398,6 +398,9 @@ pub async fn check_for_events(
 pub async fn get_latest_safe_block(web3: &Web3) -> Uint256 {
     let net_version = get_net_version_with_retry(web3).await;
     let block_number = get_block_number_with_retry(web3).await;
+    info!(
+        "Latest block number {} on chain id {}",
+        block_number, net_version);
 
     match net_version {
         // Mainline Ethereum, Ethereum classic, or the Ropsten, Kotti, Mordor testnets
@@ -409,8 +412,8 @@ pub async fn get_latest_safe_block(web3: &Web3) -> Uint256 {
         // Rinkeby and Goerli use Clique (POA) Consensus, finality takes
         // up to num validators blocks. Number is higher than Ethereum based
         // on experience with operational issues
-        // 67 is used by Sepolia
-        4 | 5 | 67 => block_number - 10u8.into(),
+        // 11155111 is used by Sepolia
+        4 | 5 | 11155111 => block_number - 10u8.into(),
         // assume the safe option where we don't know
         _ => block_number - 96u8.into(),
     }
