@@ -61,6 +61,19 @@ pub struct EventInvalidSendToCosmosReceiver {
     pub sender: ::prost::alloc::string::String,
 }
 #[derive(Clone, PartialEq, ::prost::Message)]
+pub struct EventInvalidSendErc721ToCosmosReceiver {
+    #[prost(string, tag="1")]
+    pub contract: ::prost::alloc::string::String,
+    #[prost(string, tag="2")]
+    pub class_id: ::prost::alloc::string::String,
+    #[prost(string, tag="3")]
+    pub token_id: ::prost::alloc::string::String,
+    #[prost(string, tag="4")]
+    pub nonce: ::prost::alloc::string::String,
+    #[prost(string, tag="5")]
+    pub sender: ::prost::alloc::string::String,
+}
+#[derive(Clone, PartialEq, ::prost::Message)]
 pub struct EventSendToCosmos {
     #[prost(string, tag="1")]
     pub amount: ::prost::alloc::string::String,
@@ -73,10 +86,11 @@ pub struct EventSendToCosmos {
 pub struct EventSendErc721ToCosmos {
     #[prost(string, tag="1")]
     pub contract: ::prost::alloc::string::String,
-    #[prost(string, tag="2")]
-    pub token_id: ::prost::alloc::string::String,
-    /// string tokenUri = 4; ?
     #[prost(string, tag="3")]
+    pub class_id: ::prost::alloc::string::String,
+    #[prost(string, tag="4")]
+    pub token_id: ::prost::alloc::string::String,
+    #[prost(string, tag="5")]
     pub nonce: ::prost::alloc::string::String,
 }
 #[derive(Clone, PartialEq, ::prost::Message)]
@@ -89,6 +103,17 @@ pub struct EventSendToCosmosLocal {
     pub token: ::prost::alloc::string::String,
     #[prost(string, tag="4")]
     pub amount: ::prost::alloc::string::String,
+}
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct EventSendErc721ToCosmosLocal {
+    #[prost(string, tag="1")]
+    pub nonce: ::prost::alloc::string::String,
+    #[prost(string, tag="2")]
+    pub receiver: ::prost::alloc::string::String,
+    #[prost(string, tag="3")]
+    pub class_id: ::prost::alloc::string::String,
+    #[prost(string, tag="4")]
+    pub token_id: ::prost::alloc::string::String,
 }
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct EventSendToCosmosPendingIbcAutoForward {
@@ -104,6 +129,19 @@ pub struct EventSendToCosmosPendingIbcAutoForward {
     pub channel: ::prost::alloc::string::String,
 }
 #[derive(Clone, PartialEq, ::prost::Message)]
+pub struct EventSendErc721ToCosmosPendingIbcAutoForward {
+    #[prost(string, tag="1")]
+    pub nonce: ::prost::alloc::string::String,
+    #[prost(string, tag="2")]
+    pub receiver: ::prost::alloc::string::String,
+    #[prost(string, tag="3")]
+    pub class_id: ::prost::alloc::string::String,
+    #[prost(string, tag="4")]
+    pub token_id: ::prost::alloc::string::String,
+    #[prost(string, tag="5")]
+    pub channel: ::prost::alloc::string::String,
+}
+#[derive(Clone, PartialEq, ::prost::Message)]
 pub struct EventSendToCosmosExecutedIbcAutoForward {
     #[prost(string, tag="1")]
     pub nonce: ::prost::alloc::string::String,
@@ -113,6 +151,23 @@ pub struct EventSendToCosmosExecutedIbcAutoForward {
     pub token: ::prost::alloc::string::String,
     #[prost(string, tag="4")]
     pub amount: ::prost::alloc::string::String,
+    #[prost(string, tag="5")]
+    pub channel: ::prost::alloc::string::String,
+    #[prost(string, tag="6")]
+    pub timeout_time: ::prost::alloc::string::String,
+    #[prost(string, tag="7")]
+    pub timeout_height: ::prost::alloc::string::String,
+}
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct EventSendErc721ToCosmosExecutedIbcAutoForward {
+    #[prost(string, tag="1")]
+    pub nonce: ::prost::alloc::string::String,
+    #[prost(string, tag="2")]
+    pub receiver: ::prost::alloc::string::String,
+    #[prost(string, tag="3")]
+    pub class_id: ::prost::alloc::string::String,
+    #[prost(string, tag="4")]
+    pub token_id: ::prost::alloc::string::String,
     #[prost(string, tag="5")]
     pub channel: ::prost::alloc::string::String,
     #[prost(string, tag="6")]
@@ -362,6 +417,24 @@ pub struct PendingIbcAutoForward {
     #[prost(uint64, tag="4")]
     pub event_nonce: u64,
 }
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct PendingErc721IbcAutoForward {
+    /// the destination address. sdk.AccAddress does not preserve foreign prefixes
+    #[prost(string, tag="1")]
+    pub foreign_receiver: ::prost::alloc::string::String,
+    /// the x/nft class id for the NFT token
+    #[prost(string, tag="2")]
+    pub class_id: ::prost::alloc::string::String,
+    /// the token id of the ERC721 token
+    #[prost(string, tag="3")]
+    pub token_id: ::prost::alloc::string::String,
+    /// the IBC channel to send the NFT over via nft-transfer module
+    #[prost(string, tag="4")]
+    pub ibc_channel: ::prost::alloc::string::String,
+    /// the EventNonce from the MsgSendERC721ToCosmosClaim, used for ordering the queue
+    #[prost(uint64, tag="5")]
+    pub event_nonce: u64,
+}
 /// MsgSetOrchestratorAddress
 /// this message allows validators to delegate their voting responsibilities
 /// to a given key. This key is then used as an optional authentication method
@@ -540,7 +613,7 @@ pub struct MsgSendToCosmosClaim {
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct MsgSendToCosmosClaimResponse {
 }
-/// MsgSendErc721ToCosmosClaim
+/// MsgSendERC721ToCosmosClaim
 /// When more than 66% of the active validator set has
 /// claimed to have seen the ERC621 deposit enter the ethereum blockchain NFT is minted and
 /// issued to the Cosmos address in question
@@ -1343,6 +1416,10 @@ pub struct GenesisState {
     pub unbatched_transfers: ::prost::alloc::vec::Vec<OutgoingTransferTx>,
     #[prost(message, repeated, tag="13")]
     pub pending_ibc_auto_forwards: ::prost::alloc::vec::Vec<PendingIbcAutoForward>,
+    #[prost(message, repeated, tag="14")]
+    pub pending_erc721_ibc_auto_forwards: ::prost::alloc::vec::Vec<PendingErc721IbcAutoForward>,
+    #[prost(message, repeated, tag="15")]
+    pub erc721_attestations: ::prost::alloc::vec::Vec<Attestation>,
 }
 /// GravityCounters contains the many noces and counters required to maintain the bridge state in the genesis
 #[derive(Clone, PartialEq, ::prost::Message)]
@@ -1533,6 +1610,16 @@ pub struct QueryLastEventNonceByAddrResponse {
     pub event_nonce: u64,
 }
 #[derive(Clone, PartialEq, ::prost::Message)]
+pub struct QueryLastErc721EventNonceByAddrRequest {
+    #[prost(string, tag="1")]
+    pub address: ::prost::alloc::string::String,
+}
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct QueryLastErc721EventNonceByAddrResponse {
+    #[prost(uint64, tag="1")]
+    pub event_nonce: u64,
+}
+#[derive(Clone, PartialEq, ::prost::Message)]
 pub struct QueryErc20ToDenomRequest {
     #[prost(string, tag="1")]
     pub erc20: ::prost::alloc::string::String,
@@ -1592,6 +1679,16 @@ pub struct QueryLastObservedEthNonceResponse {
     #[prost(uint64, tag="1")]
     pub nonce: u64,
 }
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct QueryLastObservedErc721EthNonceRequest {
+}
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct QueryLastObservedErc721EthNonceResponse {
+    /// a response of 0 indicates that no Ethereum events have been observed, and thus
+    /// the bridge is inactive
+    #[prost(uint64, tag="1")]
+    pub nonce: u64,
+}
 /// QueryAttestationsRequest defines the request structure for getting recent
 /// attestations with optional query parameters. By default, a limited set of
 /// recent attestations will be returned, defined by 'limit'. These attestations
@@ -1625,6 +1722,31 @@ pub struct QueryAttestationsRequest {
 }
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct QueryAttestationsResponse {
+    #[prost(message, repeated, tag="1")]
+    pub attestations: ::prost::alloc::vec::Vec<Attestation>,
+}
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct QueryErc721AttestationsRequest {
+    /// limit defines how many attestations to limit in the response.
+    #[prost(uint64, tag="1")]
+    pub limit: u64,
+    /// order_by provides ordering of atteststions by nonce in the response. Either
+    /// 'asc' or 'desc' can be provided. If no value is provided, it defaults to
+    /// 'asc'.
+    #[prost(string, tag="2")]
+    pub order_by: ::prost::alloc::string::String,
+    /// claim_type allows filtering attestations by Ethereum claim type.
+    #[prost(string, tag="3")]
+    pub claim_type: ::prost::alloc::string::String,
+    /// nonce allows filtering attestations by Ethereum claim nonce.
+    #[prost(uint64, tag="4")]
+    pub nonce: u64,
+    /// height allows filtering attestations by Ethereum claim height.
+    #[prost(uint64, tag="5")]
+    pub height: u64,
+}
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct QueryErc721AttestationsResponse {
     #[prost(message, repeated, tag="1")]
     pub attestations: ::prost::alloc::vec::Vec<Attestation>,
 }
@@ -1686,6 +1808,17 @@ pub struct QueryPendingIbcAutoForwards {
 pub struct QueryPendingIbcAutoForwardsResponse {
     #[prost(message, repeated, tag="1")]
     pub pending_ibc_auto_forwards: ::prost::alloc::vec::Vec<PendingIbcAutoForward>,
+}
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct QueryPendingErc721IbcAutoForwardsRequest {
+    /// limit defines the number of pending forwards to return, in order of their SendToCosmos.EventNonce
+    #[prost(uint64, tag="1")]
+    pub limit: u64,
+}
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct QueryPendingErc721IbcAutoForwardsResponse {
+    #[prost(message, repeated, tag="1")]
+    pub pending_erc721_ibc_auto_forwards: ::prost::alloc::vec::Vec<PendingErc721IbcAutoForward>,
 }
 /// Generated client implementations.
 pub mod query_client {
@@ -1965,6 +2098,30 @@ pub mod query_client {
             );
             self.inner.unary(request.into_request(), path, codec).await
         }
+        pub async fn last_erc721_event_nonce_by_addr(
+            &mut self,
+            request: impl tonic::IntoRequest<
+                super::QueryLastErc721EventNonceByAddrRequest,
+            >,
+        ) -> Result<
+            tonic::Response<super::QueryLastErc721EventNonceByAddrResponse>,
+            tonic::Status,
+        > {
+            self.inner
+                .ready()
+                .await
+                .map_err(|e| {
+                    tonic::Status::new(
+                        tonic::Code::Unknown,
+                        format!("Service was not ready: {}", e.into()),
+                    )
+                })?;
+            let codec = tonic::codec::ProstCodec::default();
+            let path = http::uri::PathAndQuery::from_static(
+                "/gravity.v1.Query/LastERC721EventNonceByAddr",
+            );
+            self.inner.unary(request.into_request(), path, codec).await
+        }
         pub async fn batch_fees(
             &mut self,
             request: impl tonic::IntoRequest<super::QueryBatchFeeRequest>,
@@ -2170,6 +2327,30 @@ pub mod query_client {
             );
             self.inner.unary(request.into_request(), path, codec).await
         }
+        pub async fn get_last_observed_erc721_eth_nonce(
+            &mut self,
+            request: impl tonic::IntoRequest<
+                super::QueryLastObservedErc721EthNonceRequest,
+            >,
+        ) -> Result<
+            tonic::Response<super::QueryLastObservedErc721EthNonceResponse>,
+            tonic::Status,
+        > {
+            self.inner
+                .ready()
+                .await
+                .map_err(|e| {
+                    tonic::Status::new(
+                        tonic::Code::Unknown,
+                        format!("Service was not ready: {}", e.into()),
+                    )
+                })?;
+            let codec = tonic::codec::ProstCodec::default();
+            let path = http::uri::PathAndQuery::from_static(
+                "/gravity.v1.Query/GetLastObservedERC721EthNonce",
+            );
+            self.inner.unary(request.into_request(), path, codec).await
+        }
         pub async fn get_attestations(
             &mut self,
             request: impl tonic::IntoRequest<super::QueryAttestationsRequest>,
@@ -2186,6 +2367,28 @@ pub mod query_client {
             let codec = tonic::codec::ProstCodec::default();
             let path = http::uri::PathAndQuery::from_static(
                 "/gravity.v1.Query/GetAttestations",
+            );
+            self.inner.unary(request.into_request(), path, codec).await
+        }
+        pub async fn get_erc721_attestations(
+            &mut self,
+            request: impl tonic::IntoRequest<super::QueryErc721AttestationsRequest>,
+        ) -> Result<
+            tonic::Response<super::QueryErc721AttestationsResponse>,
+            tonic::Status,
+        > {
+            self.inner
+                .ready()
+                .await
+                .map_err(|e| {
+                    tonic::Status::new(
+                        tonic::Code::Unknown,
+                        format!("Service was not ready: {}", e.into()),
+                    )
+                })?;
+            let codec = tonic::codec::ProstCodec::default();
+            let path = http::uri::PathAndQuery::from_static(
+                "/gravity.v1.Query/GetERC721Attestations",
             );
             self.inner.unary(request.into_request(), path, codec).await
         }
@@ -2298,6 +2501,30 @@ pub mod query_client {
             let codec = tonic::codec::ProstCodec::default();
             let path = http::uri::PathAndQuery::from_static(
                 "/gravity.v1.Query/GetPendingIbcAutoForwards",
+            );
+            self.inner.unary(request.into_request(), path, codec).await
+        }
+        pub async fn get_pending_erc721_ibc_auto_forwards(
+            &mut self,
+            request: impl tonic::IntoRequest<
+                super::QueryPendingErc721IbcAutoForwardsRequest,
+            >,
+        ) -> Result<
+            tonic::Response<super::QueryPendingErc721IbcAutoForwardsResponse>,
+            tonic::Status,
+        > {
+            self.inner
+                .ready()
+                .await
+                .map_err(|e| {
+                    tonic::Status::new(
+                        tonic::Code::Unknown,
+                        format!("Service was not ready: {}", e.into()),
+                    )
+                })?;
+            let codec = tonic::codec::ProstCodec::default();
+            let path = http::uri::PathAndQuery::from_static(
+                "/gravity.v1.Query/GetPendingERC721IbcAutoForwards",
             );
             self.inner.unary(request.into_request(), path, codec).await
         }
