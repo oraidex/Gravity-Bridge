@@ -4,6 +4,7 @@ use clarity::Address as EthAddress;
 use deep_space::address::Address;
 use deep_space::error::CosmosGrpcError;
 use deep_space::Contact;
+use gravity_proto::gravity::QueryLastErc721EventNonceByAddrRequest;
 use gravity_proto::gravity::query_client::QueryClient as GravityQueryClient;
 use gravity_proto::gravity::Params;
 use gravity_proto::gravity::QueryAttestationsRequest;
@@ -200,7 +201,7 @@ pub async fn get_last_erc721_event_nonce_for_validator(
     prefix: String,
 ) -> Result<u64, GravityError> {
     let request = client
-        .last_event_nonce_by_addr(QueryLastEventNonceByAddrRequest {
+        .last_erc721_event_nonce_by_addr(QueryLastErc721EventNonceByAddrRequest {
             address: address.to_bech32(prefix).unwrap(),
         })
         .await?;
