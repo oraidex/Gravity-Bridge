@@ -1,6 +1,6 @@
 {
     "genesis_time": "2023-05-20T08:51:20.632395418Z",
-    "chain_id": "gravitygaze-2",
+    "chain_id": "gravitygaze-3",
     "initial_height": "1",
     "consensus_params": {
         "block": {
@@ -116,6 +116,12 @@
                 {
                     "hrp": "nftprefixstars",
                     "source_channel": "channel-0",
+                    "ics_to_height_offset": "10000",
+                    "ics_to_time_offset": "0s"
+                },
+                {
+                    "hrp": "nftprefixomniflix",
+                    "source_channel": "channel-1",
                     "ics_to_height_offset": "10000",
                     "ics_to_time_offset": "0s"
                 }
