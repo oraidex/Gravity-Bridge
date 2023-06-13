@@ -618,9 +618,10 @@ func (a AttestationHandler) sendERC721ToCosmosAccount(ctx sdk.Context, claim typ
 	if accountPrefix == nativePrefix { // Send to a native gravity account
 		return false, a.sendERC721ToLocalAddress(ctx, claim, receiver, nftToken)
 	} else { // Try to send tokens to IBC chain, fall back to native send on errors
-		// TODO: FINISH
 		// panic("not implemented just yet! need to figure out if I can skip that pesky ibc-forwarding queue crap")
 		// TODO: The hrp hack here is ugly as shit, but the hrp thing doesn't seem to allow more than one ibc channel per account prefix...
+		// stars... -> IBC channel ICS20
+		// nftstars -> IBC channel ICS721
 		hrpPrefix := types.AccountPrefixForERC721Hrp(accountPrefix)
 		hrpIbcRecord, err := a.keeper.bech32IbcKeeper.GetHrpIbcRecord(ctx, hrpPrefix)
 		if err != nil {
