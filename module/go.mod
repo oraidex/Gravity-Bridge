@@ -3,14 +3,29 @@ module github.com/Gravity-Bridge/Gravity-Bridge/module
 go 1.19
 
 require (
-	github.com/cosmos/cosmos-sdk v0.45.15
-	github.com/cosmos/ibc-go/v3 v3.4.0
+	github.com/althea-net/bech32-ibc v0.4.5
+	github.com/cosmos/cosmos-sdk v0.45.16
+	github.com/cosmos/ibc-go/v4 v4.3.1
+	github.com/evmos/ethermint v0.19.5 // Replaced
+)
+
+replace (
+	// Lock us into the v0.45 line
+	github.com/cosmos/cosmos-sdk => github.com/cosmos/cosmos-sdk v0.45.16
+
+	// Althea-net fork removes ibc-go v3 dep, tendermint->cometbft issue
+	github.com/evmos/ethermint => github.com/althea-net/ethermint v0.19.5
+
+	github.com/gogo/protobuf => github.com/regen-network/protobuf v1.3.3-alpha.regen.1
+
+	github.com/tendermint/tendermint => github.com/cometbft/cometbft v0.34.27
+
+	google.golang.org/grpc => google.golang.org/grpc v1.33.2
 )
 
 require (
-	github.com/althea-net/bech32-ibc v0.4.2
+	github.com/cosmos/ibc-go/v3 v3.4.0
 	github.com/ethereum/go-ethereum v1.10.19
-	github.com/evmos/ethermint v0.19.3
 	github.com/gogo/protobuf v1.3.3
 	github.com/golang/protobuf v1.5.2
 	github.com/gorilla/mux v1.8.0
@@ -113,7 +128,7 @@ require (
 	github.com/klauspost/compress v1.15.11 // indirect
 	github.com/kr/pretty v0.3.1 // indirect
 	github.com/kr/text v0.2.0 // indirect
-	github.com/lib/pq v1.10.6 // indirect
+	github.com/lib/pq v1.10.7 // indirect
 	github.com/libp2p/go-buffer-pool v0.1.0 // indirect
 	github.com/linxGnu/grocksdb v1.7.10 // indirect
 	github.com/magiconair/properties v1.8.6 // indirect
@@ -169,18 +184,4 @@ require (
 	gopkg.in/yaml.v2 v2.4.0 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
 	nhooyr.io/websocket v1.8.6 // indirect
-)
-
-replace (
-	// Lock us into the v0.45 line
-	github.com/cosmos/cosmos-sdk => github.com/cosmos/cosmos-sdk v0.45.15
-
-	// Lock us into ethermint v0.19
-	github.com/evmos/ethermint => github.com/evmos/ethermint v0.19.3
-
-	github.com/gogo/protobuf => github.com/regen-network/protobuf v1.3.3-alpha.regen.1
-
-	github.com/tendermint/tendermint => github.com/cometbft/cometbft v0.34.27
-
-	google.golang.org/grpc => google.golang.org/grpc v1.33.2
 )

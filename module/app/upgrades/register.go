@@ -11,7 +11,7 @@ import (
 	mintkeeper "github.com/cosmos/cosmos-sdk/x/mint/keeper"
 	stakingkeeper "github.com/cosmos/cosmos-sdk/x/staking/keeper"
 	upgradekeeper "github.com/cosmos/cosmos-sdk/x/upgrade/keeper"
-	ibctransferkeeper "github.com/cosmos/ibc-go/v3/modules/apps/transfer/keeper"
+	ibctransferkeeper "github.com/cosmos/ibc-go/v4/modules/apps/transfer/keeper"
 
 	"github.com/Gravity-Bridge/Gravity-Bridge/module/app/upgrades/orion"
 	"github.com/Gravity-Bridge/Gravity-Bridge/module/app/upgrades/singlestep"

@@ -9,10 +9,10 @@ import (
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
 	capabilitytypes "github.com/cosmos/cosmos-sdk/x/capability/types"
-	transfertypes "github.com/cosmos/ibc-go/v3/modules/apps/transfer/types"
-	channeltypes "github.com/cosmos/ibc-go/v3/modules/core/04-channel/types"
+	transfertypes "github.com/cosmos/ibc-go/v4/modules/apps/transfer/types"
+	channeltypes "github.com/cosmos/ibc-go/v4/modules/core/04-channel/types"
 
-	ibcexported "github.com/cosmos/ibc-go/v3/modules/core/exported"
+	ibcexported "github.com/cosmos/ibc-go/v4/modules/core/exported"
 )
 
 // IsModuleAccount returns true if the given account is a module account
@@ -102,7 +102,7 @@ func (k Keeper) OnRecvPacket(
 	// Receiver become sender when send evm_prefix + contract_address token to evm
 	sender, err := sdk.AccAddressFromBech32(data.Receiver)
 	if err != nil {
-		return channeltypes.NewErrorAcknowledgement(err.Error())
+		return channeltypes.NewErrorAcknowledgement(err)
 	}
 
 	senderAcc := k.accountKeeper.GetAccount(ctx, sender)
@@ -121,15 +121,15 @@ func (k Keeper) OnRecvPacket(
 
 	dest, err := types.NewEthAddress(ethDest)
 	if err != nil {
-		return channeltypes.NewErrorAcknowledgement(err.Error())
+		return channeltypes.NewErrorAcknowledgement(err)
 	}
 	_, erc20, err := k.DenomToERC20Lookup(ctx, evmChainPrefix, coin.Denom)
 	if err != nil {
-		return channeltypes.NewErrorAcknowledgement(err.Error())
+		return channeltypes.NewErrorAcknowledgement(err)
 	}
 
 	if k.InvalidSendToEthAddress(ctx, evmChainPrefix, *dest, *erc20) {
-		return channeltypes.NewErrorAcknowledgement(sdkerrors.Wrap(types.ErrInvalid, "destination address is invalid or blacklisted").Error())
+		return channeltypes.NewErrorAcknowledgement(sdkerrors.Wrap(types.ErrInvalid, "destination address is invalid or blacklisted"))
 	}
 
 	batchFees := sdk.ZeroInt()
@@ -142,7 +142,7 @@ func (k Keeper) OnRecvPacket(
 	// finally add to outgoing pool and waiting for gbt to submit it via MsgRequestBatch
 	txID, err := k.AddToOutgoingPool(ctx, evmChainPrefix, sender, *dest, coin, sdk.Coin{Denom: coin.Denom, Amount: batchFees})
 	if err != nil {
-		return channeltypes.NewErrorAcknowledgement(err.Error())
+		return channeltypes.NewErrorAcknowledgement(err)
 	}
 
 	ctx.EventManager().EmitTypedEvent(
@@ -167,4 +167,9 @@ func (k Keeper) WriteAcknowledgement(ctx sdk.Context,
 	packet ibcexported.PacketI,
 	ack ibcexported.Acknowledgement) error {
 	return k.ics4Wrapper.WriteAcknowledgement(ctx, chanCap, packet, ack)
+}
+
+// GetAppVersion calls the ICS4Wrapper GetAppVersion function.
+func (k Keeper) GetAppVersion(ctx sdk.Context, portID, channelID string) (string, bool) {
+	return k.ics4Wrapper.GetAppVersion(ctx, portID, channelID)
 }

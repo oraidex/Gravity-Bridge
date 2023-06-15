@@ -1,8 +1,6 @@
 linters:
   enable:
     - bodyclose
-    - deadcode
-    - depguard
     - dogsled
     - dupl
     - goconst
@@ -13,14 +11,10 @@ linters:
     - govet
     - ineffassign
     - staticcheck
-    - structcheck
     - typecheck
     - unused
-    - varcheck
     - exhaustruct
     - errcheck
-    # - gosec
-    # - goimports
 
 linters-settings:
   govet:
