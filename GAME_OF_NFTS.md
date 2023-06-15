@@ -6,13 +6,13 @@ ERC721 tokens can be deposited in GravityERC721.sol contract using `sendErc721To
 
 From the user perspective, to transfer NFT to Cosmos, two eth transactions has to be sent - one to approve `GravityERC721.sol` to use user's NFT and the other to deposit the NFT. Then, after the trust period, deposit event is picked up by validators and transfer process continues without any further actions needed from the user.
 
-// TODO add graphic eth-to-cosmos @ba1ciu
+![eth-to-cosmos](./media/eth-to-cosmos.png)
 
 To transfer Cosmos-originating NFTs to Ethereum, they will have to be locked in the module account. Next, `GravityERC721.sol` will work as a factory and deploy ERC721 contracts that will correspond to Cosmos' NFT classes as well as mint actual NFTs. These `GravityERC721.sol` calls will verify the presence of Gravity validator signatures similarly to how corresponding calls for ERC20s currently work.
 
 From the UX perspective, user will have to transfer NFT from a Cosmos chain to Gravity through IBC and then send a deposit message to gather validator signatures required for minting on the Ethereum side. With ERC20, user would pay a transaction relaying fee to relayers in the same ERC20 token that is being transfered, but with NFT it's not possible, therefore, user will have to *relay* Ethereum transactions manually with the help of UI.
 
-// TODO add graphic cosmos-to-eth @ba1ciu
+![cosmos-to-eth](./media/cosmos-to-eth.png)
 
 Similar processes will take place to transfer the NFT back to it's origin, but instead of locking it up on the source chain and minting on the destination chain, it's going to be burned at the remote location and unlocked at origin.
 
