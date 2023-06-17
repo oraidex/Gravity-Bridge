@@ -210,14 +210,14 @@ pub async fn test_erc721_deposit_result(
         .await;
 
         if res.is_err() {
-            error!("Failed to get owner of token_class {} and token_id {} from Cosmos. Retrying...", format!("{}{}", "gravityerc721", erc721_address), token_id.clone());
+            error!("Failed to get nfts of token_class {} from Cosmos. Retrying...", format!("{}{}", "gravityerc721", erc721_address));
             contact.wait_for_next_block(TOTAL_TIMEOUT).await.unwrap();
             continue;
         }
 
         let nfts = res.unwrap().into_inner().nfts;
         if nfts.len() == 0 {
-            error!("No NFTs found for token_class {} and token_id {} from Cosmos. Retrying...", format!("{}{}", "gravityerc721", erc721_address), token_id.clone());
+            error!("No NFTs found for token_class {} from Cosmos. Retrying...", format!("{}{}", "gravityerc721", erc721_address));
             contact.wait_for_next_block(TOTAL_TIMEOUT).await.unwrap();
             continue;
         }
