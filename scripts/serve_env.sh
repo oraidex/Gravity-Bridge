@@ -54,7 +54,11 @@ STARGAZE_LOG_FILE_PATH=$CHAIN_DIR/$CHAIN_ID.log
 KAARE_MNEMONIC="skate height year measure reunion toast onion canal cupboard innocent dash develop spend pottery wine nest orchard vibrant zebra climb cricket carbon unhappy color" # stars1j0hkmu8rklcewz4g0wclxlzf4tzhlx00a9apjl
 KENT_ROGER_MNEMONIC="name rose pill armor surprise position vague suggest rescue april evidence all silly original dignity wet seven lazy slogan smoke genre cost faith royal" # stars1yza3nu6qz8kwn67tgd395s8yedpq45vf5pfczp
 STARGAZE_VALIDATOR_MNEMONIC="traffic occur lens age swim tilt canvas train stairs leg base inmate vessel trigger abstract thunder whale resist summer popular nature move original tired" # stars16vrj6an5f7pl0g8gl8qxex7rts2vucq4gw0m7c
+<<<<<<< HEAD
 STARGAZE_RELAY_ACCOUNT="result impulse book sand wedding mass top ritual swing assault claw mind outside hand kind detect gasp large radar relief wool tank taxi item" # stars16vrj6an5f7pl0g8gl8qxex7rts2vucq4gw0m7c
+=======
+STARGAZE_RELAY_ACCOUNT="result impulse book sand wedding mass top ritual swing assault claw mind outside hand kind detect gasp large radar relief wool tank taxi item" # stars1sl3mpymvv70z5xyxfe7fvlqqjvm4v4hlrmuq2e
+>>>>>>> 1afca4e1bb393f95473ad06d99899f3582308119
 
 STARGAZE_P2P_PORT=36656
 STARGAZE_RPC_PORT=36657

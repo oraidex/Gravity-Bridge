@@ -181,7 +181,11 @@ func GravityDenom(tokenContract EthAddress) string {
 
 // GravityERC721ClassId converts an EthAddress to a gravity cosmos class id for ERC721 tokens
 func GravityERC721ClassId(tokenContract EthAddress) string {
+<<<<<<< HEAD
 	return fmt.Sprintf("%s%s%s", GravityERC721ClassIDPrefix, GravityDenomSeparator, tokenContract.GetAddress().Hex())
+=======
+	return fmt.Sprintf("%s%s%s", GravityERC721DenomPrefix, GravityDenomSeparator, tokenContract.GetAddress().Hex())
+>>>>>>> 1afca4e1bb393f95473ad06d99899f3582308119
 }
 
 // ValidateBasic performs stateless validation
