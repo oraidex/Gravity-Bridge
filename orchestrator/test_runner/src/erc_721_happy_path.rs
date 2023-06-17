@@ -11,7 +11,7 @@ use ethereum_gravity::send_erc721_to_cosmos::send_erc721_to_cosmos;
 use ethereum_gravity::utils::get_gravity_sol_address;
 use ethereum_gravity::utils::get_valset_nonce;
 use cosmos_gravity::query::get_erc721_attestations;
-use gravity_proto::nft::QueryOwnerRequest;
+use gravity_proto::nft::QueryNfTsRequest;
 use gravity_proto::nft::query_client::QueryClient as NftQueryClient;
 use gravity_proto::gravity::query_client::QueryClient as GravityQueryClient;
 use gravity_proto::gravity::MsgSendErc721ToCosmosClaim;
@@ -202,21 +202,34 @@ pub async fn test_erc721_deposit_result(
         // in this while loop wait for owner to change OR wait for event to fire
         info!("Trying to get owner of token_class {} and token_id {} from Cosmos", format!("{}{}", "gravityerc721", erc721_address), token_id.clone());
         let res = grpc_nft_client
-        .owner(QueryOwnerRequest {
+        .nf_ts(QueryNfTsRequest {
             class_id: format!("{}{}", "gravityerc721", erc721_address),
-            id: token_id.clone().to_string(),
+            owner: dest.to_string(),
+            pagination: None,
         })
         .await;
 
         if res.is_err() {
-            info!("Failed to get owner of token_class {} and token_id {} from Cosmos", format!("{}{}. Retrying...", "gravityerc721", erc721_address), token_id.clone());
+            error!("Failed to get owner of token_class {} and token_id {} from Cosmos. Retrying...", format!("{}{}", "gravityerc721", erc721_address), token_id.clone());
             contact.wait_for_next_block(TOTAL_TIMEOUT).await.unwrap();
             continue;
         }
 
-        let owner = res.unwrap().into_inner().owner;
+        let nfts = res.unwrap().into_inner().nfts;
+        if nfts.len() == 0 {
+            error!("No NFTs found for token_class {} and token_id {} from Cosmos. Retrying...", format!("{}{}", "gravityerc721", erc721_address), token_id.clone());
+            contact.wait_for_next_block(TOTAL_TIMEOUT).await.unwrap();
+            continue;
+        }
+        let mut nft_found = false;
+        for nft in nfts {
+            if nft.id == token_id.to_string() {
+                nft_found = true;
+                break;
+            }
+        }
 
-        if owner == dest.to_string() {
+        if nft_found {
             info!(
                 "Successfully moved token_id {} to {}",
                 token_id.clone(),

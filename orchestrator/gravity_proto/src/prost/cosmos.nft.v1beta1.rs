@@ -82,6 +82,24 @@ pub struct QuerySupplyResponse {
     #[prost(uint64, tag="1")]
     pub amount: u64,
 }
+/// QueryNFTstRequest is the request type for the Query/NFTs RPC method
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct QueryNfTsRequest {
+    #[prost(string, tag="1")]
+    pub class_id: ::prost::alloc::string::String,
+    #[prost(string, tag="2")]
+    pub owner: ::prost::alloc::string::String,
+    #[prost(message, optional, tag="3")]
+    pub pagination: ::core::option::Option<super::cosmos_sdk_proto::cosmos::base::query::v1beta1::PageRequest>,
+}
+/// QueryNFTsResponse is the response type for the Query/NFTs RPC methods
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct QueryNfTsResponse {
+    #[prost(message, repeated, tag="1")]
+    pub nfts: ::prost::alloc::vec::Vec<Nft>,
+    #[prost(message, optional, tag="2")]
+    pub pagination: ::core::option::Option<super::cosmos_sdk_proto::cosmos::base::query::v1beta1::PageResponse>,
+}
 /// QueryNFTRequest is the request type for the Query/NFT RPC method
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct QueryNftRequest {
@@ -230,6 +248,27 @@ pub mod query_client {
             let codec = tonic::codec::ProstCodec::default();
             let path = http::uri::PathAndQuery::from_static(
                 "/cosmos.nft.v1beta1.Query/Supply",
+            );
+            self.inner.unary(request.into_request(), path, codec).await
+        }
+        /// NFTs queries all NFTs of a given class or owner,choose at least one of the two, similar to tokenByIndex in
+        /// ERC721Enumerable
+        pub async fn nf_ts(
+            &mut self,
+            request: impl tonic::IntoRequest<super::QueryNfTsRequest>,
+        ) -> Result<tonic::Response<super::QueryNfTsResponse>, tonic::Status> {
+            self.inner
+                .ready()
+                .await
+                .map_err(|e| {
+                    tonic::Status::new(
+                        tonic::Code::Unknown,
+                        format!("Service was not ready: {}", e.into()),
+                    )
+                })?;
+            let codec = tonic::codec::ProstCodec::default();
+            let path = http::uri::PathAndQuery::from_static(
+                "/cosmos.nft.v1beta1.Query/NFTs",
             );
             self.inner.unary(request.into_request(), path, codec).await
         }
