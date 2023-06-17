@@ -9,3 +9,7 @@ pub mod gravity {
     include!("prost/gravity.v1.rs");
     include!("ethereum_claim.rs");
 }
+
+pub mod nft {
+    include!("prost/cosmos.nft.v1beta1.rs");
+}
