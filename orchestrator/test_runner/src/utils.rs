@@ -328,6 +328,7 @@ pub struct ValidatorKeys {
 pub async fn start_orchestrators(
     keys: Vec<ValidatorKeys>,
     gravity_address: EthAddress,
+    gravityerc721_address: EthAddress,
     validator_out: bool,
     orchestrator_config: GravityBridgeToolsConfig,
 ) {
@@ -369,6 +370,7 @@ pub async fn start_orchestrators(
                 contact,
                 grpc_client,
                 gravity_address,
+                gravityerc721_address,
                 params.gravity_id,
                 get_fee(None),
                 config,

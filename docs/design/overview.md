@@ -40,15 +40,19 @@ The high-level workflow is:
 Activation Steps:
 
 - Bootstrap Cosmos SDK chain
-- Deploy Ethereum contract
+- Deploy Ethereum contracts
 
-Token Transfer Steps:
+Token (ERC20) Transfer Steps:
 
 - Transfer original ERC20 tokens from ETH to Cosmos
 - Transfer pegged tokens from Cosmos to ETH
 - Update Cosmos Validator set on ETH
 
-The first two steps are done once, the other 3 repeated many times.
+NFT (ERC721) Transfer Steps:
+
+- Transfer original ERC721 token from ETH to Cosmos
+
+The first two steps are done once, the others are repeated many times.
 
 ## Definitions
 
@@ -81,6 +85,7 @@ Key concepts that we mention below will be defined here:
 - `Counterpart` - to a `Voucher` is the locked ETH token in the contract
 - `Delegate keys` - when an `Operator` sets up the `Eth Signer` and `Oracle` they assign `Delegate Keys` by sending a message containing these keys using their `Validator` address. There is one delegate Ethereum key, used for signing messages on Ethereum and representing this `Validator` on Ethereum and one delegate Cosmos key that is used to submit `Oracle` messages.
 - `Gravity Contract` - The `Gravity Contract` is the Ethereum contract that holds all of the Gravity bridge bunds on the Ethereum side. It contains a representation of the cosmos validator set using `Delegate Keys` and normalized powers. For example if a validator has 5% of the Cosmos chain validator power, their delegate key will have 5% of the voting power in the `Gravity Contract` these value are regularly updated to keep the Cosmos and Ethereum chain validator sets in sync.
+- `GravityERC721 Contract` - Ethereum contract that holds Ethereum-originated ERC721 tokens transfered to Cosmos. Unlocking NFTs is only possible by making an arbitrary logic call from the `Gravity Contract`.
 
 The _Operator_ is the key unit of trust here. Each operator is responsible for maintaining 4 secure processes:
 

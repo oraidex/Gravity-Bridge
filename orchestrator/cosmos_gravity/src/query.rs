@@ -4,6 +4,8 @@ use clarity::Address as EthAddress;
 use deep_space::address::Address;
 use deep_space::error::CosmosGrpcError;
 use deep_space::Contact;
+use gravity_proto::gravity::QueryErc721AttestationsRequest;
+use gravity_proto::gravity::QueryLastErc721EventNonceByAddrRequest;
 use gravity_proto::gravity::query_client::QueryClient as GravityQueryClient;
 use gravity_proto::gravity::Params;
 use gravity_proto::gravity::QueryAttestationsRequest;
@@ -177,7 +179,7 @@ pub async fn get_transaction_batch_signatures(
     Ok(out)
 }
 
-/// Gets the last event nonce that a given validator has attested to, this lets us
+/// Gets the last event nonce for gravity.sol contract that a given validator has attested to, this lets us
 /// catch up with what the current event nonce should be if a oracle is restarted
 pub async fn get_last_event_nonce_for_validator(
     client: &mut GravityQueryClient<Channel>,
@@ -186,6 +188,21 @@ pub async fn get_last_event_nonce_for_validator(
 ) -> Result<u64, GravityError> {
     let request = client
         .last_event_nonce_by_addr(QueryLastEventNonceByAddrRequest {
+            address: address.to_bech32(prefix).unwrap(),
+        })
+        .await?;
+    Ok(request.into_inner().event_nonce)
+}
+
+/// Gets the last event nonce for gravityerc721.sol contract that a given validator has attested to, this lets us
+/// catch up with what the current event nonce should be if a oracle is restarted
+pub async fn get_last_erc721_event_nonce_for_validator(
+    client: &mut GravityQueryClient<Channel>,
+    address: Address,
+    prefix: String,
+) -> Result<u64, GravityError> {
+    let request = client
+        .last_erc721_event_nonce_by_addr(QueryLastErc721EventNonceByAddrRequest {
             address: address.to_bech32(prefix).unwrap(),
         })
         .await?;
@@ -258,6 +275,23 @@ pub async fn get_attestations(
             nonce: 0,
             height: 0,
             use_v1_key: false,
+        })
+        .await?;
+    let attestations = request.into_inner().attestations;
+    Ok(attestations)
+}
+
+pub async fn get_erc721_attestations(
+    client: &mut GravityQueryClient<Channel>,
+    limit: Option<u64>,
+) -> Result<Vec<Attestation>, GravityError> {
+    let request = client
+        .get_erc721_attestations(QueryErc721AttestationsRequest {
+            limit: limit.unwrap_or(1000u64),
+            order_by: String::new(),
+            claim_type: String::new(),
+            nonce: 0,
+            height: 0,
         })
         .await?;
     let attestations = request.into_inner().attestations;

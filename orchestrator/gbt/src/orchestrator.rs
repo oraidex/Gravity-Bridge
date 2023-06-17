@@ -121,7 +121,7 @@ pub async fn orchestrator(
         .expect("Failed to get Gravity Bridge module parameters!");
 
     // get the gravity contract address, if not provided
-    let contract_address = if let Some(c) = args.gravity_contract_address {
+    let gravity_contract_address = if let Some(c) = args.gravity_contract_address {
         c
     } else {
         let c = params.bridge_ethereum_address.parse();
@@ -135,6 +135,26 @@ pub async fn orchestrator(
             }
             Err(_) => {
                 error!("The Gravity address is not yet set as a chain parameter! You must specify --gravity-contract-address");
+                exit(1);
+            }
+        }
+    };
+
+    // get the gravityerc721 contract address, if not provided
+    let gravityerc721_contract_address = if let Some(c) = args.gravityerc721_contract_address {
+        c
+    } else {
+        let c = params.bridge_erc721_ethereum_address.parse();
+        match c {
+            Ok(v) => {
+                if v == *ZERO_ADDRESS {
+                    error!("The GravityERC721 address is not yet set as a chain parameter! You must specify --gravityerc721-contract-address");
+                    exit(1);
+                }
+                c.unwrap()
+            }
+            Err(_) => {
+                error!("The GravityERC721 address is not yet set as a chain parameter! You must specify --gravityerc721-contract-address");
                 exit(1);
             }
         }
@@ -162,7 +182,8 @@ pub async fn orchestrator(
         connections.web3.unwrap(),
         connections.contact.unwrap(),
         connections.grpc.unwrap(),
-        contract_address,
+        gravity_contract_address,
+        gravityerc721_contract_address,
         params.gravity_id,
         fee,
         config,
