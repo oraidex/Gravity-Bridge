@@ -4,6 +4,7 @@ use clarity::Address as EthAddress;
 use deep_space::address::Address;
 use deep_space::error::CosmosGrpcError;
 use deep_space::Contact;
+use gravity_proto::gravity::QueryErc721AttestationsRequest;
 use gravity_proto::gravity::QueryLastErc721EventNonceByAddrRequest;
 use gravity_proto::gravity::query_client::QueryClient as GravityQueryClient;
 use gravity_proto::gravity::Params;
@@ -274,6 +275,23 @@ pub async fn get_attestations(
             nonce: 0,
             height: 0,
             use_v1_key: false,
+        })
+        .await?;
+    let attestations = request.into_inner().attestations;
+    Ok(attestations)
+}
+
+pub async fn get_erc721_attestations(
+    client: &mut GravityQueryClient<Channel>,
+    limit: Option<u64>,
+) -> Result<Vec<Attestation>, GravityError> {
+    let request = client
+        .get_erc721_attestations(QueryErc721AttestationsRequest {
+            limit: limit.unwrap_or(1000u64),
+            order_by: String::new(),
+            claim_type: String::new(),
+            nonce: 0,
+            height: 0,
         })
         .await?;
     let attestations = request.into_inner().attestations;

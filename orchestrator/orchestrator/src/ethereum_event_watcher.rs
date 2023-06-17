@@ -124,7 +124,7 @@ pub async fn check_for_events(
             ));
                 } else {
                     info!(
-                        "GravityERC721 laims processed, new nonce {}",
+                        "GravityERC721 claims processed, new nonce {}",
                         new_event_nonce
                     );
                 }

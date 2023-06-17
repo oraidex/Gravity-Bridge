@@ -476,6 +476,7 @@ pub async fn main() {
             info!("Starting ERC 721 transfer test");
             erc721_happy_path_test(
                 &web30,
+                grpc_client,
                 &contact,
                 keys,
                 gravity_address,
