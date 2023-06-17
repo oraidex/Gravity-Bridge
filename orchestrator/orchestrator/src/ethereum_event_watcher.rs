@@ -96,7 +96,7 @@ pub async fn check_for_events(
             if !erc721_deposits.is_empty() {
                 info!(
                 "Oracle observed erc721 deposit with sender {}, destination {:?}, token id {}, token uri {}, and event nonce {}",
-                erc721_deposits[0].sender, erc721_deposits[0].validated_destination, erc721_deposits[0].token_id,erc721_deposits[0].token_uri, erc721_deposits[0].event_nonce
+                erc721_deposits[0].sender, erc721_deposits[0].validated_destination, erc721_deposits[0].token_id, erc721_deposits[0].token_uri, erc721_deposits[0].event_nonce
             );
                 let res =
                     send_erc721_claims(contact, our_private_key, erc721_deposits.clone(), fee)

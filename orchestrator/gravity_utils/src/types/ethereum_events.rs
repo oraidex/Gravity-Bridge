@@ -712,8 +712,12 @@ impl SendERC721ToCosmosEvent {
 
         let dest = String::from_utf8(destination.to_vec());
 
-        let token_uri_str_len_start = 5 * 32 + destination_str_len;
-        let token_uri_str_len_end = 6 * 32 + destination_str_len;
+        let mut destination_str_in_bytes = destination_str_len / 32;
+        if destination_str_len % 32 != 0 {
+            destination_str_in_bytes = destination_str_in_bytes + 1;
+        }
+        let token_uri_str_len_start = (5 + destination_str_in_bytes) * 32;
+        let token_uri_str_len_end = (6 + destination_str_in_bytes) * 32;
         let token_uri_str_len =
             Uint256::from_bytes_be(&data[token_uri_str_len_start..token_uri_str_len_end]);
 
@@ -724,8 +728,9 @@ impl SendERC721ToCosmosEvent {
         }
         let token_uri_str_len: usize = token_uri_str_len.to_string().parse().unwrap();
         let token_uri: String;
+
         if token_uri_str_len > 0 {
-            let token_uri_str_start = 6 * 32 + destination_str_len;
+            let token_uri_str_start = (6 + destination_str_in_bytes) * 32;
             let token_uri_str_end = token_uri_str_start + token_uri_str_len;
 
             if data.len() < token_uri_str_end {
