@@ -395,7 +395,6 @@ func GetPendingIbcAutoForwardsPrefixKey(nonceSource NonceSource) []byte {
 func GetPendingIbcAutoForwardKey(eventNonce uint64, nonceSource NonceSource) []byte {
 	prefixKey := GetPendingIbcAutoForwardsPrefixKey(nonceSource)
 	return AppendBytes(prefixKey, UInt64Bytes(eventNonce))
-<<<<<<< HEAD
 }
 
 func GetLastObservedEthereumBlockHeightKey(nonceSource NonceSource) []byte {
@@ -407,6 +406,4 @@ func GetLastObservedEthereumBlockHeightKey(nonceSource NonceSource) []byte {
 	default:
 		panic("invalid nonce source")
 	}
-=======
->>>>>>> 1afca4e1bb393f95473ad06d99899f3582308119
 }
