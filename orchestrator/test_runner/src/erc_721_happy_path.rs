@@ -201,15 +201,20 @@ pub async fn test_erc721_deposit_result(
     while Instant::now() - start < duration {
         // in this while loop wait for owner to change OR wait for event to fire
         info!("Trying to get owner of token_class {} and token_id {} from Cosmos", format!("{}{}", "gravityerc721", erc721_address), token_id.clone());
-        let owner = grpc_nft_client
+        let res = grpc_nft_client
         .owner(QueryOwnerRequest {
             class_id: format!("{}{}", "gravityerc721", erc721_address),
             id: token_id.clone().to_string(),
         })
-        .await
-        .expect("Failed to get NFT owner")
-        .into_inner()
-        .owner;
+        .await;
+
+        if res.is_err() {
+            info!("Failed to get owner of token_class {} and token_id {} from Cosmos", format!("{}{}. Retrying...", "gravityerc721", erc721_address), token_id.clone());
+            contact.wait_for_next_block(TOTAL_TIMEOUT).await.unwrap();
+            continue;
+        }
+
+        let owner = res.unwrap().into_inner().owner;
 
         if owner == dest.to_string() {
             info!(
