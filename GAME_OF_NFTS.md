@@ -16,9 +16,9 @@ From the UX perspective, user will have to transfer NFT from a Cosmos chain to G
 
 ![cosmos-to-eth](./media/cosmos-to-eth.png)
 
-Similar processes will take place to transfer the NFT back to it's origin, but instead of locking it up on the source chain and minting on the destination chain, it's going to be burned at the remote location and unlocked at origin.
+Similar processes will take place to transfer the NFT back to its origin, but instead of locking it up on the source chain and minting on the destination chain, it's going to be burned at the remote location and unlocked at origin.
 
-// TODO @gjermundgaraba we need ibc channel maintained for every destination chain, no? Show we write something about it too?
+Similar to the ERC20 support, each supported destination needs a correct IBC channel to be set up and relayed.
 
 # Work done so far
 - Added NFT metadata support to existing GravityERC721.sol
@@ -26,12 +26,28 @@ Similar processes will take place to transfer the NFT back to it's origin, but i
 - Added `SendERC721ToCosmosClaim` to `x/gravity` and implemented attestiation handling
 - Added separate orchestartor oracle flow for `GravityERC721.sol` contract
 - Added integration test happy path flow for bridging ERC721 to Gravity
-- Set up a testnet (Gravitygaze) connecting Sepolia and Stargaze Testnet @gjermundgaraba and Omniflix, no?
-- frontend? TODO @gjermundgaraba
+- Set up a testnet (Gravitygaze) connecting Sepolia and Stargaze Testnet and Omniflix testnet
+- Relaying ERC721 transfers from Gravity Bridge to Stargaze Testnet and Omniflix testnet
+- Created a demonstration frontend: https://gravity-nft-ui.vercel.app/
+    - Code, including an in-depth README of the frontend process: https://github.com/gjermundgaraba/gravity-nft-ui
+- Made a gravityjs typescript project to make it easier to interact with the Gravity Bridge from JS, can be found under `gravityjs` (and its use can be found in the gravity-nft-ui code)
+
+A video demonstration can be found here: https://www.youtube.com/watch?v=fow_uQqEak4
+
+For a full overview of the code changes made to the Gravity Bridge, see the following draft PR (made to track these changes):
+https://github.com/EmpowerPlastic/Gravity-Bridge/pull/14/files
 
 # How to use
 
-// TODO @gjermundgaraba our UI? Or just etherscan's UI?
+To get yourself some testnet NFTs, you can use the following contract which has a permissionless `mint` method that can be called directly:
+https://sepolia.etherscan.io/token/0x715c4c9d6b376b93a22e96d59004be3e118d7e71
+
+You could interact directly with the contracts on the testnet, but we've also created a simple UI that allows you to transfer NFTs from Ethereum to Cosmos. It's available here: https://gravity-nft-ui.vercel.app/
+See also the demo video above for a walkthrough.
+
+![UI Screenshot](media/ui-screenshot.png)
+
+The ERC721 Bridge contract can be found here: https://sepolia.etherscan.io/address/0x4f2Ff6F09467B176A9d58ccb8E29E81057Ad5FD4
 
 # Future plans
 
