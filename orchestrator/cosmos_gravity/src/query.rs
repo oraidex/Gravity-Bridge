@@ -7,6 +7,9 @@ use deep_space::Contact;
 use gravity_proto::gravity::QueryErc721AttestationsRequest;
 use gravity_proto::gravity::QueryLastErc721EventNonceByAddrRequest;
 use gravity_proto::gravity::query_client::QueryClient as GravityQueryClient;
+use gravity_proto::nft::QueryOwnerRequest;
+use gravity_proto::nft::QueryOwnerResponse;
+use gravity_proto::nft::query_client::QueryClient as NftQueryClient;
 use gravity_proto::gravity::Params;
 use gravity_proto::gravity::QueryAttestationsRequest;
 use gravity_proto::gravity::QueryBatchConfirmsRequest;
@@ -279,7 +282,7 @@ pub async fn get_attestations(
         .await?;
     let attestations = request.into_inner().attestations;
     Ok(attestations)
-}
+} 
 
 pub async fn get_erc721_attestations(
     client: &mut GravityQueryClient<Channel>,
@@ -297,6 +300,21 @@ pub async fn get_erc721_attestations(
     let attestations = request.into_inner().attestations;
     Ok(attestations)
 }
+
+pub async fn get_nft_owner(
+    client: &mut NftQueryClient<Channel>,
+    class_id: String,
+    token_id: String,
+) -> Result<QueryOwnerResponse, GravityError> {
+    let request = client
+        .owner(QueryOwnerRequest {
+            class_id: class_id,
+            id: token_id,
+        })
+        .await?;
+    Ok(request.into_inner())
+}
+
 
 /// Get a list of transactions going to the EVM blockchain that are pending for a given user.
 pub async fn get_pending_send_to_eth(

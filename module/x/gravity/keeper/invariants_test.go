@@ -105,7 +105,7 @@ func TestModuleBalanceBatchedTxs(t *testing.T) {
 		input.AccountKeeper.NewAccountWithAddress(ctx, mySender)
 		require.NoError(t, input.BankKeeper.SendCoinsFromModuleToAccount(ctx, types.ModuleName, mySender, v))
 	}
-	input.GravityKeeper.SetLastObservedEthereumBlockHeight(ctx, 1234567)
+	input.GravityKeeper.SetLastObservedEthereumBlockHeight(ctx, 1234567, types.GravityContractNonce)
 
 	////////////////// EXECUTE //////////////////
 	// Check the invariant without any transactions

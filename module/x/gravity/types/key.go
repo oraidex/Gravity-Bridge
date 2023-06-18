@@ -1,9 +1,10 @@
 package types
 
 import (
+	"strings"
+
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
-	"strings"
 )
 
 const (
@@ -131,6 +132,10 @@ var (
 	// [0x83a283a6c3390f1526250df45e9ef8c6]
 	LastObservedEthereumBlockHeightKey = HashString("LastObservedEthereumBlockHeightKey")
 
+	// LastObservedERC721EthereumBlockHeightKey indexes the latest Ethereum block height
+	// [4004926194b2aadbcc5a28cac2d991ae]
+	LastObservedERC721EthereumBlockHeightKey = HashString("LastObservedERC721EthereumBlockHeightKey")
+
 	// DenomToERC20Key prefixes the index of Cosmos originated asset denoms to ERC20s
 	// [0x19fb4f512868744eea13f3eac3672c12]
 	DenomToERC20Key = HashString("DenomToERC20Key")
@@ -250,17 +255,6 @@ func GetAttestationKey(eventNonce uint64, claimHash []byte, nonceSource NonceSou
 	}
 
 	return AppendBytes(oracleKey, UInt64Bytes(eventNonce), claimHash)
-}
-
-// GetERC721AttestationKey returns the following key format
-// prefix     nonce                             claim-details-hash
-// [0x0][0 0 0 0 0 0 0 1][fd1af8cec6c67fcf156f1b61fdf91ebc04d05484d007436e75342fc05bbff35a]
-// An attestation is an ERC721 event multiple people are voting on, this function needs the claim
-// details because each Attestation is aggregating all claims of a specific event, lets say
-// validator X and validator y were making different claims about the same event nonce
-// Note that the claim hash does NOT include the claimer address and only identifies an event
-func GetERC721AttestationKey(eventNonce uint64, claimHash []byte) []byte {
-	return AppendBytes(OracleERC721AttestationKey, UInt64Bytes(eventNonce), claimHash)
 }
 
 // GetOutgoingTxPoolContractPrefix returns
@@ -401,4 +395,15 @@ func GetPendingIbcAutoForwardsPrefixKey(nonceSource NonceSource) []byte {
 func GetPendingIbcAutoForwardKey(eventNonce uint64, nonceSource NonceSource) []byte {
 	prefixKey := GetPendingIbcAutoForwardsPrefixKey(nonceSource)
 	return AppendBytes(prefixKey, UInt64Bytes(eventNonce))
+}
+
+func GetLastObservedEthereumBlockHeightKey(nonceSource NonceSource) []byte {
+	switch nonceSource {
+	case GravityContractNonce:
+		return LastObservedEthereumBlockHeightKey
+	case ERC721ContractNonce:
+		return LastObservedERC721EthereumBlockHeightKey
+	default:
+		panic("invalid nonce source")
+	}
 }

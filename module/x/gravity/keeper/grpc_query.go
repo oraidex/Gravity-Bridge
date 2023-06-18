@@ -346,19 +346,29 @@ func (k Keeper) GetLastObservedEthBlock(
 	ctx := sdk.UnwrapSDKContext(c)
 
 	// Use the old locator pre-Mercury, when the keys changed to hashed strings
-	var locator func(ctx sdk.Context) types.LastObservedEthereumBlockHeight
+	var locator func(ctx sdk.Context, nonceSource types.NonceSource) types.LastObservedEthereumBlockHeight
 	if req.UseV1Key {
 		locator = k.GetOldLastObservedEthereumBlockHeight
 	} else {
 		locator = k.GetLastObservedEthereumBlockHeight
 	}
 
-	ethHeight := locator(ctx)
+	ethHeight := locator(ctx, types.GravityContractNonce)
 
 	return &types.QueryLastObservedEthBlockResponse{Block: ethHeight.EthereumBlockHeight}, nil
 }
 
-func (k Keeper) GetOldLastObservedEthereumBlockHeight(ctx sdk.Context) types.LastObservedEthereumBlockHeight {
+// GetLastObservedEthBlock queries the LastObservedEthereumBlockHeight
+func (k Keeper) GetLastObservedERC721EthBlock(
+	c context.Context,
+	_ *types.QueryLastObservedERC721EthBlockRequest,
+) (*types.QueryLastObservedERC721EthBlockResponse, error) {
+	ctx := sdk.UnwrapSDKContext(c)
+	ethHeight := k.GetLastObservedEthereumBlockHeight(ctx, types.ERC721ContractNonce)
+	return &types.QueryLastObservedERC721EthBlockResponse{Block: ethHeight.EthereumBlockHeight}, nil
+}
+
+func (k Keeper) GetOldLastObservedEthereumBlockHeight(ctx sdk.Context, _ types.NonceSource) types.LastObservedEthereumBlockHeight {
 	store := ctx.KVStore(k.storeKey)
 	bytes := store.Get([]byte(v1.LastObservedEthereumBlockHeightKey))
 

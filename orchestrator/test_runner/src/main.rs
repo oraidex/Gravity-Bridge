@@ -477,6 +477,7 @@ pub async fn main() {
             erc721_happy_path_test(
                 &web30,
                 grpc_client,
+                COSMOS_NODE_GRPC.clone(),
                 &contact,
                 keys,
                 gravity_address,

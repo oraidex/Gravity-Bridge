@@ -150,7 +150,8 @@ func attestationTally(ctx sdk.Context, k keeper.Keeper, nonceSource types.NonceS
 // project, if we do a slowdown on ethereum could cause a double spend. Instead timeouts will *only* occur after the timeout period
 // AND any deposit or withdraw has occurred to update the Ethereum block height.
 func cleanupTimedOutBatches(ctx sdk.Context, k keeper.Keeper) {
-	ethereumHeight := k.GetLastObservedEthereumBlockHeight(ctx).EthereumBlockHeight
+	// TODO: ERC721 WHEN BATCH SUPPORTED?
+	ethereumHeight := k.GetLastObservedEthereumBlockHeight(ctx, types.GravityContractNonce).EthereumBlockHeight
 	batches := k.GetOutgoingTxBatches(ctx)
 	for _, batch := range batches {
 		if batch.BatchTimeout < ethereumHeight {
@@ -172,7 +173,7 @@ func cleanupTimedOutBatches(ctx sdk.Context, k keeper.Keeper) {
 // project, if we do a slowdown on ethereum could cause a double spend. Instead timeouts will *only* occur after the timeout period
 // AND any deposit or withdraw has occurred to update the Ethereum block height.
 func cleanupTimedOutLogicCalls(ctx sdk.Context, k keeper.Keeper) {
-	ethereumHeight := k.GetLastObservedEthereumBlockHeight(ctx).EthereumBlockHeight
+	ethereumHeight := k.GetLastObservedEthereumBlockHeight(ctx, types.GravityContractNonce).EthereumBlockHeight
 	calls := k.GetOutgoingLogicCalls(ctx)
 	for _, call := range calls {
 		if call.Timeout < ethereumHeight {

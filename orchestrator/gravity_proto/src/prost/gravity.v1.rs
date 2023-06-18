@@ -1661,6 +1661,16 @@ pub struct QueryLastObservedEthBlockResponse {
     #[prost(uint64, tag="1")]
     pub block: u64,
 }
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct QueryLastObservedErc721EthBlockRequest {
+}
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct QueryLastObservedErc721EthBlockResponse {
+    /// a response of 0 indicates that no Ethereum events have been observed, and thus
+    /// the bridge is inactive
+    #[prost(uint64, tag="1")]
+    pub block: u64,
+}
 /// QueryLastObservedEthNonceRequest defines the request for getting the event nonce
 /// of the last applied Ethereum Event on the bridge.
 /// Note that this is likely to lag the last executed event a little
@@ -2302,6 +2312,30 @@ pub mod query_client {
             let codec = tonic::codec::ProstCodec::default();
             let path = http::uri::PathAndQuery::from_static(
                 "/gravity.v1.Query/GetLastObservedEthBlock",
+            );
+            self.inner.unary(request.into_request(), path, codec).await
+        }
+        pub async fn get_last_observed_erc721_eth_block(
+            &mut self,
+            request: impl tonic::IntoRequest<
+                super::QueryLastObservedErc721EthBlockRequest,
+            >,
+        ) -> Result<
+            tonic::Response<super::QueryLastObservedErc721EthBlockResponse>,
+            tonic::Status,
+        > {
+            self.inner
+                .ready()
+                .await
+                .map_err(|e| {
+                    tonic::Status::new(
+                        tonic::Code::Unknown,
+                        format!("Service was not ready: {}", e.into()),
+                    )
+                })?;
+            let codec = tonic::codec::ProstCodec::default();
+            let path = http::uri::PathAndQuery::from_static(
+                "/gravity.v1.Query/GetLastObservedERC721EthBlock",
             );
             self.inner.unary(request.into_request(), path, codec).await
         }

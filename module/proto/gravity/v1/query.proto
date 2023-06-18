@@ -78,6 +78,9 @@ service Query {
   rpc GetLastObservedEthBlock(QueryLastObservedEthBlockRequest) returns (QueryLastObservedEthBlockResponse) {
     option (google.api.http).get = "/gravity/v1beta/query_last_observed_eth_block";
   }
+  rpc GetLastObservedERC721EthBlock(QueryLastObservedERC721EthBlockRequest) returns (QueryLastObservedERC721EthBlockResponse) {
+    option (google.api.http).get = "/gravity/v1beta/query_last_observed_eth_block";
+  }
   rpc GetLastObservedEthNonce(QueryLastObservedEthNonceRequest) returns (QueryLastObservedEthNonceResponse) {
     option (google.api.http).get = "/gravity/v1beta/query_last_observed_eth_nonce";
   }
@@ -245,6 +248,13 @@ message QueryLastObservedEthBlockRequest{
   bool use_v1_key = 1;
 }
 message QueryLastObservedEthBlockResponse{
+  // a response of 0 indicates that no Ethereum events have been observed, and thus
+  // the bridge is inactive
+  uint64 block = 1;
+}
+
+message QueryLastObservedERC721EthBlockRequest {}
+message QueryLastObservedERC721EthBlockResponse{
   // a response of 0 indicates that no Ethereum events have been observed, and thus
   // the bridge is inactive
   uint64 block = 1;

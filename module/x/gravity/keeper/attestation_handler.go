@@ -2,10 +2,11 @@ package keeper
 
 import (
 	"fmt"
-	"github.com/cosmos/cosmos-sdk/x/nft"
 	"math/big"
 	"strconv"
 	"strings"
+
+	"github.com/cosmos/cosmos-sdk/x/nft"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
@@ -308,7 +309,7 @@ func (a AttestationHandler) handleSendERC721ToCosmos(ctx sdk.Context, claim type
 		if err := ctx.EventManager().EmitTypedEvent(
 			&types.EventSendERC721ToCosmos{
 				Contract: claim.TokenContract,
-				ClassId: nftToken.ClassId,
+				ClassId:  nftToken.ClassId,
 				TokenId:  nftToken.Id,
 				Nonce:    strconv.Itoa(int(claim.GetEventNonce())),
 			},

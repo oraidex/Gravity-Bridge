@@ -130,12 +130,19 @@ func TestGetSetLastObservedEthereumBlockHeight(t *testing.T) {
 	ctx := input.Context
 
 	ethereumHeight := uint64(7654321)
+	erc721EthereumHeight := uint64(1234567)
 
-	require.NotPanics(t, func() { k.SetLastObservedEthereumBlockHeight(ctx, ethereumHeight) })
+	require.NotPanics(t, func() { k.SetLastObservedEthereumBlockHeight(ctx, ethereumHeight, types.GravityContractNonce) })
+	require.NotPanics(t, func() { k.SetLastObservedEthereumBlockHeight(ctx, erc721EthereumHeight, types.ERC721ContractNonce) })
 
-	ethHeight := k.GetLastObservedEthereumBlockHeight(ctx)
+	ethHeight := k.GetLastObservedEthereumBlockHeight(ctx, types.GravityContractNonce)
 	require.Equal(t, uint64(ctx.BlockHeight()), ethHeight.CosmosBlockHeight)
 	require.Equal(t, ethereumHeight, ethHeight.EthereumBlockHeight)
+
+	erc721EthHeight := k.GetLastObservedEthereumBlockHeight(ctx, types.ERC721ContractNonce)
+	require.Equal(t, uint64(ctx.BlockHeight()), erc721EthHeight.CosmosBlockHeight)
+	require.Equal(t, erc721EthereumHeight, erc721EthHeight.EthereumBlockHeight)
+
 }
 
 func TestGetSetLastObservedValset(t *testing.T) {
@@ -206,7 +213,7 @@ func TestInvalidHeight(t *testing.T) {
 	sender := AccAddrs[0]
 	receiver := EthAddrs[0]
 	lastNonce := pk.GetLastObservedEventNonce(ctx, types.GravityContractNonce)
-	lastEthHeight := pk.GetLastObservedEthereumBlockHeight(ctx).EthereumBlockHeight
+	lastEthHeight := pk.GetLastObservedEthereumBlockHeight(ctx, types.ERC721ContractNonce).EthereumBlockHeight
 	lastBatchNonce := 0
 	tokenContract := "0x2260FAC5E5542a773Aa44fBCfeDf7C193bc2C599"
 	goodHeight := lastEthHeight + 1

@@ -11,6 +11,8 @@ use ethereum_gravity::send_erc721_to_cosmos::send_erc721_to_cosmos;
 use ethereum_gravity::utils::get_gravity_sol_address;
 use ethereum_gravity::utils::get_valset_nonce;
 use cosmos_gravity::query::get_erc721_attestations;
+use gravity_proto::nft::QueryNfTsRequest;
+use gravity_proto::nft::query_client::QueryClient as NftQueryClient;
 use gravity_proto::gravity::query_client::QueryClient as GravityQueryClient;
 use gravity_proto::gravity::MsgSendErc721ToCosmosClaim;
 use tonic::transport::Channel;
@@ -26,6 +28,7 @@ use web30::types::SendTxOption;
 pub async fn erc721_happy_path_test(
     web30: &Web3,
     grpc_client: GravityQueryClient<Channel>,
+    cosmos_node_grpc: String,
     contact: &Contact,
     keys: Vec<ValidatorKeys>,
     gravity_address: EthAddress,
@@ -72,6 +75,7 @@ pub async fn erc721_happy_path_test(
         test_erc721_deposit_panic(
             web30,
             &mut grpc_client,
+            cosmos_node_grpc.clone(),
             contact,
             user_keys.cosmos_address,
             gravity_address,
@@ -99,6 +103,7 @@ pub async fn erc721_happy_path_test(
 pub async fn test_erc721_deposit_panic(
     web30: &Web3,
     grpc_client: &mut GravityQueryClient<Channel>,
+    cosmos_node_grpc: String,
     contact: &Contact,
     dest: CosmosAddress,
     gravity_address: EthAddress,
@@ -110,6 +115,7 @@ pub async fn test_erc721_deposit_panic(
     match test_erc721_deposit_result(
         web30,
         grpc_client,
+        cosmos_node_grpc,
         contact,
         dest,
         gravity_address,
@@ -134,6 +140,7 @@ pub async fn test_erc721_deposit_panic(
 pub async fn test_erc721_deposit_result(
     web30: &Web3,
     grpc_client: &mut GravityQueryClient<Channel>,
+    cosmos_node_grpc: String,
     contact: &Contact,
     dest: CosmosAddress,
     gravity_address: EthAddress,
@@ -185,17 +192,48 @@ pub async fn test_erc721_deposit_result(
         Some(w) => w,
         None => TOTAL_TIMEOUT,
     };
+
+
+    let mut grpc_nft_client = NftQueryClient::connect(cosmos_node_grpc)
+        .await
+        .unwrap();
+
     while Instant::now() - start < duration {
         // in this while loop wait for owner to change OR wait for event to fire
-        let owner = web30
-            .get_erc721_owner_of(erc721_address, *MINER_ADDRESS, token_id.clone())
-            .await;
+        info!("Trying to get owner of token_class {} and token_id {} from Cosmos", format!("{}{}", "gravityerc721", erc721_address), token_id.clone());
+        let res = grpc_nft_client
+        .nf_ts(QueryNfTsRequest {
+            class_id: format!("{}{}", "gravityerc721", erc721_address),
+            owner: dest.to_string(),
+            pagination: None,
+        })
+        .await;
 
-        if owner.unwrap() == gravityerc721_address {
+        if res.is_err() {
+            error!("Failed to get nfts of token_class {} from Cosmos. Retrying...", format!("{}{}", "gravityerc721", erc721_address));
+            contact.wait_for_next_block(TOTAL_TIMEOUT).await.unwrap();
+            continue;
+        }
+
+        let nfts = res.unwrap().into_inner().nfts;
+        if nfts.len() == 0 {
+            error!("No NFTs found for token_class {} from Cosmos. Retrying...", format!("{}{}", "gravityerc721", erc721_address));
+            contact.wait_for_next_block(TOTAL_TIMEOUT).await.unwrap();
+            continue;
+        }
+        let mut nft_found = false;
+        for nft in nfts {
+            if nft.id == token_id.to_string() {
+                nft_found = true;
+                break;
+            }
+        }
+
+        if nft_found {
             info!(
-                "Successfully moved token_id {} to GravityERC721 {}",
+                "Successfully moved token_id {} to {}",
                 token_id.clone(),
-                gravityerc721_address
+                dest.to_string()
             );
             return Ok(());
         }
