@@ -74,11 +74,6 @@ func RegisterUpgradeHandlers(
 		singlestep.GetUpgradeHandler(mm, configurator, crisisKeeper),
 	)
 
-	upgradeKeeper.SetUpgradeHandler(
-		orion.PleiadesPart2ToOrionPlanName,
-		orion.GetOrionUpgradeHandler(mm, configurator, crisisKeeper),
-	)
-
 	// Orion upgrade handler
 	upgradeKeeper.SetUpgradeHandler(
 		orion.PleiadesPart2ToOrionPlanName,
