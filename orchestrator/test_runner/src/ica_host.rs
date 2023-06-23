@@ -2,6 +2,7 @@ use std::str::FromStr;
 /// Tests basic interchain accounts functionality
 use std::time::{Duration, Instant};
 
+use cosmos_gravity::proposals::submit_parameter_change_proposal;
 use cosmos_gravity::send::MSG_SEND_TO_ETH_TYPE_URL;
 use cosmos_gravity::utils::get_reasonable_send_to_eth_fee;
 use deep_space::error::CosmosGrpcError;
@@ -31,7 +32,9 @@ use crate::airdrop_proposal::wait_for_proposals_to_execute;
 use crate::happy_path_v2::deploy_cosmos_representing_erc20_and_check_adoption;
 use crate::ibc_auto_forward::get_channel;
 use crate::utils::{footoken_metadata, get_erc20_balance_safe, vote_yes_on_proposals};
-use crate::{get_fee, IBC_STAKING_TOKEN, OPERATION_TIMEOUT, STAKING_TOKEN, TOTAL_TIMEOUT};
+use crate::{
+    get_fee, EVM_CHAIN_PREFIX, IBC_STAKING_TOKEN, OPERATION_TIMEOUT, STAKING_TOKEN, TOTAL_TIMEOUT,
+};
 use crate::{
     get_ibc_chain_id,
     utils::{create_default_test_config, start_orchestrators, ValidatorKeys},
@@ -121,6 +124,7 @@ pub async fn ica_host_happy_path(
     let footoken = footoken_metadata(gravity_contact).await;
     let footoken_deployed = grpc_client
         .denom_to_erc20(QueryDenomToErc20Request {
+            evm_chain_prefix: EVM_CHAIN_PREFIX.to_string(),
             denom: footoken.base.clone(),
         })
         .await;
@@ -325,32 +329,32 @@ pub async fn enable_ica_host(
         amount: 0u8.into(),
         denom: STAKING_TOKEN.clone(),
     };
-    let res = contact
-        .submit_parameter_change_proposal(
-            ParameterChangeProposal {
-                title: "Enable ICA Host".to_string(),
-                description: "Enable ICA Host".to_string(),
-                changes: vec![
-                    // subspace defined at ibc-go/modules/apps/27-interchain-accounts/host/types/keys.go
-                    // keys defined at     ibc-go/modules/apps/27-interchain-accounts/host/types/params.go
-                    ParamChange {
-                        subspace: "icahost".to_string(),
-                        key: "HostEnabled".to_string(),
-                        value: "true".to_string(),
-                    },
-                    ParamChange {
-                        subspace: "icahost".to_string(),
-                        key: "AllowMessages".to_string(),
-                        value: "[\"*\"]".to_string(),
-                    },
-                ],
-            },
-            deposit,
-            fee,
-            keys[0].validator_key,
-            Some(OPERATION_TIMEOUT),
-        )
-        .await;
+    let res = submit_parameter_change_proposal(
+        ParameterChangeProposal {
+            title: "Enable ICA Host".to_string(),
+            description: "Enable ICA Host".to_string(),
+            changes: vec![
+                // subspace defined at ibc-go/modules/apps/27-interchain-accounts/host/types/keys.go
+                // keys defined at     ibc-go/modules/apps/27-interchain-accounts/host/types/params.go
+                ParamChange {
+                    subspace: "icahost".to_string(),
+                    key: "HostEnabled".to_string(),
+                    value: "true".to_string(),
+                },
+                ParamChange {
+                    subspace: "icahost".to_string(),
+                    key: "AllowMessages".to_string(),
+                    value: "[\"*\"]".to_string(),
+                },
+            ],
+        },
+        deposit,
+        fee,
+        &contact,
+        keys[0].validator_key,
+        Some(OPERATION_TIMEOUT),
+    )
+    .await;
     vote_yes_on_proposals(contact, keys, None).await;
     wait_for_proposals_to_execute(contact).await;
     trace!("Gov proposal executed with {:?}", res);
@@ -386,27 +390,27 @@ pub async fn enable_ica_controller(
         amount: 0u8.into(),
         denom: STAKING_TOKEN.clone(),
     };
-    let res = contact
-        .submit_parameter_change_proposal(
-            ParameterChangeProposal {
-                title: "Enable ICA Controller".to_string(),
-                description: "Enable ICA Controller".to_string(),
-                changes: vec![
-                    // subspace defined at ibc-go/modules/apps/27-interchain-accounts/controller/types/keys.go
-                    // keys defined at     ibc-go/modules/apps/27-interchain-accounts/controller/types/params.go
-                    ParamChange {
-                        subspace: "icacontroller".to_string(),
-                        key: "icacontroller".to_string(),
-                        value: "true".to_string(),
-                    },
-                ],
-            },
-            deposit,
-            fee,
-            keys[0].validator_key,
-            Some(OPERATION_TIMEOUT),
-        )
-        .await;
+    let res = submit_parameter_change_proposal(
+        ParameterChangeProposal {
+            title: "Enable ICA Controller".to_string(),
+            description: "Enable ICA Controller".to_string(),
+            changes: vec![
+                // subspace defined at ibc-go/modules/apps/27-interchain-accounts/controller/types/keys.go
+                // keys defined at     ibc-go/modules/apps/27-interchain-accounts/controller/types/params.go
+                ParamChange {
+                    subspace: "icacontroller".to_string(),
+                    key: "icacontroller".to_string(),
+                    value: "true".to_string(),
+                },
+            ],
+        },
+        deposit,
+        fee,
+        &contact,
+        keys[0].validator_key,
+        Some(OPERATION_TIMEOUT),
+    )
+    .await;
     vote_yes_on_proposals(contact, keys, None).await;
     wait_for_proposals_to_execute(contact).await;
     trace!("Gov proposal executed with {:?}", res);
@@ -533,6 +537,7 @@ pub async fn send_to_eth_via_ica(
     }
 
     let msg_send_to_eth = MsgSendToEth {
+        evm_chain_prefix: EVM_CHAIN_PREFIX.to_string(),
         sender: ica_address.to_string(),
         eth_dest: destination.to_string(),
         amount: Some(amount.into()),

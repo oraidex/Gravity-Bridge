@@ -307,6 +307,15 @@ pub async fn main() {
     // RUN_ORCH_ONLY runs only the orchestrators, for local testing where you want the chain to just run.
     let test_type = env::var("TEST_TYPE");
     info!("Starting tests with {:?}", test_type);
+
+    // 300s timeout contact instead of 30s
+    let contact = Contact::new(
+        COSMOS_NODE_GRPC.as_str(),
+        TOTAL_TIMEOUT,
+        ADDRESS_PREFIX.as_str(),
+    )
+    .unwrap();
+
     if let Ok(test_type) = test_type {
         if test_type == "VALIDATOR_OUT" {
             info!("Starting Validator out test");
@@ -322,13 +331,6 @@ pub async fn main() {
             .await;
             return;
         } else if test_type == "BATCH_STRESS" {
-            // 300s timeout contact instead of 30s
-            let contact = Contact::new(
-                COSMOS_NODE_GRPC.as_str(),
-                TOTAL_TIMEOUT,
-                ADDRESS_PREFIX.as_str(),
-            )
-            .unwrap();
             batch_stress_test(
                 &web30,
                 &contact,
@@ -614,6 +616,15 @@ pub async fn main() {
                 &web30,
                 grpc,
                 &contact,
+                &ibc_contact,
+                keys,
+                ibc_keys,
+                gravity_address,
+                erc20_addresses,
+                vulnerable_erc20,
+            )
+            .await;
+            return;
         } else if test_type == "ICA_HOST_HAPPY_PATH" {
             info!("Starting Interchain Accounts Host Module Happy Path Test");
             ica_host_happy_path(
@@ -624,8 +635,6 @@ pub async fn main() {
                 keys,
                 ibc_keys,
                 gravity_address,
-                erc20_addresses,
-                vulnerable_erc20,
             )
             .await;
             return;
