@@ -3,7 +3,7 @@ use crate::utils::TIMEOUT;
 use clarity::Address as EthAddress;
 use cosmos_gravity::query::{
     get_gravity_params, get_latest_transaction_batches, get_pending_batch_fees,
-    get_transaction_batch_signatures,
+    get_transaction_batch_signatures, query_evm_chain_from_net_version,
 };
 use cosmos_gravity::send::send_request_batch;
 use ethereum_gravity::message_signatures::encode_tx_batch_confirm_hashed;
@@ -11,6 +11,7 @@ use ethereum_gravity::submit_batch::send_eth_transaction_batch;
 use gravity_proto::gravity::query_client::QueryClient;
 use gravity_proto::gravity::{QueryDenomToErc20Request, QueryErc20ToDenomRequest};
 use gravity_utils::connection_prep::{check_for_eth, create_rpc_connections};
+use gravity_utils::get_with_retry::get_net_version_with_retry;
 use gravity_utils::types::TransactionBatch;
 use relayer::find_latest_valset::find_latest_valset;
 use std::process::exit;
@@ -31,13 +32,33 @@ pub async fn spot_relay(args: SpotRelayOpts, address_prefix: String) {
     let ethereum_public_key = ethereum_key.to_address();
     check_for_eth(ethereum_public_key, &web3).await;
 
-    let params = get_gravity_params(&mut grpc).await.unwrap();
-    let gravity_id = params.gravity_id;
+    let params = get_gravity_params(&mut grpc)
+        .await
+        .expect("Failed to get Gravity Bridge module parameters!");
+
+    let net_version = get_net_version_with_retry(&web3).await;
+
+    // get correct evm_chain from rpc by querying net_id
+    let evm_chain_prefix = match query_evm_chain_from_net_version(&mut grpc, net_version).await {
+        Some(evm_chain) => evm_chain.evm_chain_prefix,
+        None => {
+            error!("Could not find the matching net version of evm chains on the network. Network from eth-rpc: {}", net_version);
+            return;
+        }
+    };
+
+    let evm_chain_params = params
+        .evm_chain_params
+        .iter()
+        .find(|p| p.evm_chain_prefix.eq(&evm_chain_prefix))
+        .expect("Failed to get evm chain params");
+
+    let gravity_id = evm_chain_params.gravity_id.clone();
 
     let gravity_contract_address = if let Some(c) = args.gravity_contract_address {
         c
     } else {
-        let c = params.bridge_ethereum_address.parse();
+        let c = evm_chain_params.bridge_ethereum_address.parse();
         if c.is_err() {
             error!("The Gravity address is not yet set as a chain parameter! You must specify --gravity-contract-address");
             exit(1);
@@ -46,7 +67,8 @@ pub async fn spot_relay(args: SpotRelayOpts, address_prefix: String) {
     };
 
     // init complete, now we have to figure out what token the user has asked us to relay
-    let gravity_denom = user_token_name_to_gravity_token(args.token.clone(), &mut grpc).await;
+    let gravity_denom =
+        user_token_name_to_gravity_token(args.token.clone(), &mut grpc, &evm_chain_prefix).await;
     let gravity_denom = match gravity_denom {
         Some(gd) => gd,
         None => {
@@ -56,6 +78,7 @@ pub async fn spot_relay(args: SpotRelayOpts, address_prefix: String) {
     };
     let ethereum_erc20: EthAddress = grpc
         .denom_to_erc20(QueryDenomToErc20Request {
+            evm_chain_prefix: evm_chain_prefix.to_string(),
             denom: gravity_denom.clone(),
         })
         .await
@@ -68,7 +91,7 @@ pub async fn spot_relay(args: SpotRelayOpts, address_prefix: String) {
     // first we check if there's an active not timed out batch waiting
 
     let latest_eth_height = web3.eth_block_number().await.unwrap();
-    let latest_batches = get_latest_transaction_batches(&mut grpc)
+    let latest_batches = get_latest_transaction_batches(&mut grpc, &evm_chain_prefix)
         .await
         .expect("Failed to get latest batches");
     // in theory there can be multiple valid batches for each token type of increasing profitability
@@ -97,14 +120,25 @@ pub async fn spot_relay(args: SpotRelayOpts, address_prefix: String) {
             return;
         }
         info!("Found pending batch {} for {}", batch.nonce, args.token);
-        let sigs = get_transaction_batch_signatures(&mut grpc, batch.nonce, ethereum_erc20)
-            .await
-            .expect("Failed to get sigs for batch!");
+        let sigs = get_transaction_batch_signatures(
+            &mut grpc,
+            &evm_chain_prefix,
+            batch.nonce,
+            ethereum_erc20,
+        )
+        .await
+        .expect("Failed to get sigs for batch!");
         if sigs.is_empty() {
             panic!("Failed to get sigs for batch");
         }
 
-        let current_valset = find_latest_valset(&mut grpc, gravity_contract_address, &web3).await;
+        let current_valset = find_latest_valset(
+            &mut grpc,
+            &evm_chain_prefix,
+            gravity_contract_address,
+            &web3,
+        )
+        .await;
         if current_valset.is_err() {
             error!("Could not get current valset! {:?}", current_valset);
             return;
@@ -145,7 +179,9 @@ pub async fn spot_relay(args: SpotRelayOpts, address_prefix: String) {
 
     // in this case there are no pending batches of this type we need to request a batch if possible
 
-    let batch_fees = get_pending_batch_fees(&mut grpc).await.unwrap();
+    let batch_fees = get_pending_batch_fees(&mut grpc, &evm_chain_prefix)
+        .await
+        .unwrap();
     let mut batch_to_reqeust = None;
     for potential_batch in batch_fees.batch_fees {
         let token: EthAddress = potential_batch.token.parse().unwrap();
@@ -160,6 +196,7 @@ pub async fn spot_relay(args: SpotRelayOpts, address_prefix: String) {
     if let Some(cosmos_key) = args.cosmos_phrase {
         info!("{} transactions for token type {} where found in the queue requesting a batch", args.token, btr.tx_count);
         let res = send_request_batch(
+            &evm_chain_prefix,
             cosmos_key,
             gravity_denom,
             None,
@@ -193,6 +230,7 @@ pub async fn spot_relay(args: SpotRelayOpts, address_prefix: String) {
 async fn user_token_name_to_gravity_token(
     user_provided_token_name: String,
     grpc: &mut QueryClient<Channel>,
+    evm_chain_prefix: &str,
 ) -> Option<String> {
     // the token we are actually relaying after decoding, this is the name on the Gravity side
     let mut token_to_relay = None;
@@ -202,6 +240,7 @@ async fn user_token_name_to_gravity_token(
         let eth_address: EthAddress = eth_address;
         let denom = grpc
             .erc20_to_denom(QueryErc20ToDenomRequest {
+                evm_chain_prefix: evm_chain_prefix.to_string(),
                 erc20: eth_address.to_string(),
             })
             .await

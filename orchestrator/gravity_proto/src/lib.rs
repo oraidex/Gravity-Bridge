@@ -9,3 +9,18 @@ pub mod gravity {
     include!("prost/gravity.v1.rs");
     include!("ethereum_claim.rs");
 }
+
+pub mod gravity_test {
+    pub mod gaia {
+        pub mod globalfee {
+            pub mod v1beta1 {
+                include!("prost/gaia.globalfee.v1beta1.rs");
+            }
+        }
+        pub mod icaauth {
+            pub mod v1 {
+                include!("prost/gaia.icaauth.v1.rs");
+            }
+        }
+    }
+}

@@ -1,5 +1,3 @@
-
-
 /// A mirror of the EthereumClaim interface on the Go side
 /// EthereumClaim represents a claim on ethereum state
 pub trait EthereumClaim {

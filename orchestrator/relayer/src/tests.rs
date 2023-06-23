@@ -12,6 +12,7 @@ use crate::{
 use std::env;
 
 #[test]
+#[ignore]
 fn test_get_latest_valset_nonce() {
     let runner = System::new();
     let web3 = Web3::new("https://api.trongrid.io/jsonrpc", Duration::from_secs(30));
@@ -29,6 +30,7 @@ fn test_get_latest_valset_nonce() {
 }
 
 #[test]
+#[ignore]
 fn test_get_gravity_id() {
     let runner = System::new();
     let web3 = Web3::new("https://api.trongrid.io/jsonrpc", Duration::from_secs(30));
@@ -43,6 +45,7 @@ fn test_get_gravity_id() {
 }
 
 #[test]
+#[ignore]
 fn test_compare_valset_hash_bsc_network() {
     let runner = System::new();
     let web3 = Web3::new("https://bsc-dataseed.binance.org", Duration::from_secs(30));
@@ -76,6 +79,7 @@ fn test_compare_valset_hash_bsc_network() {
 }
 
 #[test]
+#[ignore]
 fn test_compare_checkpoint_hash_tron_network() {
     let runner = System::new();
     let web3 = Web3::new("https://api.trongrid.io/jsonrpc", Duration::from_secs(30));
