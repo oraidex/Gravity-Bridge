@@ -31,6 +31,7 @@ import (
 	"github.com/cosmos/cosmos-sdk/server/config"
 	servertypes "github.com/cosmos/cosmos-sdk/server/types"
 	"github.com/cosmos/cosmos-sdk/simapp"
+	storetypes "github.com/cosmos/cosmos-sdk/store/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/module"
 	"github.com/cosmos/cosmos-sdk/version"
@@ -565,7 +566,11 @@ func NewGravityApp(
 	)
 	app.govKeeper = &govKeeper
 
-	ibcTransferIBCModule := transfer.NewIBCModule(ibcTransferKeeper)
+	ibcTransferAppModule := transfer.NewAppModule(ibcTransferKeeper)
+
+	// create IBC module from top to bottom of stack
+	var ibcTransferIBCModule porttypes.IBCModule
+	ibcTransferIBCModule = transfer.NewIBCModule(ibcTransferKeeper)
 	ibcTransferIBCModule = gravity.NewIBCMiddleware(ibcTransferIBCModule, *app.gravityKeeper)
 	icaAppModule := ica.NewAppModule(nil, &icaHostKeeper)
 	icaHostIBCModule := icahost.NewIBCModule(icaHostKeeper)
@@ -657,7 +662,7 @@ func NewGravityApp(
 		evidence.NewAppModule(evidenceKeeper),
 		ibc.NewAppModule(&ibcKeeper),
 		params.NewAppModule(paramsKeeper),
-		ibcTransferIBCModule,
+		ibcTransferAppModule,
 		gravity.NewAppModule(
 			gravityKeeper,
 			bankKeeper,
@@ -757,7 +762,7 @@ func NewGravityApp(
 		params.NewAppModule(paramsKeeper),
 		evidence.NewAppModule(evidenceKeeper),
 		ibc.NewAppModule(&ibcKeeper),
-		ibcTransferIBCModule,
+		ibcTransferAppModule,
 	)
 	app.sm = &sm
 
