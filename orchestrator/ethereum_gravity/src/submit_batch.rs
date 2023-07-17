@@ -1,6 +1,6 @@
 use crate::message_signatures::encode_tx_batch_confirm_hashed;
 use crate::utils::{encode_valset_struct, get_tx_batch_nonce, GasCost};
-use clarity::abi::{encode_call, Token};
+use clarity::abi::{encode_call, AbiToken as Token};
 use clarity::PrivateKey as EthPrivateKey;
 use clarity::Uint256;
 use gravity_utils::error::GravityError;

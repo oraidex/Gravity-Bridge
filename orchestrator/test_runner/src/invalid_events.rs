@@ -14,7 +14,7 @@ use crate::utils::ValidatorKeys;
 use crate::MINER_ADDRESS;
 use crate::MINER_PRIVATE_KEY;
 use crate::TOTAL_TIMEOUT;
-use clarity::abi::Token;
+use clarity::abi::AbiToken as Token;
 use clarity::Address;
 use deep_space::Contact;
 use ethereum_gravity::send_to_cosmos::SEND_TO_COSMOS_GAS_LIMIT;

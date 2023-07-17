@@ -147,7 +147,7 @@ async fn setup_batch_test(
     let dest_cosmos_address = dest_cosmos_private_key
         .to_address(ADDRESS_PREFIX.as_str())
         .unwrap();
-    let dest_eth_private_key = EthPrivateKey::from_slice(&secret).unwrap();
+    let dest_eth_private_key = EthPrivateKey::from_bytes(secret).unwrap();
     let dest_eth_address = dest_eth_private_key.to_address();
 
     // Send the generated address 300 dai from ethereum to cosmos

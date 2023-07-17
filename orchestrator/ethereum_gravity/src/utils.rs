@@ -6,7 +6,7 @@ use clarity::abi::encode_call;
 use clarity::PrivateKey;
 
 use clarity::Uint256;
-use clarity::{abi::Token, constants::zero_address};
+use clarity::{abi::AbiToken as Token, constants::zero_address};
 use deep_space::error::CosmosGrpcError;
 use futures::future::join_all;
 use gravity_utils::error::GravityError;
@@ -393,7 +393,7 @@ mod test {
     #[test]
     fn encode_tokens() {
         let evm_addr = EthAddress::from_str("0xf2846a1E4dAFaeA38C1660a618277d67605bd2B5").unwrap();
-        let tokens = vec![clarity::abi::Token::Address(evm_addr)];
+        let tokens = vec![clarity::abi::AbiToken::Address(evm_addr)];
         let encoded1 = clarity::abi::encode_tokens(&tokens);
 
         let base58_addr = TronAddress::from_str("TY5X9ocQACH9YGAyiK3WUxLcLw3t2ethnc").unwrap();

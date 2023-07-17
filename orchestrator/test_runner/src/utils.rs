@@ -182,7 +182,7 @@ pub async fn send_eth_bulk(amount: Uint256, destinations: &[EthAddress], web3: &
         .unwrap();
     let mut transactions = Vec::new();
     for address in destinations {
-        let t = Transaction {
+        let t = Transaction::Legacy {
             to: *address,
             nonce,
             gas_price: HIGH_GAS_PRICE.into(),
@@ -197,7 +197,7 @@ pub async fn send_eth_bulk(amount: Uint256, destinations: &[EthAddress], web3: &
     }
     let mut sends = Vec::new();
     for tx in transactions {
-        sends.push(web3.eth_send_raw_transaction(tx.to_bytes().unwrap()));
+        sends.push(web3.eth_send_raw_transaction(tx.to_bytes()));
     }
     let txids = join_all(sends).await;
     wait_for_txids(txids, web3).await;
@@ -257,7 +257,7 @@ pub fn get_user_key(cosmos_prefix: Option<&str>) -> BridgeUserKey {
     let mut rng = rand::thread_rng();
     let secret: [u8; 32] = rng.gen();
     // the starting location of the funds
-    let eth_key = EthPrivateKey::from_slice(&secret).unwrap();
+    let eth_key = EthPrivateKey::from_bytes(secret).unwrap();
     let eth_address = eth_key.to_address();
     // the destination on cosmos that sends along to the final ethereum destination
     let cosmos_key = CosmosPrivateKey::from_secret(&secret);
@@ -265,7 +265,7 @@ pub fn get_user_key(cosmos_prefix: Option<&str>) -> BridgeUserKey {
     let mut rng = rand::thread_rng();
     let secret: [u8; 32] = rng.gen();
     // the final destination of the tokens back on Ethereum
-    let eth_dest_key = EthPrivateKey::from_slice(&secret).unwrap();
+    let eth_dest_key = EthPrivateKey::from_bytes(secret).unwrap();
     let eth_dest_address = eth_key.to_address();
     BridgeUserKey {
         eth_address,

@@ -3,7 +3,7 @@ use crate::error::GravityError;
 use crate::num_conversion::print_eth;
 use crate::prices::{get_dai_price, get_weth_price};
 use crate::types::erc20::Erc20Token;
-use clarity::abi::Token;
+use clarity::abi::AbiToken as Token;
 use clarity::{Signature as EthSignature, Uint256};
 use deep_space::Address as CosmosAddress;
 use log::LevelFilter;

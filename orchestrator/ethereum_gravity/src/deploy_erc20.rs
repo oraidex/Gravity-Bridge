@@ -2,7 +2,7 @@
 //! the event for this deployment is then ferried over to Cosmos where the validators will accept the ERC20 contract address
 //! as the representation of this asset on Ethereum
 
-use clarity::{abi::Token, Uint256};
+use clarity::{abi::AbiToken as Token, Uint256};
 use clarity::{Address, PrivateKey};
 use gravity_utils::error::GravityError;
 use std::time::Duration;

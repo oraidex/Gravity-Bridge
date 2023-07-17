@@ -681,6 +681,20 @@ dependencies = [
 ]
 
 [[package]]
+name = "clarity"
+version = "1.2.3"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "40a212766da516c900407d799b70635c79d6c1ca95f85a545f1edad10e197542"
+dependencies = [
+ "num-traits",
+ "num256",
+ "secp256k1 0.27.0",
+ "serde",
+ "serde_derive",
+ "sha3",
+]
+
+[[package]]
 name = "const-oid"
 version = "0.9.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -736,7 +750,7 @@ version = "0.1.0"
 dependencies = [
  "actix",
  "bytes",
- "clarity",
+ "clarity 1.2.3",
  "deep_space",
  "ethereum_gravity",
  "futures",
@@ -886,7 +900,7 @@ dependencies = [
  "base64 0.13.1",
  "bech32",
  "bytes",
- "clarity",
+ "clarity 0.7.0",
  "cosmos-sdk-proto-althea",
  "hmac",
  "log",
@@ -1177,7 +1191,7 @@ name = "ethereum_gravity"
 version = "0.1.0"
 dependencies = [
  "actix",
- "clarity",
+ "clarity 1.2.3",
  "deep_space",
  "ethabi",
  "futures",
@@ -1390,7 +1404,7 @@ version = "1.10.0"
 dependencies = [
  "actix-rt",
  "clap",
- "clarity",
+ "clarity 1.2.3",
  "cosmos_gravity",
  "deep_space",
  "dirs",
@@ -1462,7 +1476,7 @@ name = "gravity_utils"
 version = "0.1.0"
 dependencies = [
  "actix",
- "clarity",
+ "clarity 1.2.3",
  "deep_space",
  "env_logger",
  "futures",
@@ -1581,7 +1595,7 @@ checksum = "95505c38b4572b2d910cecb0281560f54b440a19336cbbcb27bf6ce6adc6f5a8"
 [[package]]
 name = "heliosphere"
 version = "0.2.0"
-source = "git+https://github.com/oraichain/heliosphere.git?rev=e5c81d0#e5c81d0230f81f649a005382f1ca4ed869ba75a6"
+source = "git+https://github.com/oraichain/heliosphere.git?rev=2d68eb7#2d68eb734003d8148a6ce50b8e1a152e741a5ec5"
 dependencies = [
  "awc",
  "heliosphere-core",
@@ -1596,10 +1610,10 @@ dependencies = [
 [[package]]
 name = "heliosphere-core"
 version = "0.2.0"
-source = "git+https://github.com/oraichain/heliosphere.git?rev=e5c81d0#e5c81d0230f81f649a005382f1ca4ed869ba75a6"
+source = "git+https://github.com/oraichain/heliosphere.git?rev=2d68eb7#2d68eb734003d8148a6ce50b8e1a152e741a5ec5"
 dependencies = [
  "bs58",
- "clarity",
+ "clarity 1.2.3",
  "derive-new",
  "ethabi",
  "hex",
@@ -1611,7 +1625,7 @@ dependencies = [
 [[package]]
 name = "heliosphere-signer"
 version = "0.2.0"
-source = "git+https://github.com/oraichain/heliosphere.git?rev=e5c81d0#e5c81d0230f81f649a005382f1ca4ed869ba75a6"
+source = "git+https://github.com/oraichain/heliosphere.git?rev=2d68eb7#2d68eb734003d8148a6ce50b8e1a152e741a5ec5"
 dependencies = [
  "heliosphere-core",
  "hex",
@@ -2394,7 +2408,7 @@ name = "orchestrator"
 version = "0.4.3"
 dependencies = [
  "actix-rt",
- "clarity",
+ "clarity 1.2.3",
  "cosmos_gravity",
  "deep_space",
  "docopt",
@@ -2885,7 +2899,7 @@ version = "0.4.3"
 dependencies = [
  "actix",
  "actix-rt",
- "clarity",
+ "clarity 1.2.3",
  "cosmos_gravity",
  "deep_space",
  "docopt",
@@ -3264,6 +3278,15 @@ name = "secp256k1"
 version = "0.26.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "4124a35fe33ae14259c490fd70fa199a32b9ce9502f2ee6bc4f81ec06fa65894"
+dependencies = [
+ "secp256k1-sys 0.8.1",
+]
+
+[[package]]
+name = "secp256k1"
+version = "0.27.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "25996b82292a7a57ed3508f052cfff8640d38d32018784acd714758b43da9c8f"
 dependencies = [
  "secp256k1-sys 0.8.1",
 ]
@@ -3775,7 +3798,7 @@ dependencies = [
  "actix",
  "actix-rt",
  "bytes",
- "clarity",
+ "clarity 1.2.3",
  "cosmos_gravity",
  "deep_space",
  "docopt",
@@ -4374,10 +4397,10 @@ dependencies = [
 [[package]]
 name = "web30"
 version = "0.23.1"
-source = "git+https://github.com/oraichain/web30.git?rev=12ccc2b#12ccc2b7da4229bbac1d7a265d8efe918995b1a9"
+source = "git+https://github.com/oraichain/web30.git?rev=6a53621#6a5362127715d87caccf9def75cd5182a0c33216"
 dependencies = [
  "awc",
- "clarity",
+ "clarity 1.2.3",
  "futures",
  "heliosphere",
  "lazy_static",

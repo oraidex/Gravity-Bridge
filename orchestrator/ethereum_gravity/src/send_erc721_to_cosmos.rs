@@ -1,6 +1,6 @@
 //! Helper functions for sending tokens to Cosmos
 
-use clarity::abi::Token;
+use clarity::abi::AbiToken as Token;
 use clarity::PrivateKey as EthPrivateKey;
 use clarity::{Address, Uint256};
 use deep_space::address::Address as CosmosAddress;

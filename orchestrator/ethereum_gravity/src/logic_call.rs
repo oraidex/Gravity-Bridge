@@ -2,7 +2,7 @@ use crate::message_signatures::encode_logic_call_confirm_hashed;
 use crate::utils::{encode_valset_struct, get_logic_call_nonce, GasCost};
 use clarity::abi::encode_call;
 use clarity::Uint256;
-use clarity::{abi::Token, utils::bytes_to_hex_str, PrivateKey as EthPrivateKey};
+use clarity::{abi::AbiToken as Token, utils::bytes_to_hex_str, PrivateKey as EthPrivateKey};
 use gravity_utils::error::GravityError;
 use gravity_utils::types::*;
 use std::{cmp::min, time::Duration};
@@ -270,8 +270,8 @@ mod tests {
             invalidation_id,
             invalidation_nonce,
             ethereum_signer,
-            eth_signature: Signature {
-                v: 27u8.into(),
+            eth_signature: Signature::ModernSignature {
+                v: false,
                 r: Uint256::from_be_bytes(
                     &hex_str_to_bytes(
                         "0x324da548f6070e8c8d78b205f139138e263d4bad21751e437a7ef31bc53928a8",
