@@ -909,26 +909,25 @@ dependencies = [
 
 [[package]]
 name = "deep_space"
-version = "2.15.2"
-source = "git+https://github.com/oraichain/deep_space.git?rev=1044fcb#1044fcb8b9578f69076508649b3474778441959d"
+version = "2.21.2"
+source = "git+https://github.com/oraichain/deep_space.git?rev=311d302#311d3025c456c4490ba5b5f01d41c1c3bcbe5633"
 dependencies = [
- "base64 0.13.1",
+ "base64 0.21.2",
  "bech32",
  "bytes",
  "clarity",
  "cosmos-sdk-proto-althea",
  "hmac",
  "log",
- "num-bigint",
  "num-traits",
  "num256",
- "pbkdf2",
+ "pbkdf2 0.12.2",
  "prost",
  "prost-types",
  "rand",
  "ripemd",
  "rust_decimal",
- "secp256k1 0.24.3",
+ "secp256k1 0.27.0",
  "serde",
  "serde_derive",
  "serde_json",
@@ -2509,17 +2508,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "password-hash"
-version = "0.4.2"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "7676374caaee8a325c9e7a2ae557f216c5563a171d6997b0ef8a65af35147700"
-dependencies = [
- "base64ct",
- "rand_core 0.6.4",
- "subtle",
-]
-
-[[package]]
 name = "paste"
 version = "1.0.14"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -2532,9 +2520,16 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "83a0692ec44e4cf1ef28ca317f14f8f07da2d95ec3fa01f86e4467b725e60917"
 dependencies = [
  "digest 0.10.7",
+]
+
+[[package]]
+name = "pbkdf2"
+version = "0.12.2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "f8ed6a7761f76e3b9f92dfb0a60a6a6477c61024b775147ff0973a02653abaf2"
+dependencies = [
+ "digest 0.10.7",
  "hmac",
- "password-hash",
- "sha2 0.10.7",
 ]
 
 [[package]]
@@ -3906,7 +3901,7 @@ dependencies = [
  "anyhow",
  "hmac",
  "once_cell",
- "pbkdf2",
+ "pbkdf2 0.11.0",
  "rand",
  "rustc-hash",
  "sha2 0.10.7",
