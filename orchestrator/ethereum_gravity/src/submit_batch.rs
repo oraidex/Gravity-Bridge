@@ -107,6 +107,10 @@ pub async fn estimate_tx_batch_cost(
 ) -> Result<GasCost, GravityError> {
     let our_balance = web3.eth_get_balance(our_eth_address).await?;
     let our_nonce = web3.eth_get_transaction_count(our_eth_address).await?;
+    let chain_id = web3
+        .eth_chainid()
+        .await?
+        .expect("Failed to get chain id from ETH node?");
     let gas_limit = min((u64::MAX - 1).into(), our_balance);
     let gas_price = web3.eth_gas_price().await?;
     // increase the value by 20% without using floating point multiplication
@@ -114,11 +118,14 @@ pub async fn estimate_tx_batch_cost(
     let zero: Uint256 = 0u8.into();
     let tokens = tokens_batch_payload(current_valset, &batch, confirms, gravity_id)?;
     let val = web3
-        .eth_estimate_gas(TransactionRequest {
-            from: Some(our_eth_address),
+        .eth_estimate_gas(TransactionRequest::Eip1559 {
+            access_list: None,
+            chain_id: Some(chain_id.into()),
+            from: our_eth_address,
             to: gravity_contract_address,
             nonce: Some(our_nonce.into()),
-            gas_price: Some(gas_price.into()),
+            max_fee_per_gas: Some(gas_price.into()),
+            max_priority_fee_per_gas: None,
             gas: Some(gas_limit.into()),
             value: Some(zero.into()),
             data: Some(encode_call(SUBMIT_BATCH_SELECTOR, &tokens)?.into()),

@@ -23,8 +23,8 @@ pub async fn get_latest_valset_nonce(
 ) -> Result<u64, Web3Error> {
     let payload = encode_call("state_lastValsetNonce()", &[]).unwrap();
     let result = web3
-        .eth_call(TransactionRequest {
-            from: None,
+        .eth_call(TransactionRequest::Legacy {
+            from: gravity_contract_address,
             to: gravity_contract_address,
             gas: None,
             gas_price: None,
@@ -43,8 +43,8 @@ pub async fn get_gravity_id(
 ) -> Result<String, Web3Error> {
     let payload = encode_call("state_gravityId()", &[]).unwrap();
     let gravity_id_data = web3
-        .eth_call(TransactionRequest {
-            from: None,
+        .eth_call(TransactionRequest::Legacy {
+            from: gravity_contract_address,
             to: gravity_contract_address,
             gas: None,
             gas_price: None,
@@ -67,8 +67,8 @@ pub async fn get_eth_gravity_checkpoint(
     web3: &Web3,
 ) -> Result<Vec<u8>, Web3Error> {
     let payload = encode_call("state_lastValsetCheckpoint()", &[]).unwrap();
-    web3.eth_call(TransactionRequest {
-        from: None,
+    web3.eth_call(TransactionRequest::Legacy {
+        from: gravity_contract_address,
         to: gravity_contract_address,
         gas: None,
         gas_price: None,

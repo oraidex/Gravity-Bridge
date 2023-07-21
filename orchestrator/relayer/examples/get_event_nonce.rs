@@ -15,7 +15,7 @@ fn main() {
 
     runner.block_on(async move {
         let val = web3
-            .simulate_transaction(tron_addr.into(), 0u8.into(), payload, caller_address, None)
+            .simulate_transaction(tron_addr.into(), payload, caller_address, None)
             .await
             .unwrap();
 

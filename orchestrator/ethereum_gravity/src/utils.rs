@@ -26,7 +26,7 @@ pub async fn get_valset_nonce(
 ) -> Result<u64, Web3Error> {
     let payload = encode_call("state_lastValsetNonce()", &[]).unwrap();
     let val = web3
-        .simulate_transaction(contract_address, 0u8.into(), payload, caller_address, None)
+        .simulate_transaction(contract_address, payload, caller_address, None)
         .await?;
     // the go represents all nonces as u64, there's no
     // reason they should ever overflow without a user
@@ -46,13 +46,7 @@ pub async fn get_tx_batch_nonce(
 ) -> Result<u64, Web3Error> {
     let payload = encode_call("lastBatchNonce(address)", &[erc20_contract_address.into()]).unwrap();
     let val = web3
-        .simulate_transaction(
-            gravity_contract_address,
-            0u8.into(),
-            payload,
-            caller_address,
-            None,
-        )
+        .simulate_transaction(gravity_contract_address, payload, caller_address, None)
         .await?;
     // the go represents all nonces as u64, there's no
     // reason they should ever overflow without a user
@@ -75,14 +69,9 @@ pub async fn get_logic_call_nonce(
         &[Token::Bytes(invalidation_id)],
     )
     .unwrap();
+
     let val = web3
-        .simulate_transaction(
-            gravity_contract_address,
-            0u8.into(),
-            payload,
-            caller_address,
-            None,
-        )
+        .simulate_transaction(gravity_contract_address, payload, caller_address, None)
         .await?;
     // the go represents all nonces as u64, there's no
     // reason they should ever overflow without a user
@@ -101,13 +90,7 @@ pub async fn get_event_nonce(
 ) -> Result<u64, Web3Error> {
     let payload = encode_call("state_lastEventNonce()", &[]).unwrap();
     let val = web3
-        .simulate_transaction(
-            gravity_contract_address,
-            0u8.into(),
-            payload,
-            caller_address,
-            None,
-        )
+        .simulate_transaction(gravity_contract_address, payload, caller_address, None)
         .await?;
     // the go represents all nonces as u64, there's no
     // reason they should ever overflow without a user
@@ -126,7 +109,7 @@ pub async fn get_gravity_id(
 ) -> Result<String, Web3Error> {
     let payload = encode_call("state_gravityId()", &[]).unwrap();
     let val = web3
-        .simulate_transaction(contract_address, 0u8.into(), payload, caller_address, None)
+        .simulate_transaction(contract_address, payload, caller_address, None)
         .await?;
     let gravity_id = String::from_utf8(val);
     match gravity_id {
@@ -145,7 +128,7 @@ pub async fn get_gravity_sol_address(
 ) -> Result<EthAddress, Web3Error> {
     let payload = encode_call("state_gravitySolAddress()", &[]).unwrap();
     let val = web3
-        .simulate_transaction(contract_address, 0u8.into(), payload, caller_address, None)
+        .simulate_transaction(contract_address, payload, caller_address, None)
         .await?;
 
     let mut data: [u8; 20] = Default::default();

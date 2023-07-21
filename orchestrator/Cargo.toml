@@ -20,8 +20,8 @@ prost-types = "0.11"
 tonic = "0.8"
 tokio = "1.21"
 cosmos-sdk-proto = {git = "https://github.com/oraichain/cosmos-rust", rev = "19f3de7", package = "cosmos-sdk-proto-althea"}
-web30 = {git = "https://github.com/oraichain/web30.git", rev = "3eafd3f"}
-deep_space = {git ="https://github.com/oraichain/deep_space.git", rev = "7676bdd"}
+web30 = {git = "https://github.com/oraichain/web30.git", rev = "0a98bb0"}
+deep_space = {git ="https://github.com/oraichain/deep_space.git", rev = "1044fcb"}
 prometheus_exporter = {git="https://github.com/jkilpatr/prometheus_exporter", rev="c6a720a"}
 
 gravity_utils = { path = "./gravity_utils" }
@@ -31,6 +31,3 @@ gravity_proto = { path = "./gravity_proto" }
 relayer = { path = "./relayer" }
 orchestrator = { path = "./orchestrator" }
 metrics_exporter = { path = "./metrics_exporter" }
-
-
-

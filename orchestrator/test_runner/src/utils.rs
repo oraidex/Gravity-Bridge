@@ -124,10 +124,6 @@ pub fn get_coins(denom: &str, balances: &[Coin]) -> Option<Coin> {
     None
 }
 
-/// This is a hardcoded very high gas value used in transaction stress test to counteract rollercoaster
-/// gas prices due to the way that test fills blocks
-pub const HIGH_GAS_PRICE: u64 = 1_000_000_000u64;
-
 /// This function efficiently distributes ERC20 tokens to a large number of provided Ethereum addresses
 /// the real problem here is that you can't do more than one send operation at a time from a
 /// single address without your sequence getting out of whack. By manually setting the nonce
@@ -151,11 +147,7 @@ pub async fn send_erc20_bulk(
             erc20,
             *MINER_PRIVATE_KEY,
             Some(OPERATION_TIMEOUT),
-            vec![
-                SendTxOption::Nonce(nonce),
-                SendTxOption::GasLimit(100_000u32.into()),
-                SendTxOption::GasPriceMultiplier(5.0),
-            ],
+            vec![SendTxOption::Nonce(nonce)],
         );
         transactions.push(send);
         nonce += 1u64.into();
@@ -169,6 +161,10 @@ pub async fn send_erc20_bulk(
     }
     join_all(balance_checks).await;
 }
+
+/// This is a hardcoded very high gas value used in transaction stress test to counteract rollercoaster
+/// gas prices due to the way that test fills blocks
+pub const HIGH_GAS_PRICE: u64 = 1_000_000_000u64;
 
 /// This function efficiently distributes ETH to a large number of provided Ethereum addresses
 /// the real problem here is that you can't do more than one send operation at a time from a
