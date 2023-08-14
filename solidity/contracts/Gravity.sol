@@ -8,7 +8,6 @@ import "@openzeppelin/contracts/utils/Address.sol";
 // import "hardhat/console.sol";
 import "@openzeppelin/contracts/utils/cryptography/ECDSA.sol";
 import "./CosmosToken.sol";
-import "./IGravity.sol";
 
 error InvalidSignature();
 error InvalidValsetNonce(uint256 newNonce, uint256 currentNonce);
@@ -42,7 +41,30 @@ struct LogicCallArgs {
 	uint256 invalidationNonce;
 }
 
-contract Gravity is IGravity, ReentrancyGuard {
+// This is used purely to avoid stack too deep errors
+// represents everything about a given validator set
+struct ValsetArgs {
+	// the validators in this set, represented by an Ethereum address
+	address[] validators;
+	// the powers of the given validators in the same order as above
+	uint256[] powers;
+	// the nonce of this validator set
+	uint256 valsetNonce;
+	// the reward amount denominated in the below reward token, can be
+	// set to zero
+	uint256 rewardAmount;
+	// the reward token, should be set to the zero address if not being used
+	address rewardToken;
+}
+
+// This represents a validator signature
+struct Signature {
+	uint8 v;
+	bytes32 r;
+	bytes32 s;
+}
+
+contract Gravity is ReentrancyGuard {
 	using SafeERC20 for IERC20;
 
 	// The number of 'votes' required to execute a valset
