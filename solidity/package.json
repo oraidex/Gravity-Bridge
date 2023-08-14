@@ -1,8 +1,11 @@
 {
-  "name": "gravity-contracts",
-  "version": "1.0.0",
+  "name": "@oraichain/gravity-contracts",
+  "version": "1.0.1",
   "description": "",
   "main": "index.js",
+  "files": [
+    "contracts"
+  ],
   "scripts": {
     "evm": "npx hardhat node",
     "test": "npx hardhat test --network localhost",
