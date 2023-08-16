@@ -1,5 +1,5 @@
 //SPDX-License-Identifier: Apache-2.0
-pragma solidity 0.8.10;
+pragma solidity 0.8.16;
 import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 
 // A test ERC20 with a really bad method called steal which permissionlessly allows transfers from an account
@@ -17,10 +17,10 @@ contract VulnerableERC20 is ERC20 {
 	}
 
 	/**
-     *	Attepmts to transfer `amount` from `from` to `to`, bypassing the normal checks
+	 *	Attepmts to transfer `amount` from `from` to `to`, bypassing the normal checks
 	 *  essentially allowing anyone to steal funds from anyone else
-     */
-    function steal(address from, address to, uint256 amount) public {
-        _transfer(from, to, amount);
+	 */
+	function steal(address from, address to, uint256 amount) public {
+		_transfer(from, to, amount);
 	}
 }

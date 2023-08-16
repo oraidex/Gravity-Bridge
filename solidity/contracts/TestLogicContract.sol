@@ -1,5 +1,5 @@
 //SPDX-License-Identifier: Apache-2.0
-pragma solidity ^0.8.10;
+pragma solidity 0.8.16;
 
 import "hardhat/console.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
@@ -12,11 +12,7 @@ contract TestLogicContract is Ownable {
 		state_tokenContract = _tokenContract;
 	}
 
-	function transferTokens(
-		address _to,
-		uint256 _a,
-		uint256 _b
-	) public onlyOwner {
+	function transferTokens(address _to, uint256 _a, uint256 _b) public onlyOwner {
 		IERC20(state_tokenContract).transfer(_to, _a + _b);
 		console.log("Sent Tokens");
 	}

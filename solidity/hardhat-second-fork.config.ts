@@ -28,37 +28,42 @@ task("accounts", "Prints the list of accounts", async (args, hre) => {
 module.exports = {
   // This is a sample solc configuration that specifies which version of solc to use
   solidity: {
-    version: "0.8.10",
+    version: "0.8.16",
     settings: {
       optimizer: {
-        enabled: true
-      }
-    }
+        enabled: true,
+      },
+    },
   },
   networks: {
     hardhat: {
       chainId: 421,
-      accounts: [{ privateKey: "0xbbfb76c92cd13796899f63dc6ead6d2420e8d0bc502d42bd5773c2d4b8897f08", balance: "10000000000000000000000" }],
+      accounts: [
+        {
+          privateKey:
+            "0xbbfb76c92cd13796899f63dc6ead6d2420e8d0bc502d42bd5773c2d4b8897f08",
+          balance: "10000000000000000000000",
+        },
+      ],
       forking: {
         url: "https://1rpc.io/bnb",
-        blockNumber: 24882604
+        blockNumber: 24882604,
       },
       mining: {
         auto: false,
-        interval: 2000
-      }
-    }
-
+        interval: 2000,
+      },
+    },
   },
   typechain: {
     outDir: "typechain",
     target: "ethers-v5",
-    runOnCompile: true
+    runOnCompile: true,
   },
   gasReporter: {
-    enabled: true
+    enabled: true,
   },
   mocha: {
-    timeout: 2000000
-  }
+    timeout: 2000000,
+  },
 };
