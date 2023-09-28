@@ -12,7 +12,7 @@ PROJECTDIR=$BASEDIR/../..
 SOURCEDIR=$(realpath ${1:-$PROJECTDIR/tmp})
 
 COSMOS_SDK_DIR=${COSMOS_SDK_DIR:-$(go list -f "{{ .Dir }}" -m github.com/cosmos/cosmos-sdk)}
-IBC_DIR=${IBC_DIR:-$(go list -f "{{ .Dir }}" -m github.com/cosmos/ibc-go/v3)}
+IBC_DIR=${IBC_DIR:-$(go list -f "{{ .Dir }}" -m github.com/cosmos/ibc-go/v4)}
 
 # scan all folders that contain proto file
 proto_dirs=$(find $PROJECTDIR/proto $IBC_DIR/proto $COSMOS_SDK_DIR/proto $COSMOS_SDK_DIR/third_party/proto -path -prune -o -name '*.proto' -print0 | xargs -0 -n1 dirname | sort | uniq)
