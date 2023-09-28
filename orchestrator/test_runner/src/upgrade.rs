@@ -8,13 +8,13 @@ use gravity_proto::cosmos_sdk_proto::cosmos::bank::v1beta1::Metadata;
 use gravity_proto::gravity::query_client::{QueryClient as GravityQueryClient, QueryClient};
 use gravity_proto::gravity::{
     ClaimType, EthereumClaim, MsgBatchSendToEthClaim, MsgErc20DeployedClaim,
-    MsgLogicCallExecutedClaim, MsgSendToCosmosClaim, MsgValsetUpdatedClaim,
-    QueryAttestationsRequest,
+    MsgLogicCallExecutedClaim, MsgSendErc721ToCosmosClaim, MsgSendToCosmosClaim,
+    MsgValsetUpdatedClaim, QueryAttestationsRequest,
 };
 use gravity_utils::types::{
     MSG_BATCH_SEND_TO_ETH_TYPE_URL, MSG_ERC20_DEPLOYED_CLAIM_TYPE_URL,
-    MSG_LOGIC_CALL_EXECUTED_CLAIM_TYPE_URL, MSG_SEND_TO_COSMOS_CLAIM_TYPE_URL,
-    MSG_VALSET_UPDATED_CLAIM_TYPE_URL,
+    MSG_LOGIC_CALL_EXECUTED_CLAIM_TYPE_URL, MSG_SEND_ERC721_TO_COSMOS_CLAIM_TYPE_URL,
+    MSG_SEND_TO_COSMOS_CLAIM_TYPE_URL, MSG_VALSET_UPDATED_CLAIM_TYPE_URL,
 };
 use std::time::Duration;
 use tokio::time::sleep as delay_for;
@@ -26,6 +26,7 @@ use web30::EthAddress;
 const MINIMUM_ATTESTATIONS: u64 = 10;
 // Those attestations broken down by type
 const EXPECTED_SENDS_TO_COSMOS: u64 = 3;
+const EXPECTED_SENDS_ERC721_TO_COSMOS: u64 = 1;
 const EXPECTED_BATCHES: u64 = 2;
 const EXPECTED_ERC20S: u64 = 1;
 const EXPECTED_LOGIC_CALLS: u64 = 0;
@@ -46,6 +47,7 @@ pub async fn upgrade_part_1(
     keys: Vec<ValidatorKeys>,
     ibc_keys: Vec<CosmosPrivateKey>,
     gravity_address: EthAddress,
+    gravityerc721_address: EthAddress,
     erc20_addresses: Vec<EthAddress>,
 ) {
     info!("Starting upgrade test part 1");
@@ -63,6 +65,7 @@ pub async fn upgrade_part_1(
         grpc_client.clone(),
         keys.clone(),
         gravity_address,
+        gravityerc721_address,
         erc20_addresses.clone(),
         metadata.clone(),
     )
@@ -75,6 +78,7 @@ pub async fn upgrade_part_1(
         keys.clone(),
         ibc_keys.clone(),
         gravity_address,
+        gravityerc721_address,
         erc20_addresses.clone(),
         false,
     )
@@ -115,6 +119,7 @@ pub async fn upgrade_part_2(
     keys: Vec<ValidatorKeys>,
     ibc_keys: Vec<CosmosPrivateKey>,
     gravity_address: EthAddress,
+    gravityerc721_address: EthAddress,
     erc20_addresses: Vec<EthAddress>,
 ) {
     info!("Starting upgrade_part_2 test");
@@ -148,6 +153,7 @@ pub async fn upgrade_part_2(
         grpc_client.clone(),
         keys.clone(),
         gravity_address,
+        gravityerc721_address,
         erc20_addresses.clone(),
         metadata.clone(),
     )
@@ -160,6 +166,7 @@ pub async fn upgrade_part_2(
         keys.clone(),
         ibc_keys,
         gravity_address,
+        gravityerc721_address,
         erc20_addresses.clone(),
         true,
     )
@@ -222,6 +229,7 @@ pub async fn run_all_recoverable_tests(
     grpc_client: GravityQueryClient<Channel>,
     keys: Vec<ValidatorKeys>,
     gravity_address: EthAddress,
+    gravityerc721_address: EthAddress,
     erc20_addresses: Vec<EthAddress>,
     ibc_metadata: Metadata,
 ) {
@@ -232,6 +240,7 @@ pub async fn run_all_recoverable_tests(
         contact,
         keys.clone(),
         gravity_address,
+        gravityerc721_address,
         erc20_addresses[0],
         false,
     )
@@ -243,6 +252,7 @@ pub async fn run_all_recoverable_tests(
         contact,
         keys.clone(),
         gravity_address,
+        gravityerc721_address,
         false,
         Some(ibc_metadata),
     )
@@ -252,6 +262,7 @@ pub async fn run_all_recoverable_tests(
 // These tests should fail in upgrade_part_1() but pass in upgrade_part_2()
 #[allow(clippy::too_many_arguments)]
 pub async fn run_upgrade_specific_tests(
+<<<<<<< HEAD
     web30: &Web3,
     gravity_contact: &Contact,
     ibc_contact: &Contact,
@@ -259,6 +270,15 @@ pub async fn run_upgrade_specific_tests(
     keys: Vec<ValidatorKeys>,
     ibc_keys: Vec<CosmosPrivateKey>,
     gravity_address: EthAddress,
+=======
+    _web30: &Web3,
+    _contact: &Contact,
+    _grpc_client: GravityQueryClient<Channel>,
+    _keys: Vec<ValidatorKeys>,
+    _ibc_keys: Vec<CosmosPrivateKey>,
+    _gravity_address: EthAddress,
+    _gravityerc721_address: EthAddress,
+>>>>>>> 81057dc97ff3a6f3702fca99300ddbb3a7011770
     _erc20_addresses: Vec<EthAddress>,
     post_upgrade: bool,
 ) {
@@ -306,6 +326,7 @@ async fn check_attestations(grpc_client: QueryClient<Channel>, expected_attestat
         claims.push(unpack_and_print_claim_info(claim_any, i));
     }
     let mut sends_to_cosmos = 0;
+    let mut sends_erc721_to_cosmos = 0;
     let mut batches = 0;
     let mut erc20s_deployed = 0;
     let mut logic_calls = 0;
@@ -314,6 +335,7 @@ async fn check_attestations(grpc_client: QueryClient<Channel>, expected_attestat
         match claim.get_type() {
             ClaimType::Unspecified => panic!("Unexpected claim!"),
             ClaimType::SendToCosmos => sends_to_cosmos += 1,
+            ClaimType::SendErc721ToCosmos => sends_erc721_to_cosmos += 1,
             ClaimType::BatchSendToEth => batches += 1,
             ClaimType::Erc20Deployed => erc20s_deployed += 1,
             ClaimType::LogicCallExecuted => logic_calls += 1,
@@ -321,6 +343,7 @@ async fn check_attestations(grpc_client: QueryClient<Channel>, expected_attestat
         }
     }
     assert_eq!(sends_to_cosmos, EXPECTED_SENDS_TO_COSMOS);
+    assert_eq!(sends_erc721_to_cosmos, EXPECTED_SENDS_ERC721_TO_COSMOS);
     assert_eq!(batches, EXPECTED_BATCHES);
     assert_eq!(erc20s_deployed, EXPECTED_ERC20S);
     assert_eq!(logic_calls, EXPECTED_LOGIC_CALLS);
@@ -331,6 +354,15 @@ fn unpack_and_print_claim_info(claim_any: prost_types::Any, i: usize) -> Box<dyn
     let claim: Box<dyn EthereumClaim>;
     if claim_any.type_url == MSG_SEND_TO_COSMOS_CLAIM_TYPE_URL {
         claim = Box::new(decode_any::<MsgSendToCosmosClaim>(claim_any).unwrap());
+        info!(
+            "Claim {} is {} at height {} with nonce {}",
+            i,
+            claim.get_type().to_string(),
+            claim.get_eth_block_height(),
+            claim.get_event_nonce()
+        )
+    } else if claim_any.type_url == MSG_SEND_ERC721_TO_COSMOS_CLAIM_TYPE_URL {
+        claim = Box::new(decode_any::<MsgSendErc721ToCosmosClaim>(claim_any).unwrap());
         info!(
             "Claim {} is {} at height {} with nonce {}",
             i,

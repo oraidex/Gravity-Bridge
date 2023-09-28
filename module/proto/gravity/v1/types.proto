@@ -171,3 +171,12 @@ message BridgeBalanceSnapshot {
   repeated ERC20Token balances = 4;
   uint64 event_nonce = 5;
 }
+
+message PendingERC721IbcAutoForward {
+  string foreign_receiver = 1;         // the destination address. sdk.AccAddress does not preserve foreign prefixes
+  string class_id = 2;                 // the x/nft class id for the NFT token
+  string token_id = 3;                 // the token id of the ERC721 token
+  string ibc_channel = 4;              // the IBC channel to send the NFT over via nft-transfer module
+  uint64 event_nonce = 5;              // the EventNonce from the MsgSendERC721ToCosmosClaim, used for ordering the queue
+}
+

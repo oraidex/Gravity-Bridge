@@ -26,6 +26,7 @@ import (
 	"github.com/cosmos/cosmos-sdk/x/evidence"
 	"github.com/cosmos/cosmos-sdk/x/genutil"
 	"github.com/cosmos/cosmos-sdk/x/gov"
+	govclient "github.com/cosmos/cosmos-sdk/x/gov/client"
 	"github.com/cosmos/cosmos-sdk/x/mint"
 	"github.com/cosmos/cosmos-sdk/x/params"
 	paramsclient "github.com/cosmos/cosmos-sdk/x/params/client"
@@ -408,7 +409,11 @@ func TestMigrateAttestation(t *testing.T) {
 	require.NoError(t, err)
 
 	oldKeyEntry := store.Get(attestationOldKey)
+<<<<<<< HEAD
 	newKeyEntry := store.Get(types.GetAttestationKey(v3.EthereumChainPrefix, nonce, newClaimHash))
+=======
+	newKeyEntry := store.Get(types.GetAttestationKey(nonce, newClaimHash, types.GravityContractNonce))
+>>>>>>> 81057dc97ff3a6f3702fca99300ddbb3a7011770
 	// Check migration results:
 	require.Empty(t, oldKeyEntry)
 	require.NotEqual(t, oldKeyEntry, newKeyEntry)
@@ -488,7 +493,9 @@ var (
 		mint.AppModuleBasic{},
 		distribution.AppModuleBasic{},
 		gov.NewAppModuleBasic(
-			paramsclient.ProposalHandler, distrclient.ProposalHandler, upgradeclient.ProposalHandler, upgradeclient.CancelProposalHandler,
+			[]govclient.ProposalHandler{
+				paramsclient.ProposalHandler, distrclient.ProposalHandler, upgradeclient.LegacyProposalHandler, upgradeclient.LegacyCancelProposalHandler,
+			},
 		),
 		params.AppModuleBasic{},
 		crisis.AppModuleBasic{},

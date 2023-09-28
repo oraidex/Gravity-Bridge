@@ -16,7 +16,7 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
-	govtypes "github.com/cosmos/cosmos-sdk/x/gov/types"
+	govtypesv1beta1 "github.com/cosmos/cosmos-sdk/x/gov/types/v1beta1"
 
 	"github.com/Gravity-Bridge/Gravity-Bridge/module/x/gravity/keeper"
 	"github.com/Gravity-Bridge/Gravity-Bridge/module/x/gravity/types"
@@ -48,6 +48,7 @@ func GetTxCmd(storeKey string) *cobra.Command {
 		CmdExecutePendingIbcAutoForwards(),
 		CmdAddEvmChainProposal(),
 		CmdRemoveEvmChainProposal(),
+		CmdSendERC721ToCosmosClaim(),
 	}...)
 
 	return gravityTxCmd
@@ -136,7 +137,7 @@ func CmdGovIbcMetadataProposal() *cobra.Command {
 			}
 
 			// Make the message
-			msg := govtypes.MsgSubmitProposal{
+			msg := govtypesv1beta1.MsgSubmitProposal{
 				Proposer:       cosmosAddr.String(),
 				InitialDeposit: initialDeposit,
 				Content:        proposalAny,
@@ -228,7 +229,7 @@ func CmdGovAirdropProposal() *cobra.Command {
 			}
 
 			// Make the message
-			msg := govtypes.MsgSubmitProposal{
+			msg := govtypesv1beta1.MsgSubmitProposal{
 				Proposer:       cosmosAddr.String(),
 				InitialDeposit: initialDeposit,
 				Content:        proposalAny,
@@ -287,7 +288,7 @@ func CmdGovUnhaltBridgeProposal() *cobra.Command {
 			}
 
 			// Make the message
-			msg := govtypes.MsgSubmitProposal{
+			msg := govtypesv1beta1.MsgSubmitProposal{
 				Proposer:       cosmosAddr.String(),
 				InitialDeposit: initialDeposit,
 				Content:        proposalAny,
@@ -587,6 +588,59 @@ func CmdExecutePendingIbcAutoForwards() *cobra.Command {
 				Executor:        cliCtx.GetFromAddress().String(),
 				EvmChainPrefix:  args[1],
 			}
+			if err := msg.ValidateBasic(); err != nil {
+				return err
+			}
+			// Send it
+			return tx.GenerateOrBroadcastTxCLI(cliCtx, cmd.Flags(), &msg)
+		},
+	}
+	flags.AddTxFlagsToCmd(cmd)
+	return cmd
+}
+
+func CmdSendERC721ToCosmosClaim() *cobra.Command {
+	// nolint: exhaustruct
+	cmd := &cobra.Command{
+		Use:   "send-erc721-to-cosmos-claim [event_nonce] [eth_block_height] [token_contract] [token_id] [token_uri] [ethereum_sender] [cosmos_receiver] [orchestrator]",
+		Short: "Make a MsgSendERC721ToCosmosClaim",
+		Args:  cobra.ExactArgs(8),
+		RunE: func(cmd *cobra.Command, args []string) error {
+			cliCtx, err := client.GetClientTxContext(cmd)
+			if err != nil {
+				return err
+			}
+			sender := cliCtx.GetFromAddress()
+			if sender.String() == "" {
+				return fmt.Errorf("from address must be specified")
+			}
+
+			eventNonce, err := strconv.ParseUint(args[0], 10, 64)
+			if err != nil {
+				return err
+			}
+			ethBlockHeight, err := strconv.ParseUint(args[1], 10, 64)
+			if err != nil {
+				return err
+			}
+			tokenContract := args[2]
+			tokenId := args[3]
+			tokenUri := args[4]
+			ethereumSender := args[5]
+			cosmosReceiver := args[6]
+			orchestrator := args[7]
+
+			msg := types.MsgSendERC721ToCosmosClaim{
+				EventNonce:     eventNonce,
+				EthBlockHeight: ethBlockHeight,
+				TokenContract:  tokenContract,
+				TokenId:        tokenId,
+				TokenUri:       tokenUri,
+				EthereumSender: ethereumSender,
+				CosmosReceiver: cosmosReceiver,
+				Orchestrator:   orchestrator,
+			}
+
 			if err := msg.ValidateBasic(); err != nil {
 				return err
 			}

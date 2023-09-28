@@ -33,15 +33,23 @@ pub async fn relay_market_test(
     contact: &Contact,
     keys: Vec<ValidatorKeys>,
     gravity_address: EthAddress,
+    gravityerc721_address: EthAddress,
 ) {
     let grpc_client = &mut grpc_client.clone();
     test_batches(
         web30,
         grpc_client,
+<<<<<<< HEAD
         evm_chain_prefix,
         contact,
         keys,
         gravity_address,
+=======
+        contact,
+        keys,
+        gravity_address,
+        gravityerc721_address,
+>>>>>>> 81057dc97ff3a6f3702fca99300ddbb3a7011770
     )
     .await
 }
@@ -53,13 +61,21 @@ async fn test_batches(
     contact: &Contact,
     keys: Vec<ValidatorKeys>,
     gravity_address: EthAddress,
+    gravityerc721_address: EthAddress,
 ) {
     // Start Orchestrators with the default config, but modified to enable the integrated
     // relayer by default
     let mut default_config = GravityBridgeToolsConfig::default();
     default_config.orchestrator.relayer_enabled = true;
     default_config.relayer.relayer_loop_speed = 10;
-    start_orchestrators(keys.clone(), gravity_address, false, default_config).await;
+    start_orchestrators(
+        keys.clone(),
+        gravity_address,
+        gravityerc721_address,
+        false,
+        default_config,
+    )
+    .await;
 
     test_good_batch(
         web30,

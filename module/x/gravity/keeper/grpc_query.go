@@ -20,6 +20,7 @@ var _ types.QueryServer = Keeper{}
 const MERCURY_UPGRADE_HEIGHT uint64 = 1282013
 const QUERY_ATTESTATIONS_LIMIT uint64 = 1000
 
+
 // Params queries the params of the gravity module
 func (k Keeper) Params(c context.Context, req *types.QueryParamsRequest) (*types.QueryParamsResponse, error) {
 	var params types.Params
@@ -270,9 +271,36 @@ func (k Keeper) LastEventNonceByAddr(
 	if err := sdk.VerifyAddressFormat(validator.GetOperator()); err != nil {
 		return nil, sdkerrors.Wrap(err, "invalid validator address")
 	}
+<<<<<<< HEAD
 	lastEventNonce := k.GetLastEventNonceByValidator(ctx, req.EvmChainPrefix, validator.GetOperator())
+=======
+	lastEventNonce := k.GetLastEventNonceByValidator(ctx, validator.GetOperator(), types.GravityContractNonce)
+>>>>>>> 81057dc97ff3a6f3702fca99300ddbb3a7011770
 	ret.EventNonce = lastEventNonce
 	return &ret, nil
+}
+
+func (k Keeper) LastERC721EventNonceByAddr(
+	c context.Context, req *types.QueryLastERC721EventNonceByAddrRequest,
+) (*types.QueryLastERC721EventNonceByAddrResponse, error) {
+	ctx := sdk.UnwrapSDKContext(c)
+
+	addr, err := sdk.AccAddressFromBech32(req.Address)
+	if err != nil {
+		return nil, sdkerrors.Wrap(sdkerrors.ErrInvalidAddress, req.Address)
+	}
+
+	validator, found := k.GetOrchestratorValidator(ctx, addr)
+	if !found {
+		return nil, sdkerrors.Wrap(types.ErrUnknown, "address")
+	}
+	if err := sdk.VerifyAddressFormat(validator.GetOperator()); err != nil {
+		return nil, sdkerrors.Wrap(err, "invalid validator address")
+	}
+
+	lastEventNonce := k.GetLastEventNonceByValidator(ctx, validator.GetOperator(), types.ERC721ContractNonce)
+
+	return &types.QueryLastERC721EventNonceByAddrResponse{EventNonce: lastEventNonce}, nil
 }
 
 // DenomToERC20 queries the Cosmos Denom that maps to an Ethereum ERC20
@@ -316,17 +344,36 @@ func (k Keeper) GetLastObservedEthBlock(
 	ctx := sdk.UnwrapSDKContext(c)
 
 	// Use the old locator pre-Mercury, when the keys changed to hashed strings
+<<<<<<< HEAD
 	var ethHeight types.LastObservedEthereumBlockHeight
+=======
+	var locator func(ctx sdk.Context, nonceSource types.NonceSource) types.LastObservedEthereumBlockHeight
+>>>>>>> 81057dc97ff3a6f3702fca99300ddbb3a7011770
 	if req.UseV1Key {
 		ethHeight = k.GetOldLastObservedEthereumBlockHeight(ctx)
 	} else {
 		ethHeight = k.GetLastObservedEvmChainBlockHeight(ctx, req.EvmChainPrefix)
 	}
 
+<<<<<<< HEAD
+=======
+	ethHeight := locator(ctx, types.GravityContractNonce)
+
+>>>>>>> 81057dc97ff3a6f3702fca99300ddbb3a7011770
 	return &types.QueryLastObservedEthBlockResponse{Block: ethHeight.EthereumBlockHeight}, nil
 }
 
-func (k Keeper) GetOldLastObservedEthereumBlockHeight(ctx sdk.Context) types.LastObservedEthereumBlockHeight {
+// GetLastObservedEthBlock queries the LastObservedEthereumBlockHeight
+func (k Keeper) GetLastObservedERC721EthBlock(
+	c context.Context,
+	_ *types.QueryLastObservedERC721EthBlockRequest,
+) (*types.QueryLastObservedERC721EthBlockResponse, error) {
+	ctx := sdk.UnwrapSDKContext(c)
+	ethHeight := k.GetLastObservedEthereumBlockHeight(ctx, types.ERC721ContractNonce)
+	return &types.QueryLastObservedERC721EthBlockResponse{Block: ethHeight.EthereumBlockHeight}, nil
+}
+
+func (k Keeper) GetOldLastObservedEthereumBlockHeight(ctx sdk.Context, _ types.NonceSource) types.LastObservedEthereumBlockHeight {
 	store := ctx.KVStore(k.storeKey)
 	bytes := store.Get([]byte(v1.LastObservedEthereumBlockHeightKey))
 
@@ -352,17 +399,35 @@ func (k Keeper) GetLastObservedEthNonce(
 	ctx := sdk.UnwrapSDKContext(c)
 
 	// Use the old locator pre-Mercury, when the keys changed to hashed strings
+<<<<<<< HEAD
 	var nonce uint64
+=======
+	var locator func(ctx sdk.Context, nonceSource types.NonceSource) uint64
+>>>>>>> 81057dc97ff3a6f3702fca99300ddbb3a7011770
 	if req.UseV1Key {
 		nonce = k.GetOldLastObservedEventNonce(ctx)
 	} else {
 		nonce = k.GetLastObservedEventNonce(ctx, req.EvmChainPrefix)
 	}
+<<<<<<< HEAD
+=======
+	nonce := locator(ctx, types.GravityContractNonce)
+>>>>>>> 81057dc97ff3a6f3702fca99300ddbb3a7011770
 
 	return &types.QueryLastObservedEthNonceResponse{Nonce: nonce}, nil
 }
 
-func (k Keeper) GetOldLastObservedEventNonce(ctx sdk.Context) uint64 {
+func (k Keeper) GetLastObservedERC721EthNonce(
+	c context.Context, req *types.QueryLastObservedERC721EthNonceRequest,
+) (*types.QueryLastObservedERC721EthNonceResponse, error) {
+	ctx := sdk.UnwrapSDKContext(c)
+
+	nonce := k.GetLastObservedEventNonce(ctx, types.ERC721ContractNonce)
+
+	return &types.QueryLastObservedERC721EthNonceResponse{Nonce: nonce}, nil
+}
+
+func (k Keeper) GetOldLastObservedEventNonce(ctx sdk.Context, _ types.NonceSource) uint64 {
 	store := ctx.KVStore(k.storeKey)
 	bytes := store.Get([]byte(v1.LastObservedEventNonceKey))
 
@@ -380,7 +445,11 @@ func (k Keeper) GetAttestations(
 	ctx := sdk.UnwrapSDKContext(c)
 
 	// Use the old iterator pre-Mercury, when the keys changed to hashed strings
+<<<<<<< HEAD
 	var iterator func(ctx sdk.Context, evmChainPrefix string, reverse bool, cb func([]byte, types.Attestation) bool)
+=======
+	var iterator func(ctx sdk.Context, nonceSource types.NonceSource, reverse bool, cb func([]byte, types.Attestation) bool)
+>>>>>>> 81057dc97ff3a6f3702fca99300ddbb3a7011770
 	if req.UseV1Key {
 		iterator = k.IterateOldAttestations
 	} else {
@@ -401,7 +470,12 @@ func (k Keeper) GetAttestations(
 	reverse := strings.EqualFold(req.OrderBy, "desc")
 	filter := req.Height > 0 || req.Nonce > 0 || req.ClaimType != ""
 
+<<<<<<< HEAD
 	iterator(ctx, req.EvmChainPrefix, reverse, func(_ []byte, att types.Attestation) (abort bool) {
+=======
+
+	iterator(ctx, types.GravityContractNonce, reverse, func(_ []byte, att types.Attestation) (abort bool) {
+>>>>>>> 81057dc97ff3a6f3702fca99300ddbb3a7011770
 		claim, err := k.UnpackAttestationClaim(&att)
 		if err != nil {
 			iterErr = sdkerrors.Wrap(sdkerrors.ErrUnpackAny, "failed to unmarshal Ethereum claim")
@@ -445,9 +519,75 @@ func (k Keeper) GetAttestations(
 	return &types.QueryAttestationsResponse{Attestations: attestations}, nil
 }
 
+func (k Keeper) GetERC721Attestations(c context.Context, req *types.QueryERC721AttestationsRequest) (*types.QueryERC721AttestationsResponse, error) {
+	ctx := sdk.UnwrapSDKContext(c)
+
+	limit := req.Limit
+	if limit == 0 || limit > QUERY_ATTESTATIONS_LIMIT {
+		limit = QUERY_ATTESTATIONS_LIMIT
+	}
+
+	var (
+		attestations []types.Attestation
+		count        uint64
+		iterErr      error
+	)
+
+	reverse := strings.EqualFold(req.OrderBy, "desc")
+	filter := req.Height > 0 || req.Nonce > 0 || req.ClaimType != ""
+
+
+	k.IterateAttestations(ctx, types.ERC721ContractNonce, reverse, func(_ []byte, att types.Attestation) (abort bool) {
+		claim, err := k.UnpackAttestationClaim(&att)
+		if err != nil {
+			iterErr = sdkerrors.Wrap(sdkerrors.ErrUnpackAny, "failed to unmarshal Ethereum claim")
+			return true
+		}
+
+		var match bool
+		switch {
+		case filter && claim.GetEthBlockHeight() == req.Height:
+			attestations = append(attestations, att)
+			match = true
+
+		case filter && claim.GetEventNonce() == req.Nonce:
+			attestations = append(attestations, att)
+			match = true
+
+		case filter && claim.GetType().String() == req.ClaimType:
+			attestations = append(attestations, att)
+			match = true
+
+		case !filter:
+			// No filter provided, so we include the attestation. This is equivalent
+			// to providing no query params or just limit and/or order_by.
+			attestations = append(attestations, att)
+			match = true
+		}
+
+		if match {
+			count++
+			if count >= limit {
+				return true
+			}
+		}
+
+		return false
+	})
+	if iterErr != nil {
+		return nil, iterErr
+	}
+
+	return &types.QueryERC721AttestationsResponse{Attestations: attestations}, nil
+}
+
 // This is the pre-Mercury Attestation iterator, which used an old prefix
+<<<<<<< HEAD
 // _evmChainPrefix is just for migration
 func (k Keeper) IterateOldAttestations(ctx sdk.Context, _evmChainPrefix string, reverse bool, cb func([]byte, types.Attestation) bool) {
+=======
+func (k Keeper) IterateOldAttestations(ctx sdk.Context, _ types.NonceSource, reverse bool, cb func([]byte, types.Attestation) bool) {
+>>>>>>> 81057dc97ff3a6f3702fca99300ddbb3a7011770
 	store := ctx.KVStore(k.storeKey)
 	prefix := v1.OracleAttestationKey
 
@@ -583,6 +723,7 @@ func (k Keeper) GetPendingIbcAutoForwards(
 	return &types.QueryPendingIbcAutoForwardsResponse{PendingIbcAutoForwards: pendingForwards}, nil
 }
 
+<<<<<<< HEAD
 func (k Keeper) GetListEvmChains(
 	c context.Context,
 	req *types.QueryListEvmChains,
@@ -641,4 +782,10 @@ func (k Keeper) GetBridgeBalanceSnapshotByEventNonce(
 	}
 
 	return &types.QueryBridgeBalanceSnapshotByEventNonceResponse{Snapshot: &snapshot}, nil
+=======
+func (k Keeper) GetPendingERC721IbcAutoForwards(c context.Context, req *types.QueryPendingERC721IbcAutoForwardsRequest) (*types.QueryPendingERC721IbcAutoForwardsResponse, error) {
+	ctx := sdk.UnwrapSDKContext(c)
+	pendingForwards := k.PendingERC721IbcAutoForwards(ctx, req.Limit)
+	return &types.QueryPendingERC721IbcAutoForwardsResponse{PendingErc721IbcAutoForwards: pendingForwards}, nil
+>>>>>>> 81057dc97ff3a6f3702fca99300ddbb3a7011770
 }

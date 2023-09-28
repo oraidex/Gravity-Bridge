@@ -15,7 +15,7 @@ SOURCEDIR=$(realpath ${1:-$PROJECTDIR/tmp})
 DOC_DIR=$(realpath $PROJECTDIR/doc)
 
 COSMOS_SDK_DIR=${COSMOS_SDK_DIR:-$(go list -f "{{ .Dir }}" -m github.com/cosmos/cosmos-sdk)}
-IBC_DIR=${IBC_DIR:-$(go list -f "{{ .Dir }}" -m github.com/cosmos/ibc-go/v4)}
+IBC_DIR=${IBC_DIR:-$(go list -f "{{ .Dir }}" -m github.com/cosmos/ibc-go/v6)}
 
 
 # scan all folders that contain proto file

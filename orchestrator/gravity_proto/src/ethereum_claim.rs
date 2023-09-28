@@ -38,6 +38,7 @@ impl ToString for ClaimType {
         match self {
             ClaimType::Unspecified => "CLAIM_TYPE_UNSPECIFIED".to_string(),
             ClaimType::SendToCosmos => "CLAIM_TYPE_SEND_TO_COSMOS".to_string(),
+            ClaimType::SendErc721ToCosmos => "CLAIM_TYPE_SEND_ERC721_TO_COSMOS".to_string(),
             ClaimType::BatchSendToEth => "CLAIM_TYPE_BATCH_SEND_TO_ETH".to_string(),
             ClaimType::Erc20Deployed => "CLAIM_TYPE_ERC20_DEPLOYED".to_string(),
             ClaimType::LogicCallExecuted => "CLAIM_TYPE_LOGIC_CALL_EXECUTED".to_string(),
@@ -61,6 +62,23 @@ impl EthereumClaim for MsgSendToCosmosClaim {
 
     fn get_type(&self) -> ClaimType {
         ClaimType::SendToCosmos
+    }
+}
+impl EthereumClaim for MsgSendErc721ToCosmosClaim {
+    fn get_event_nonce(&self) -> u64 {
+        self.event_nonce
+    }
+
+    fn get_eth_block_height(&self) -> u64 {
+        self.eth_block_height
+    }
+
+    fn get_claimer(&self) -> String {
+        self.orchestrator.clone()
+    }
+
+    fn get_type(&self) -> ClaimType {
+        ClaimType::SendErc721ToCosmos
     }
 }
 impl EthereumClaim for MsgBatchSendToEthClaim {

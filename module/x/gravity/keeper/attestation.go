@@ -19,6 +19,7 @@ func (k Keeper) Attest(
 	ctx sdk.Context,
 	claim types.EthereumClaim,
 	anyClaim *codectypes.Any,
+	nonceSource types.NonceSource,
 ) (*types.Attestation, error) {
 	val, found := k.GetOrchestratorValidator(ctx, claim.GetClaimer())
 	if !found {
@@ -142,7 +143,7 @@ func (k Keeper) TryAttestation(ctx sdk.Context, att *types.Attestation) {
 }
 
 // processAttestation actually applies the attestation to the consensus state
-func (k Keeper) processAttestation(ctx sdk.Context, att *types.Attestation, claim types.EthereumClaim) {
+func (k Keeper) processAttestation(ctx sdk.Context, att *types.Attestation, claim types.EthereumClaim, nonceSource types.NonceSource) {
 	hash, err := claim.ClaimHash()
 	if err != nil {
 		panic("unable to compute claim hash")
@@ -165,7 +166,7 @@ func (k Keeper) processAttestation(ctx sdk.Context, att *types.Attestation, clai
 
 // emitObservedEvent emits an event with information about an attestation that has been applied to
 // consensus state.
-func (k Keeper) emitObservedEvent(ctx sdk.Context, att *types.Attestation, claim types.EthereumClaim) {
+func (k Keeper) emitObservedEvent(ctx sdk.Context, att *types.Attestation, claim types.EthereumClaim, nonceSource types.NonceSource) {
 	hash, err := claim.ClaimHash()
 	if err != nil {
 		panic(sdkerrors.Wrap(err, "unable to compute claim hash"))
@@ -206,7 +207,7 @@ func (k Keeper) GetAttestation(ctx sdk.Context, evmChainPrefix string, eventNonc
 }
 
 // DeleteAttestation deletes the given attestation
-func (k Keeper) DeleteAttestation(ctx sdk.Context, att types.Attestation) {
+func (k Keeper) DeleteAttestation(ctx sdk.Context, att types.Attestation, nonceSource types.NonceSource) {
 	claim, err := k.UnpackAttestationClaim(&att)
 	if err != nil {
 		panic("Bad Attestation in DeleteAttestation")
@@ -251,9 +252,18 @@ func (k Keeper) GetAttestationMapping(ctx sdk.Context, evmChainPrefix string) (a
 // IterateAttestations iterates through all attestations executing a given callback on each discovered attestation
 // If reverse is true, attestations will be returned in descending order by key (aka by event nonce and then claim hash)
 // cb should return true to stop iteration, false to continue
-func (k Keeper) IterateAttestations(ctx sdk.Context, evmChainPrefix string, reverse bool, cb func([]byte, types.Attestation) bool) {
+func (k Keeper) IterateAttestations(ctx sdk.Context, nonceSource types.NonceSource, reverse bool, cb func(key []byte, att types.Attestation) (stop bool)) {
 	store := ctx.KVStore(k.storeKey)
-	keyPrefix := types.AppendChainPrefix(types.OracleAttestationKey, evmChainPrefix)
+
+	var keyPrefix []byte
+	switch nonceSource {
+	case types.GravityContractNonce:
+		keyPrefix = types.AppendChainPrefix(types.OracleAttestationKey, evmChainPrefix)
+	case types.ERC721ContractNonce:
+		keyPrefix = types.AppendChainPrefix(types.OracleERC721AttestationKey, evmChainPrefix)
+	default:
+		panic("unknown nonce source")
+	}
 
 	var iter storetypes.Iterator
 	if reverse {
@@ -292,10 +302,10 @@ func (k Keeper) IterateAttestations(ctx sdk.Context, evmChainPrefix string, reve
 // IterateClaims iterates through all attestations, filtering them for claims of a given type
 // If reverse is true, attestations will be returned in descending order by key (aka by event nonce and then claim hash)
 // cb should return true to stop iteration, false to continue
-func (k Keeper) IterateClaims(ctx sdk.Context, evmChainPrefix string, reverse bool, claimType types.ClaimType, cb func(key []byte, att types.Attestation, claim types.EthereumClaim) (stop bool)) {
+func (k Keeper) IterateClaims(ctx sdk.Context, nonceSource types.NonceSource, reverse bool, claimType types.ClaimType, cb func(key []byte, att types.Attestation, claim types.EthereumClaim) (stop bool)) {
 	typeUrl := types.ClaimTypeToTypeUrl(claimType) // Used to avoid unpacking undesired attestations
 
-	k.IterateAttestations(ctx, evmChainPrefix, reverse, func(key []byte, att types.Attestation) bool {
+	k.IterateAttestations(ctx, nonceSource, evmChainPrefix, reverse, func(key []byte, att types.Attestation) bool {
 		if att.Claim.TypeUrl == typeUrl {
 			claim, err := k.UnpackAttestationClaim(&att)
 			if err != nil {
@@ -311,8 +321,8 @@ func (k Keeper) IterateClaims(ctx sdk.Context, evmChainPrefix string, reverse bo
 // GetMostRecentAttestations returns sorted (by nonce) attestations up to a provided limit number of attestations
 // Note: calls GetAttestationMapping in the hopes that there are potentially many attestations
 // which are distributed between few nonces to minimize sorting time
-func (k Keeper) GetMostRecentAttestations(ctx sdk.Context, evmChainPrefix string, limit uint64) []types.Attestation {
-	attestationMapping, keys := k.GetAttestationMapping(ctx, evmChainPrefix)
+func (k Keeper) GetMostRecentAttestations(ctx sdk.Context, nonceSource types.NonceSource, limit uint64) []types.Attestation {
+	attestationMapping, keys := k.GetAttestationMapping(ctx, nonceSource, evmChainPrefix)
 	attestations := make([]types.Attestation, 0, limit)
 
 	// Iterate the nonces and collect the attestations
@@ -334,9 +344,19 @@ func (k Keeper) GetMostRecentAttestations(ctx sdk.Context, evmChainPrefix string
 }
 
 // GetLastObservedEventNonce returns the latest observed event nonce
-func (k Keeper) GetLastObservedEventNonce(ctx sdk.Context, evmChainPrefix string) uint64 {
+func (k Keeper) GetLastObservedEventNonce(ctx sdk.Context, nonceSource types.NonceSource, evmChainPrefix string) uint64 {
 	store := ctx.KVStore(k.storeKey)
-	bytes := store.Get(types.AppendChainPrefix(types.LastObservedEventNonceKey, evmChainPrefix))
+
+	var key []byte
+	switch nonceSource {
+	case types.GravityContractNonce:
+		key = types.AppendChainPrefix(types.LastObservedEventNonceKey, evmChainPrefix)
+	case types.ERC721ContractNonce:
+		key = types.AppendChainPrefix(types.LastERC721EventNonceByValidatorKey, evmChainPrefix)
+	default:
+		panic("invalid nonce source")
+	}
+	bytes := store.Get(key)
 
 	if len(bytes) == 0 {
 		return 0
@@ -350,9 +370,17 @@ func (k Keeper) GetLastObservedEventNonce(ctx sdk.Context, evmChainPrefix string
 
 // GetLastObservedEvmChainBlockHeight height gets the block height to of the last observed attestation from
 // the store
-func (k Keeper) GetLastObservedEvmChainBlockHeight(ctx sdk.Context, evmChainPrefix string) types.LastObservedEthereumBlockHeight {
+func (k Keeper) GetLastObservedEthereumBlockHeight(ctx sdk.Context, nonceSource types.NonceSource, evmChainPrefix string) types.LastObservedEthereumBlockHeight {
 	store := ctx.KVStore(k.storeKey)
-	bytes := store.Get(types.AppendChainPrefix(types.LastObservedEvmBlockHeightKey, evmChainPrefix))
+	key := types.GetLastObservedEthereumBlockHeightKey(nonceSource, evmChainPrefix)
+	bytes := store.Get(key)
+
+	if len(bytes) == 0 {
+		return types.LastObservedEthereumBlockHeight{
+			CosmosBlockHeight:   0,
+			EthereumBlockHeight: 0,
+		}
+	}
 	height := types.LastObservedEthereumBlockHeight{
 		CosmosBlockHeight:   0,
 		EthereumBlockHeight: 0,
@@ -366,9 +394,9 @@ func (k Keeper) GetLastObservedEvmChainBlockHeight(ctx sdk.Context, evmChainPref
 }
 
 // SetLastObservedEvmChainBlockHeight sets the block height in the store.
-func (k Keeper) SetLastObservedEvmChainBlockHeight(ctx sdk.Context, evmChainPrefix string, evmChainHeight uint64) {
+func (k Keeper) SetLastObservedEvmChainBlockHeight(ctx sdk.Context, nonceSource types.NonceSource, evmChainPrefix string, evmChainHeight uint64) {
 	store := ctx.KVStore(k.storeKey)
-	previous := k.GetLastObservedEvmChainBlockHeight(ctx, evmChainPrefix)
+	previous := k.GetLastObservedEvmChainBlockHeight(ctx, nonceSource, evmChainPrefix)
 	if previous.EthereumBlockHeight > evmChainHeight {
 		panic("Attempt to roll back Ethereum block height!")
 	}
@@ -376,7 +404,10 @@ func (k Keeper) SetLastObservedEvmChainBlockHeight(ctx sdk.Context, evmChainPref
 		EthereumBlockHeight: evmChainHeight,
 		CosmosBlockHeight:   uint64(ctx.BlockHeight()),
 	}
-	store.Set(types.AppendChainPrefix(types.LastObservedEvmBlockHeightKey, evmChainPrefix), k.cdc.MustMarshal(&height))
+
+	key := types.GetLastObservedEthereumBlockHeightKey(nonceSource, evmChainPrefix)
+
+	store.Set(key, k.cdc.MustMarshal(&height))
 }
 
 // GetLastObservedValset retrieves the last observed validator set from the store
@@ -408,32 +439,47 @@ func (k Keeper) SetLastObservedValset(ctx sdk.Context, evmChainPrefix string, va
 }
 
 // setLastObservedEventNonce sets the latest observed event nonce
-func (k Keeper) setLastObservedEventNonce(ctx sdk.Context, evmChainPrefix string, nonce uint64) {
+func (k Keeper) setLastObservedEventNonce(ctx sdk.Context, nonceSource types.NonceSource, evmChainPrefix string, nonce uint64) {
 	store := ctx.KVStore(k.storeKey)
-	last := k.GetLastObservedEventNonce(ctx, evmChainPrefix)
+	last := k.GetLastObservedEventNonce(ctx, nonceSource, evmChainPrefix)
 	// event nonce must increase, unless it's zero at which point allow zero to be set
 	// as many times as needed (genesis test setup etc)
 	zeroCase := last == 0 && nonce == 0
 	if last >= nonce && !zeroCase {
 		panic("Event nonce going backwards or replay!")
 	}
-	store.Set(types.AppendChainPrefix(types.LastObservedEventNonceKey, evmChainPrefix), types.UInt64Bytes(nonce))
+	store.Set(last, types.UInt64Bytes(nonce))
 }
 
 // GetLastEventNonceByValidator returns the latest event nonce for a given validator
-func (k Keeper) GetLastEventNonceByValidator(ctx sdk.Context, evmChainPrefix string, validator sdk.ValAddress) uint64 {
+func (k Keeper) GetLastEventNonceByValidatorKey(nonceSource types.NonceSource, evmChainPrefix string, validator sdk.ValAddress) uint64 {
+
+	var nonceKey []byte
+	switch nonceSource {
+	case types.GravityContractNonce:
+		nonceKey = types.AppendChainPrefix(types.LastObservedEventNonceKey, evmChainPrefix)
+	case types.ERC721ContractNonce:
+		nonceKey = types.AppendChainPrefix(types.LastERC721EventNonceByValidatorKey, evmChainPrefix)
+	default:
+		panic("invalid nonce source")
+	}
+	return nonceKey
+}
+
+// GetLastEventNonceByValidator returns the latest event nonce for a given validator
+func (k Keeper) GetLastEventNonceByValidator(ctx sdk.Context, nonceSource types.NonceSource, evmChainPrefix string, validator sdk.ValAddress) uint64 {
 	if err := sdk.VerifyAddressFormat(validator); err != nil {
 		panic(sdkerrors.Wrap(err, "invalid validator address"))
 	}
 	store := ctx.KVStore(k.storeKey)
-	bytes := store.Get(types.GetLastEventNonceByValidatorKey(evmChainPrefix, validator))
+	bytes := store.Get(types.GetLastEventNonceByValidatorKey(nonceSource, evmChainPrefix, validator))
 
 	if len(bytes) == 0 {
 		// in the case that we have no existing value this is the first
 		// time a validator is submitting a claim. Since we don't want to force
 		// them to replay the entire history of all events ever we can't start
 		// at zero
-		lastEventNonce := k.GetLastObservedEventNonce(ctx, evmChainPrefix)
+		lastEventNonce := k.GetLastObservedEventNonce(ctx, nonceSource, evmChainPrefix)
 		if lastEventNonce >= 1 {
 			return lastEventNonce - 1
 		} else {
@@ -444,12 +490,12 @@ func (k Keeper) GetLastEventNonceByValidator(ctx sdk.Context, evmChainPrefix str
 }
 
 // setLastEventNonceByValidator sets the latest event nonce for a give validator
-func (k Keeper) SetLastEventNonceByValidator(ctx sdk.Context, evmChainPrefix string, validator sdk.ValAddress, nonce uint64) {
+func (k Keeper) SetLastEventNonceByValidator(ctx sdk.Context, nonceSource types.NonceSource, evmChainPrefix string, validator sdk.ValAddress, nonce uint64) {
 	if err := sdk.VerifyAddressFormat(validator); err != nil {
 		panic(sdkerrors.Wrap(err, "invalid validator address"))
 	}
 	store := ctx.KVStore(k.storeKey)
-	store.Set(types.GetLastEventNonceByValidatorKey(evmChainPrefix, validator), types.UInt64Bytes(nonce))
+	store.Set(types.GetLastEventNonceByValidatorKey(nonceSource, evmChainPrefix, validator), types.UInt64Bytes(nonce))
 }
 
 // IterateValidatorLastEventNonces iterates through all batch confirmations

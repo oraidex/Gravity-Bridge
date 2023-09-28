@@ -16,6 +16,8 @@ const (
 	// GravityDenomPrefix indicates the prefix for all assets minted by this module
 	GravityDenomPrefix = "oraib"
 
+	GravityERC721ClassIDPrefix = ModuleName + "erc721"
+
 	// GravityDenomSeparator is the separator for gravity denoms
 	GravityDenomSeparator = ""
 
@@ -201,6 +203,11 @@ func (i *InternalERC20Token) GravityCoin(evmChainPrefix string) sdk.Coin {
 // GravityDenom converts an EthAddress to a gravity cosmos denom
 func GravityDenom(evmChainPrefix string, tokenContract EthAddress) string {
 	return fmt.Sprintf("%s%s%s", evmChainPrefix, GravityDenomSeparator, tokenContract.GetAddress().Hex())
+}
+
+// GravityERC721ClassId converts an EthAddress to a gravity cosmos class id for ERC721 tokens
+func GravityERC721ClassId(tokenContract EthAddress) string {
+	return fmt.Sprintf("%s%s%s", GravityERC721ClassIDPrefix, GravityDenomSeparator, tokenContract.GetAddress().Hex())
 }
 
 // ValidateBasic performs stateless validation

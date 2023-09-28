@@ -22,6 +22,7 @@ var (
 	_ sdk.Msg = &MsgConfirmLogicCall{}
 	_ sdk.Msg = &MsgLogicCallExecutedClaim{}
 	_ sdk.Msg = &MsgSendToCosmosClaim{}
+	_ sdk.Msg = &MsgSendERC721ToCosmosClaim{}
 	_ sdk.Msg = &MsgExecuteIbcAutoForwards{}
 	_ sdk.Msg = &MsgBatchSendToEthClaim{}
 	_ sdk.Msg = &MsgValsetUpdatedClaim{}
@@ -362,6 +363,7 @@ type EthereumClaim interface {
 // nolint: exhaustruct
 var (
 	_ EthereumClaim = &MsgSendToCosmosClaim{}
+	_ EthereumClaim = &MsgSendERC721ToCosmosClaim{}
 	_ EthereumClaim = &MsgBatchSendToEthClaim{}
 	_ EthereumClaim = &MsgERC20DeployedClaim{}
 	_ EthereumClaim = &MsgLogicCallExecutedClaim{}
@@ -437,7 +439,7 @@ func (msg MsgSendToCosmosClaim) GetSigners() []sdk.AccAddress {
 }
 
 // Type should return the action
-func (msg MsgSendToCosmosClaim) Type() string { return "send_to_cosmos_claim" }
+func (msg MsgSendToCosmosClaim) Type() string { return TypeMsgSendToCosmosClaim }
 
 // Route should return the name of the module
 func (msg MsgSendToCosmosClaim) Route() string { return RouterKey }
@@ -453,6 +455,85 @@ const (
 // structure for who has made what claim and is verified by the msg ante-handler for signatures
 func (msg *MsgSendToCosmosClaim) ClaimHash() ([]byte, error) {
 	path := fmt.Sprintf("%d/%d/%s/%s/%s/%s", msg.EventNonce, msg.EthBlockHeight, msg.TokenContract, msg.Amount.String(), msg.EthereumSender, msg.CosmosReceiver)
+	return tmhash.Sum([]byte(path)), nil
+}
+
+// GetType returns the type of the claim
+func (msg *MsgSendERC721ToCosmosClaim) GetType() ClaimType {
+	return CLAIM_TYPE_SEND_ERC721_TO_COSMOS
+}
+
+// ValidateBasic performs stateless checks
+func (msg *MsgSendERC721ToCosmosClaim) ValidateBasic() error {
+	if err := ValidateEthAddress(msg.EthereumSender); err != nil {
+		return sdkerrors.Wrap(err, "eth sender")
+	}
+	if err := ValidateEthAddress(msg.TokenContract); err != nil {
+		return sdkerrors.Wrap(err, "erc721 contract address")
+	}
+	if _, err := sdk.AccAddressFromBech32(msg.Orchestrator); err != nil {
+		return sdkerrors.Wrap(sdkerrors.ErrInvalidAddress, "orchestrator")
+	}
+	// note the destination address is intentionally not validated here, since
+	// MsgSendToEth has it's destination as a string many invalid inputs are possible
+	// the orchestrator will convert these invalid deposits to simply the string invalid'
+	// this is done because the oracle requires an event be processed on Cosmos for each event
+	// nonce on the Ethereum side, otherwise (A) the oracle will never proceed and (B) the funds
+	// sent with the invalid deposit will forever be lost, with no representation minted anywhere
+	// on cosmos. The attestation handler deals with this by managing invalid deposits and placing
+	// them into the community pool
+	if msg.EventNonce == 0 {
+		return fmt.Errorf("nonce == 0")
+	}
+	return nil
+}
+
+// GetSignBytes encodes the message for signing
+func (msg MsgSendERC721ToCosmosClaim) GetSignBytes() []byte {
+	return sdk.MustSortJSON(ModuleCdc.MustMarshalJSON(msg))
+}
+
+func (msg MsgSendERC721ToCosmosClaim) GetClaimer() sdk.AccAddress {
+	err := msg.ValidateBasic()
+	if err != nil {
+		panic("MsgSendERC721ToCosmosClaim failed ValidateBasic! Should have been handled earlier")
+	}
+
+	val, err := sdk.AccAddressFromBech32(msg.Orchestrator)
+	if err != nil {
+		panic(err)
+	}
+
+	return val
+}
+
+// GetSigners defines whose signature is required
+func (msg MsgSendERC721ToCosmosClaim) GetSigners() []sdk.AccAddress {
+	acc, err := sdk.AccAddressFromBech32(msg.Orchestrator)
+	if err != nil {
+		panic(err)
+	}
+
+	return []sdk.AccAddress{acc}
+}
+
+// Type should return the action
+func (msg MsgSendERC721ToCosmosClaim) Type() string { return TypeMsgSendERC721ToCosmosClaim }
+
+// Route should return the name of the module
+func (msg MsgSendERC721ToCosmosClaim) Route() string { return RouterKey }
+
+const (
+	TypeMsgSendERC721ToCosmosClaim = "send_erc721_to_cosmos_claim"
+)
+
+// Hash implements BridgeDeposit.Hash
+// modify this with care as it is security sensitive. If an element of the claim is not in this hash a single hostile validator
+// could engineer a hash collision and execute a version of the claim with any unhashed data changed to benefit them.
+// note that the Orchestrator is the only field excluded from this hash, this is because that value is used higher up in the store
+// structure for who has made what claim and is verified by the msg ante-handler for signatures
+func (msg *MsgSendERC721ToCosmosClaim) ClaimHash() ([]byte, error) {
+	path := fmt.Sprintf("%d/%d/%s/%s/%s/%s", msg.EventNonce, msg.EthBlockHeight, msg.TokenContract, msg.TokenId, msg.EthereumSender, msg.CosmosReceiver)
 	return tmhash.Sum([]byte(path)), nil
 }
 

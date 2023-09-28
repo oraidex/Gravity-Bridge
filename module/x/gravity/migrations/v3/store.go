@@ -160,6 +160,7 @@ func getAttestationConverter(ctx sdk.Context, store sdk.KVStore) func([]byte, co
 			return nil, nil, err
 		}
 
+<<<<<<< HEAD
 		// migrate last observed block height if needed because of the export genesis bug
 		migrateLastObservedEvmBlockHeight(ctx, store, cdc, att.Observed, claim.GetEthBlockHeight())
 
@@ -169,6 +170,9 @@ func getAttestationConverter(ctx sdk.Context, store sdk.KVStore) func([]byte, co
 		}
 
 		newKey := types.GetAttestationKey(EthereumChainPrefix, claim.GetEventNonce(), hash)
+=======
+		newKey, err := types.GetAttestationKey(claim.GetEventNonce(), hash, types.GravityContractNonce), nil
+>>>>>>> 81057dc97ff3a6f3702fca99300ddbb3a7011770
 		// The new key must be returned without a prefix, since it will be set on a PrefixStore
 		newKeyNoPrefix := newKey[len(implicitPrefix):]
 

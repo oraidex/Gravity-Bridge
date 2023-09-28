@@ -3,6 +3,7 @@
 
 use clap::Parser;
 use clarity::PrivateKey as EthPrivateKey;
+use clarity::Uint256;
 use deep_space::{address::Address as CosmosAddress, Coin};
 use deep_space::{CosmosPrivateKey, EthermintPrivateKey};
 use std::path::PathBuf;
@@ -62,9 +63,18 @@ pub struct OrchestratorOpts {
     /// The Cosmos Denom and amount to pay Cosmos chain fees
     #[clap(short, long, parse(try_from_str))]
     pub fees: Coin,
+<<<<<<< HEAD
     /// (Optional) The passphrase that will be used to decrypt key
     #[clap(long, default_value = "")]
     pub passphrase: String,
+=======
+    /// The address fo the Gravity contract on Ethereum
+    #[clap(short, long, parse(try_from_str))]
+    pub gravity_contract_address: Option<EthAddress>,
+    /// The address fo the GravityERC721 contract on Ethereum
+    #[clap(long, parse(try_from_str))]
+    pub gravityerc721_contract_address: Option<EthAddress>,
+>>>>>>> 81057dc97ff3a6f3702fca99300ddbb3a7011770
 }
 
 /// The Gravity Bridge Relayer is an unpermissioned role that takes data from the Cosmos blockchain
@@ -85,6 +95,15 @@ pub struct RelayerOpts {
     /// request batches
     #[clap(short, long, parse(try_from_str))]
     pub fees: Option<Coin>,
+<<<<<<< HEAD
+=======
+    /// The address fo the Gravity contract on Ethereum
+    #[clap(short, long, parse(try_from_str))]
+    pub gravity_contract_address: Option<EthAddress>,
+    /// The address fo the GravityERC721 contract on Ethereum
+    #[clap(long, parse(try_from_str))]
+    pub gravityerc721_contract_address: Option<EthAddress>,
+>>>>>>> 81057dc97ff3a6f3702fca99300ddbb3a7011770
     /// (Optional) The Ethereum RPC server that will be used
     #[clap(long, default_value = "http://localhost:8545")]
     pub ethereum_rpc: String,
@@ -103,7 +122,8 @@ pub struct ClientOpts {
 #[derive(Parser)]
 pub enum ClientSubcommand {
     CosmosToEth(CosmosToEthOpts),
-    EthToCosmos(EthToCosmosOpts),
+    Erc20ToCosmos(Erc20ToCosmosOpts),
+    Erc721ToCosmos(Erc721ToCosmosOpts),
     DeployErc20Representation(DeployErc20RepresentationOpts),
     SpotRelay(SpotRelayOpts),
 }
@@ -142,7 +162,7 @@ pub struct CosmosToEthOpts {
 
 /// Send an Ethereum ERC20 token to Cosmos
 #[derive(Parser)]
-pub struct EthToCosmosOpts {
+pub struct Erc20ToCosmosOpts {
     /// The Ethereum private key to use for sending tokens
     #[clap(long, parse(try_from_str))]
     pub ethereum_key: EthPrivateKey,
@@ -164,6 +184,32 @@ pub struct EthToCosmosOpts {
     /// The gas multiplier for networks that require heavy transaction fees
     #[clap(long, parse(try_from_str), default_value = "2.0")]
     pub gas_multiplier: f32,
+}
+
+/// Send an Ethereum ERC721 (NFT) token to Cosmos
+#[derive(Parser)]
+pub struct Erc721ToCosmosOpts {
+    /// The Ethereum private key to use for sending tokens
+    #[clap(long, parse(try_from_str))]
+    pub ethereum_key: EthPrivateKey,
+    /// (Optional) The Ethereum RPC server that will be used to submit the transaction
+    #[clap(long, default_value = "http://localhost:8545")]
+    pub ethereum_rpc: String,
+    /// The address fo the Gravity contract on Ethereum
+    #[clap(short, long, parse(try_from_str))]
+    pub gravity_contract_address: EthAddress,
+    /// The address fo the GravityERC721 contract on Ethereum
+    #[clap(long, parse(try_from_str))]
+    pub gravityerc721_contract_address: EthAddress,
+    /// The ERC721 contract address of the ERC721 you are sending
+    #[clap(long, parse(try_from_str))]
+    pub token_contract_address: EthAddress,
+    /// The id of token you are sending, eg. 1
+    #[clap(short, long, parse(try_from_str))]
+    pub token_id: Uint256,
+    /// The destination address on the Cosmos blockchain
+    #[clap(short, long, parse(try_from_str))]
+    pub destination: CosmosAddress,
 }
 
 /// Deploy an ERC20 representation of a Cosmos asset on the Ethereum chain

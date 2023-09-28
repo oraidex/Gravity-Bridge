@@ -19,6 +19,8 @@ At the send of the `sendToCosmos` function call an Ethereum event `SendToCosmosE
 
 The validators all run their oracle processes which submit `MsgDepositClaim` messages describing the deposit they have observed. Once more than 66% of all voting power has submitted a claim for this specific deposit representative tokens are minted and issued to the Cosmos address that the sender requested.
 
+Similarly, Ethereum NFTs implementing ERC721 standard can be depisited into the [GravityERC721.sol](/solidity/contracts/GravityERC721.sol) contract using `sendERC721toCosmos` call. Depositing an NFT token, emits `SendERC721ToCosmos` event, which contains ERC721 token contract address, Cosmos destination address, token ID and token URI, which are put in `MsgSendERC721ToCosmosClaim` Cosmos call and when more than 66% of all voting power submits the claim, [ADR 43](https://github.com/cosmos/cosmos-sdk/blob/main/docs/architecture/adr-043-nft-module.md)-based NFT token is minted on the Cosmos Bridge.
+
 For further details on oracle operation see [oracle](/docs/design/oracle.md)
 
 ### Cosmos -> Ethereum

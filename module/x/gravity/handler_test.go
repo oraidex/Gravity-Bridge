@@ -12,7 +12,7 @@ import (
 	"github.com/Gravity-Bridge/Gravity-Bridge/module/x/gravity/keeper"
 	"github.com/Gravity-Bridge/Gravity-Bridge/module/x/gravity/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	ibctransfertypes "github.com/cosmos/ibc-go/v4/modules/apps/transfer/types"
+	ibctransfertypes "github.com/cosmos/ibc-go/v6/modules/apps/transfer/types"
 	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -259,6 +259,115 @@ func TestMsgSendToCosmosClaim(t *testing.T) {
 		require.NoError(t, err)
 	}
 
+}
+
+func TestMsgSendERC721ToCosmosClaim(t *testing.T) {
+	var (
+		myCosmosAddr, _ = sdk.AccAddressFromBech32("gravity16ahjkfqxpp6lvfy9fpfnfjg39xr96qet0l08hu")
+		anyETHAddr      = "0xf9613b532673Cc223aBa451dFA8539B87e1F666D"
+		tokenETHAddr    = "0x0bc529c00c6401aef6d220be8c6ea1667f6ad93e"
+		tokenId1        = "1337"
+		tokenId2        = "1338"
+		tokenUri        = "ipfs://QmTSNvbpVszqJNEMNgMCKU4iPE84WFy9jCiMwBi8WwSqUA"
+
+		myBlockTime = time.Date(2020, 9, 14, 15, 20, 10, 0, time.UTC)
+	)
+	input, ctx := keeper.SetupFiveValChain(t)
+	defer func() { input.Context.Logger().Info("Asserting invariants at test end"); input.AssertInvariants() }()
+
+	h := NewHandler(input.GravityKeeper)
+
+	contractEthAddress, err := types.NewEthAddress(tokenETHAddr)
+	require.NoError(t, err)
+	classId := types.GravityERC721ClassId(*contractEthAddress)
+
+	// send attestations from all five validators
+	for _, v := range keeper.OrchAddrs {
+		ethClaim := types.MsgSendERC721ToCosmosClaim{
+			EventNonce:     uint64(1),
+			TokenContract:  tokenETHAddr,
+			TokenId:        tokenId1,
+			TokenUri:       tokenUri,
+			EthereumSender: anyETHAddr,
+			CosmosReceiver: myCosmosAddr.String(),
+			Orchestrator:   v.String(),
+		}
+		// each msg goes into it's own block
+		ctx = ctx.WithBlockTime(myBlockTime)
+		_, err := h(ctx, &ethClaim)
+		EndBlocker(ctx, input.GravityKeeper)
+		require.NoError(t, err)
+
+		// and attestation persisted
+		hash, err := ethClaim.ClaimHash()
+		require.NoError(t, err)
+		a := input.GravityKeeper.GetAttestation(ctx, uint64(1), hash, types.ERC721ContractNonce)
+		require.NotNil(t, a)
+
+		// Test to reject duplicate deposit
+		// when
+		ctx = ctx.WithBlockTime(myBlockTime)
+		_, err = h(ctx, &ethClaim)
+		EndBlocker(ctx, input.GravityKeeper)
+		// then
+		require.Error(t, err)
+	}
+
+	// and vouchers added to the account
+	nft, found := input.NftKeeper.GetNFT(ctx, classId, tokenId1)
+	assert.True(t, found)
+	assert.Equal(t, classId, nft.ClassId)
+	assert.Equal(t, tokenId1, nft.Id)
+
+	// send attestations from all five validators
+	for _, v := range keeper.OrchAddrs {
+		// Test to reject skipped nonce
+		ethClaim := types.MsgSendERC721ToCosmosClaim{
+			EventNonce:     uint64(3),
+			TokenContract:  tokenETHAddr,
+			TokenId:        tokenId2,
+			TokenUri:       tokenUri,
+			EthereumSender: anyETHAddr,
+			CosmosReceiver: myCosmosAddr.String(),
+			Orchestrator:   v.String(),
+		}
+		// when
+		ctx = ctx.WithBlockTime(myBlockTime)
+		_, err := h(ctx, &ethClaim)
+		EndBlocker(ctx, input.GravityKeeper)
+		// then
+		require.Error(t, err)
+	}
+
+	_, found = input.NftKeeper.GetNFT(ctx, classId, tokenId2)
+	assert.False(t, found)
+
+	// send attestations from all five validators
+	for _, v := range keeper.OrchAddrs {
+		// Test to finally accept consecutive nonce
+		ethClaim := types.MsgSendERC721ToCosmosClaim{
+			EventNonce:     uint64(2),
+			TokenContract:  tokenETHAddr,
+			TokenId:        tokenId2,
+			TokenUri:       tokenUri,
+			EthereumSender: anyETHAddr,
+			CosmosReceiver: myCosmosAddr.String(),
+			Orchestrator:   v.String(),
+		}
+
+		// when
+		ctx = ctx.WithBlockTime(myBlockTime)
+		_, err := h(ctx, &ethClaim)
+		EndBlocker(ctx, input.GravityKeeper)
+
+		// then
+		require.NoError(t, err)
+	}
+
+	nft, found = input.NftKeeper.GetNFT(ctx, classId, tokenId2)
+	assert.True(t, found)
+	assert.Equal(t, classId, nft.ClassId)
+	assert.Equal(t, tokenId2, nft.Id)
 }
 
 // nolint: exhaustruct

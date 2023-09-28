@@ -16,15 +16,23 @@ contract GravityERC721 is ERC721Holder, ReentrancyGuard {
 		address indexed _sender,
 		string _destination,
 		uint256 _tokenId,
-		uint256 _eventNonce
+		uint256 _eventNonce,
+		string _tokenURI
 	);
+
+	event GravityERC721DeployedEvent();
 
 	constructor(
 		// reference gravity.sol for many functions peformed here
 		address _gravitySolAddress
 	) {
 		state_gravitySolAddress = _gravitySolAddress;
+<<<<<<< HEAD
 	}
+=======
+		emit GravityERC721DeployedEvent();
+		}
+>>>>>>> 81057dc97ff3a6f3702fca99300ddbb3a7011770
 
 	function sendERC721ToCosmos(
 		address _tokenContract,
@@ -32,15 +40,20 @@ contract GravityERC721 is ERC721Holder, ReentrancyGuard {
 		uint256 _tokenId
 	) external nonReentrant {
 		ERC721(_tokenContract).safeTransferFrom(msg.sender, address(this), _tokenId);
-		state_lastERC721EventNonce = state_lastERC721EventNonce + 1;
 
 		emit SendERC721ToCosmosEvent(
 			_tokenContract,
 			msg.sender,
 			_destination,
 			_tokenId,
+<<<<<<< HEAD
 			state_lastERC721EventNonce
+=======
+			state_lastERC721EventNonce,
+			ERC721(_tokenContract).tokenURI(_tokenId)
+>>>>>>> 81057dc97ff3a6f3702fca99300ddbb3a7011770
 		);
+		state_lastERC721EventNonce = state_lastERC721EventNonce + 1;
 	}
 
 	function withdrawERC721(

@@ -2,10 +2,16 @@
 //! that can only be run by a validator. This single binary the 'Orchestrator' runs not only these two rules but also the untrusted role of a relayer, that does not need any permissions and has it's
 //! own crate and binary so that anyone may run it.
 
+<<<<<<< HEAD
 use crate::{ethereum_event_watcher::attest_to_events, oracle_resync::get_last_checked_block};
+=======
+use crate::oracle_resync::ContractType;
+use crate::{ethereum_event_watcher::check_for_events, oracle_resync::get_last_checked_block};
+>>>>>>> 81057dc97ff3a6f3702fca99300ddbb3a7011770
 use clarity::PrivateKey as EthPrivateKey;
 use clarity::Uint256;
 use cosmos_gravity::query::get_gravity_params;
+use cosmos_gravity::utils::get_last_erc721_event_nonce_with_retry;
 use cosmos_gravity::{
     query::{
         get_oldest_unsigned_logic_calls, get_oldest_unsigned_transaction_batches,
@@ -20,8 +26,12 @@ use deep_space::{
     coin::Coin,
     private_key::{CosmosPrivateKey, PrivateKey},
 };
+<<<<<<< HEAD
 use deep_space::{Address, Contact};
 use futures::future::{join, join3};
+=======
+use futures::future::{join, join3, join4};
+>>>>>>> 81057dc97ff3a6f3702fca99300ddbb3a7011770
 use gravity_proto::cosmos_sdk_proto::cosmos::base::abci::v1beta1::TxResponse;
 use gravity_proto::gravity::query_client::QueryClient as GravityQueryClient;
 use gravity_utils::types::{
@@ -61,6 +71,7 @@ pub async fn orchestrator_main_loop(
     grpc_client: GravityQueryClient<Channel>,
     evm_chain_prefix: &str,
     gravity_contract_address: EthAddress,
+    gravityerc721_contract_address: EthAddress,
     gravity_id: String,
     user_fee_amount: Coin,
     config: GravityBridgeToolsConfig,
@@ -71,6 +82,7 @@ pub async fn orchestrator_main_loop(
         test_eth_connection(web3.clone()).await;
     }
 
+    // start gravity.sol oracle event watcher
     let a = eth_oracle_main_loop(
         cosmos_key,
         ethereum_key,
@@ -79,6 +91,7 @@ pub async fn orchestrator_main_loop(
         grpc_client.clone(),
         &evm_chain_prefix,
         gravity_contract_address,
+        ContractType::Gravity,
         fee.clone(),
     );
     let b = eth_signer_main_loop(
@@ -103,12 +116,22 @@ pub async fn orchestrator_main_loop(
         Some(fee.clone()),
         config.relayer,
     );
+    // start gravityerc721.sol oracle event watcher
+    let d = eth_oracle_main_loop(
+        cosmos_key,
+        web3.clone(),
+        contact.clone(),
+        grpc_client.clone(),
+        gravityerc721_contract_address,
+        ContractType::GravityERC721,
+        fee.clone(),
+    );
 
     // if the relayer is not enabled we just don't start the relayer_main_loop or ibc_auto_forward_loop futures
     if config.orchestrator.relayer_enabled {
-        join3(a, b, c).await;
+        join4(a, b, c, d).await;
     } else {
-        join(a, b).await;
+        join3(a, b, d).await;
     }
 }
 
@@ -159,6 +182,7 @@ pub async fn eth_oracle_main_loop(
     grpc_client: GravityQueryClient<Channel>,
     evm_chain_prefix: &str,
     gravity_contract_address: EthAddress,
+    contract_type: ContractType,
     fee: Coin,
 ) {
     let our_cosmos_address = cosmos_key.to_address(&contact.get_prefix()).unwrap();
@@ -171,10 +195,10 @@ pub async fn eth_oracle_main_loop(
         our_cosmos_address,
         contact.get_prefix(),
         gravity_contract_address,
+        contract_type,
         &long_timeout_web30,
     )
     .await;
-
     // In case of governance vote to unhalt bridge, need to replay old events. Keep track of the
     // last checked event nonce to detect when this happens
     let mut last_checked_event: Uint256 = 0u8.into();
@@ -236,6 +260,7 @@ pub async fn eth_oracle_main_loop(
         // if the governance vote reset last event nonce sent by validator to some lower value, we can detect this
         // by comparing last_event_nonce retrieved from the chain with last_checked_event saved by the orchestrator
         // in order to reset last_checked_block and last_checked_event and continue from that point
+<<<<<<< HEAD
         let last_event_nonce: Uint256 = get_last_event_nonce_with_retry(
             &mut grpc_client,
             our_cosmos_address,
@@ -244,6 +269,26 @@ pub async fn eth_oracle_main_loop(
         )
         .await
         .into();
+=======
+        let last_event_nonce: Uint256;
+        if contract_type == ContractType::Gravity {
+            last_event_nonce = get_last_event_nonce_with_retry(
+                &mut grpc_client,
+                our_cosmos_address,
+                contact.get_prefix().clone(),
+            )
+            .await
+            .into();
+        } else {
+            last_event_nonce = get_last_erc721_event_nonce_with_retry(
+                &mut grpc_client,
+                our_cosmos_address,
+                contact.get_prefix().clone(),
+            )
+            .await
+            .into();
+        }
+>>>>>>> 81057dc97ff3a6f3702fca99300ddbb3a7011770
 
         if last_event_nonce < last_checked_event {
             // validator went back in history
@@ -255,6 +300,7 @@ pub async fn eth_oracle_main_loop(
                 our_cosmos_address,
                 contact.get_prefix(),
                 gravity_contract_address,
+                contract_type,
                 &web3,
             )
             .await;
@@ -267,6 +313,13 @@ pub async fn eth_oracle_main_loop(
             &web3,
             our_eth_address,
             gravity_contract_address,
+<<<<<<< HEAD
+=======
+            contract_type,
+            cosmos_key,
+            fee.clone(),
+            last_checked_block.clone(),
+>>>>>>> 81057dc97ff3a6f3702fca99300ddbb3a7011770
         )
         .await;
 

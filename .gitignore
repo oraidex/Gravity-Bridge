@@ -40,3 +40,4 @@ tmp
 
 .DS_Store
 yarn-error.log
+solidity/contract-deployer

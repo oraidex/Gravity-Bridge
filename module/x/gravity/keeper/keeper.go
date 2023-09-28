@@ -2,11 +2,15 @@ package keeper
 
 import (
 	"fmt"
+	ibcnfttransferkeeper "github.com/bianjieai/nft-transfer/keeper"
+	"github.com/cosmos/cosmos-sdk/x/nft"
+	nftkeeper "github.com/cosmos/cosmos-sdk/x/nft/keeper"
 	"sort"
 
 	gethcommon "github.com/ethereum/go-ethereum/common"
 
 	"github.com/cosmos/cosmos-sdk/codec"
+	sdkstore "github.com/cosmos/cosmos-sdk/store/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 	authkeeper "github.com/cosmos/cosmos-sdk/x/auth/keeper"
@@ -17,14 +21,18 @@ import (
 	slashingkeeper "github.com/cosmos/cosmos-sdk/x/slashing/keeper"
 	stakingkeeper "github.com/cosmos/cosmos-sdk/x/staking/keeper"
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
-	ibctransferkeeper "github.com/cosmos/ibc-go/v4/modules/apps/transfer/keeper"
+<<<<<<< HEAD
+	ibctransferkeeper "github.com/cosmos/ibc-go/v6/modules/apps/transfer/keeper"
+=======
+	ibctransferkeeper "github.com/cosmos/ibc-go/v6/modules/apps/transfer/keeper"
+>>>>>>> 81057dc97ff3a6f3702fca99300ddbb3a7011770
 	"github.com/tendermint/tendermint/libs/log"
 
 	bech32ibckeeper "github.com/althea-net/bech32-ibc/x/bech32ibc/keeper"
 
 	"github.com/Gravity-Bridge/Gravity-Bridge/module/x/gravity/types"
 	"github.com/cosmos/cosmos-sdk/store/prefix"
-	ibctransfertypes "github.com/cosmos/ibc-go/v4/modules/core/05-port/types"
+	ibctransfertypes "github.com/cosmos/ibc-go/v6/modules/core/05-port/types"
 )
 
 // Check that our expected keeper types are implemented
@@ -35,10 +43,11 @@ var _ types.DistributionKeeper = (*distrkeeper.Keeper)(nil)
 // Keeper maintains the link to storage and exposes getter/setter methods for the various parts of the state machine
 type Keeper struct {
 	// NOTE: If you add anything to this struct, add a nil check to ValidateMembers below!
-	storeKey   sdk.StoreKey // Unexposed key to access store from sdk.Context
+	storeKey   sdkstore.StoreKey // Unexposed key to access store from sdk.Context
 	paramSpace paramtypes.Subspace
 
 	// NOTE: If you add anything to this struct, add a nil check to ValidateMembers below!
+<<<<<<< HEAD
 	cdc               codec.BinaryCodec // The wire codec for binary encoding/decoding.
 	bankKeeper        *bankkeeper.BaseKeeper
 	StakingKeeper     *stakingkeeper.Keeper
@@ -48,6 +57,18 @@ type Keeper struct {
 	ibcTransferKeeper *ibctransferkeeper.Keeper
 	bech32IbcKeeper   *bech32ibckeeper.Keeper
 	ics4Wrapper       ibctransfertypes.ICS4Wrapper
+=======
+	cdc                  codec.BinaryCodec // The wire codec for binary encoding/decoding.
+	bankKeeper           *bankkeeper.BaseKeeper
+	StakingKeeper        *stakingkeeper.Keeper
+	SlashingKeeper       *slashingkeeper.Keeper
+	DistKeeper           *distrkeeper.Keeper
+	accountKeeper        *authkeeper.AccountKeeper
+	ibcTransferKeeper    *ibctransferkeeper.Keeper
+	bech32IbcKeeper      *bech32ibckeeper.Keeper
+	nftKeeper            *nftkeeper.Keeper
+	ibcNftTransferKeeper *ibcnfttransferkeeper.Keeper
+>>>>>>> 81057dc97ff3a6f3702fca99300ddbb3a7011770
 
 	AttestationHandler interface {
 		Handle(sdk.Context, types.Attestation, types.EthereumClaim) error
@@ -77,11 +98,17 @@ func (k Keeper) ValidateMembers() {
 	if k.bech32IbcKeeper == nil {
 		panic("Nil bech32IbcKeeper!")
 	}
+	if k.nftKeeper == nil {
+		panic("Nil nftKeeper!")
+	}
+	if k.ibcNftTransferKeeper == nil {
+		panic("Nil ibcNftTransferKeeper!")
+	}
 }
 
 // NewKeeper returns a new instance of the gravity keeper
 func NewKeeper(
-	storeKey sdk.StoreKey,
+	storeKey sdkstore.StoreKey,
 	paramSpace paramtypes.Subspace,
 	cdc codec.BinaryCodec,
 	bankKeeper *bankkeeper.BaseKeeper,
@@ -91,7 +118,12 @@ func NewKeeper(
 	accKeeper *authkeeper.AccountKeeper,
 	ibcTransferKeeper *ibctransferkeeper.Keeper,
 	bech32IbcKeeper *bech32ibckeeper.Keeper,
+<<<<<<< HEAD
 	ics4Wrapper ibctransfertypes.ICS4Wrapper,
+=======
+	nftKeeper *nftkeeper.Keeper,
+	ibcNftTransferKeeper *ibcnfttransferkeeper.Keeper,
+>>>>>>> 81057dc97ff3a6f3702fca99300ddbb3a7011770
 ) Keeper {
 	// set KeyTable if it has not already been set
 	if !paramSpace.HasKeyTable() {
@@ -102,6 +134,7 @@ func NewKeeper(
 		storeKey:   storeKey,
 		paramSpace: paramSpace,
 
+<<<<<<< HEAD
 		cdc:                cdc,
 		bankKeeper:         bankKeeper,
 		StakingKeeper:      stakingKeeper,
@@ -112,6 +145,19 @@ func NewKeeper(
 		bech32IbcKeeper:    bech32IbcKeeper,
 		ics4Wrapper:        ics4Wrapper,
 		AttestationHandler: nil,
+=======
+		cdc:                  cdc,
+		bankKeeper:           bankKeeper,
+		StakingKeeper:        stakingKeeper,
+		SlashingKeeper:       slashingKeeper,
+		DistKeeper:           distKeeper,
+		accountKeeper:        accKeeper,
+		ibcTransferKeeper:    ibcTransferKeeper,
+		bech32IbcKeeper:      bech32IbcKeeper,
+		nftKeeper:            nftKeeper,
+		ibcNftTransferKeeper: ibcNftTransferKeeper,
+		AttestationHandler:   nil,
+>>>>>>> 81057dc97ff3a6f3702fca99300ddbb3a7011770
 	}
 	attestationHandler := AttestationHandler{keeper: &k}
 	attestationHandler.ValidateMembers()
@@ -129,6 +175,7 @@ func NewKeeper(
 // SendToCommunityPool handles incorrect SendToCosmos calls to the community pool, since the calls
 // have already been made on evm chain there's nothing we can do to reverse them, and we should at least
 // make use of the tokens which would otherwise be lost
+// TODO: DO SOMETHING SIMILAR FOR ERC721
 func (k Keeper) SendToCommunityPool(ctx sdk.Context, coins sdk.Coins) error {
 	if err := k.bankKeeper.SendCoinsFromModuleToModule(ctx, types.ModuleName, distrtypes.ModuleName, coins); err != nil {
 		return sdkerrors.Wrap(err, "transfer to community pool failed")
@@ -136,6 +183,18 @@ func (k Keeper) SendToCommunityPool(ctx sdk.Context, coins sdk.Coins) error {
 	feePool := k.DistKeeper.GetFeePool(ctx)
 	feePool.CommunityPool = feePool.CommunityPool.Add(sdk.NewDecCoinsFromCoins(coins...)...)
 	k.DistKeeper.SetFeePool(ctx, feePool)
+	return nil
+}
+
+func (k Keeper) SendERC721ToCommunityPool(ctx sdk.Context, nftToken nft.NFT) error {
+	communityPoolAddress := k.accountKeeper.GetModuleAddress(distrtypes.ModuleName)
+	if communityPoolAddress == nil {
+		panic(sdkerrors.Wrapf(sdkerrors.ErrUnknownAddress, "module account %s does not exist", distrtypes.ModuleName))
+	}
+	if err := k.nftKeeper.Transfer(ctx, nftToken.ClassId, nftToken.Id, communityPoolAddress); err != nil {
+		return sdkerrors.Wrap(err, "transfer to community pool failed")
+	}
+
 	return nil
 }
 

@@ -29,6 +29,7 @@ pub async fn unhalt_bridge_test(
     contact: &Contact,
     keys: Vec<ValidatorKeys>,
     gravity_address: EthAddress,
+    gravityerc721_address: EthAddress,
     erc20_address: EthAddress,
 ) {
     let prefix = contact.get_prefix();
@@ -52,7 +53,14 @@ pub async fn unhalt_bridge_test(
         payer: None,
     };
 
-    start_orchestrators(keys.clone(), gravity_address, false, no_relay_market_config).await;
+    start_orchestrators(
+        keys.clone(),
+        gravity_address,
+        gravityerc721_address,
+        false,
+        no_relay_market_config,
+    )
+    .await;
     let lying_validators: Vec<CosmosPrivateKey> =
         keys[1..3].iter().map(|key| key.orch_key).collect();
 

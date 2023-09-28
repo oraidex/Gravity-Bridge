@@ -167,6 +167,8 @@ message EvmChainParam {
   repeated string ethereum_blacklist = 7;
   // use this for matching
   string evm_chain_prefix = 8;
+
+  string bridge_erc721_ethereum_address = 9;
 }
 
 // EvmChainData struct, containing all persistant data per EVM chain required by
@@ -222,4 +224,6 @@ message GravityNonces {
   uint64 last_batch_id = 7;
   // last observed evm block height
   uint64 last_observed_evm_block_height = 8;
+  // the last observed GravityERC721.sol contract event nonce
+  uint64 last_erc721_observed_nonce = 9;
 }

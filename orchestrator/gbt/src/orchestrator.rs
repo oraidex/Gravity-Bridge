@@ -124,7 +124,49 @@ pub async fn orchestrator(
         .await
         .expect("Failed to get Gravity Bridge module parameters!");
 
+<<<<<<< HEAD
     
+=======
+    // get the gravity contract address, if not provided
+    let gravity_contract_address = if let Some(c) = args.gravity_contract_address {
+        c
+    } else {
+        let c = params.bridge_ethereum_address.parse();
+        match c {
+            Ok(v) => {
+                if v == *ZERO_ADDRESS {
+                    error!("The Gravity address is not yet set as a chain parameter! You must specify --gravity-contract-address");
+                    exit(1);
+                }
+                c.unwrap()
+            }
+            Err(_) => {
+                error!("The Gravity address is not yet set as a chain parameter! You must specify --gravity-contract-address");
+                exit(1);
+            }
+        }
+    };
+>>>>>>> 81057dc97ff3a6f3702fca99300ddbb3a7011770
+
+    // get the gravityerc721 contract address, if not provided
+    let gravityerc721_contract_address = if let Some(c) = args.gravityerc721_contract_address {
+        c
+    } else {
+        let c = params.bridge_erc721_ethereum_address.parse();
+        match c {
+            Ok(v) => {
+                if v == *ZERO_ADDRESS {
+                    error!("The GravityERC721 address is not yet set as a chain parameter! You must specify --gravityerc721-contract-address");
+                    exit(1);
+                }
+                c.unwrap()
+            }
+            Err(_) => {
+                error!("The GravityERC721 address is not yet set as a chain parameter! You must specify --gravityerc721-contract-address");
+                exit(1);
+            }
+        }
+    };
 
     if config.orchestrator.relayer_enabled {
         // setup and explain relayer settings
@@ -168,6 +210,7 @@ pub async fn orchestrator(
     orchestrator_main_loop(
         cosmos_key,
         ethereum_key,
+<<<<<<< HEAD
         web3.clone(),
         contact.clone(),
         grpc_client.clone(),
@@ -176,6 +219,16 @@ pub async fn orchestrator(
         evm_chain_params.gravity_id.clone(),
         fee.clone(),
         config.clone(),
+=======
+        connections.web3.unwrap(),
+        connections.contact.unwrap(),
+        connections.grpc.unwrap(),
+        gravity_contract_address,
+        gravityerc721_contract_address,
+        params.gravity_id,
+        fee,
+        config,
+>>>>>>> 81057dc97ff3a6f3702fca99300ddbb3a7011770
     )
     .await;
 }

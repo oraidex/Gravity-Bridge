@@ -19,9 +19,14 @@ done
 
 pushd /gravity/module/
 export PATH=$PATH:/usr/local/go/bin
+<<<<<<< HEAD
 make install-no-verify
 popd
 pushd /gravity/
+=======
+make install-core
+cd /gravity/
+>>>>>>> 81057dc97ff3a6f3702fca99300ddbb3a7011770
 tests/container-scripts/setup-validators.sh $NODES
 tests/container-scripts/setup-ibc-validators.sh $NODES
 tests/container-scripts/run-testnet.sh $NODES $TEST_TYPE $ALCHEMY_ID

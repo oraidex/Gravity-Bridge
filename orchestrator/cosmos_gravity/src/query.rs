@@ -3,10 +3,18 @@ use std::convert::TryFrom;
 use deep_space::address::Address;
 use deep_space::error::CosmosGrpcError;
 use deep_space::Contact;
+use gravity_proto::gravity::QueryErc721AttestationsRequest;
+use gravity_proto::gravity::QueryLastErc721EventNonceByAddrRequest;
 use gravity_proto::gravity::query_client::QueryClient as GravityQueryClient;
+<<<<<<< HEAD
 use gravity_proto::gravity::BridgeBalanceSnapshot;
 use gravity_proto::gravity::EvmChain;
 use gravity_proto::gravity::EvmChainParam;
+=======
+use gravity_proto::nft::QueryOwnerRequest;
+use gravity_proto::nft::QueryOwnerResponse;
+use gravity_proto::nft::query_client::QueryClient as NftQueryClient;
+>>>>>>> 81057dc97ff3a6f3702fca99300ddbb3a7011770
 use gravity_proto::gravity::Params;
 use gravity_proto::gravity::QueryAttestationsRequest;
 use gravity_proto::gravity::QueryBatchConfirmsRequest;
@@ -207,7 +215,7 @@ pub async fn get_transaction_batch_signatures(
     Ok(out)
 }
 
-/// Gets the last event nonce that a given validator has attested to, this lets us
+/// Gets the last event nonce for gravity.sol contract that a given validator has attested to, this lets us
 /// catch up with what the current event nonce should be if a oracle is restarted
 pub async fn get_last_event_nonce_for_validator(
     client: &mut GravityQueryClient<Channel>,
@@ -219,6 +227,21 @@ pub async fn get_last_event_nonce_for_validator(
         .last_event_nonce_by_addr(QueryLastEventNonceByAddrRequest {
             address: address.to_bech32(prefix).unwrap(),
             evm_chain_prefix,
+        })
+        .await?;
+    Ok(request.into_inner().event_nonce)
+}
+
+/// Gets the last event nonce for gravityerc721.sol contract that a given validator has attested to, this lets us
+/// catch up with what the current event nonce should be if a oracle is restarted
+pub async fn get_last_erc721_event_nonce_for_validator(
+    client: &mut GravityQueryClient<Channel>,
+    address: Address,
+    prefix: String,
+) -> Result<u64, GravityError> {
+    let request = client
+        .last_erc721_event_nonce_by_addr(QueryLastErc721EventNonceByAddrRequest {
+            address: address.to_bech32(prefix).unwrap(),
         })
         .await?;
     Ok(request.into_inner().event_nonce)
@@ -303,7 +326,39 @@ pub async fn get_attestations(
         .await?;
     let attestations = request.into_inner().attestations;
     Ok(attestations)
+} 
+
+pub async fn get_erc721_attestations(
+    client: &mut GravityQueryClient<Channel>,
+    limit: Option<u64>,
+) -> Result<Vec<Attestation>, GravityError> {
+    let request = client
+        .get_erc721_attestations(QueryErc721AttestationsRequest {
+            limit: limit.unwrap_or(1000u64),
+            order_by: String::new(),
+            claim_type: String::new(),
+            nonce: 0,
+            height: 0,
+        })
+        .await?;
+    let attestations = request.into_inner().attestations;
+    Ok(attestations)
 }
+
+pub async fn get_nft_owner(
+    client: &mut NftQueryClient<Channel>,
+    class_id: String,
+    token_id: String,
+) -> Result<QueryOwnerResponse, GravityError> {
+    let request = client
+        .owner(QueryOwnerRequest {
+            class_id: class_id,
+            id: token_id,
+        })
+        .await?;
+    Ok(request.into_inner())
+}
+
 
 /// Get a list of transactions going to the EVM blockchain that are pending for a given user.
 pub async fn get_pending_send_to_eth(

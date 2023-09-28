@@ -11,8 +11,13 @@ use args::{GovQuerySubcommand, GovSubcommand, GovSubmitSubcommand, Opts};
 use clap::Parser;
 use client::cosmos_to_eth::cosmos_to_eth_cmd;
 use client::deploy_erc20_representation::deploy_erc20_representation;
+<<<<<<< HEAD
 use client::eth_to_cosmos::eth_to_cosmos;
 use client::spot_relay::spot_relay;
+=======
+use client::erc20_to_cosmos::erc20_to_cosmos;
+use client::erc721_to_cosmos::erc721_to_cosmos;
+>>>>>>> 81057dc97ff3a6f3702fca99300ddbb3a7011770
 use config::{get_home_dir, load_config};
 use env_logger::Env;
 use gov::proposals::{
@@ -53,8 +58,11 @@ async fn main() {
     // control flow for the command structure
     match opts.subcmd {
         SubCommand::Client(client_opts) => match client_opts.subcmd {
-            ClientSubcommand::EthToCosmos(eth_to_cosmos_opts) => {
-                eth_to_cosmos(eth_to_cosmos_opts, address_prefix).await
+            ClientSubcommand::Erc20ToCosmos(erc20_to_cosmos_opts) => {
+                erc20_to_cosmos(erc20_to_cosmos_opts, address_prefix).await
+            }
+            ClientSubcommand::Erc721ToCosmos(erc721_to_cosmos_opts) => {
+                erc721_to_cosmos(erc721_to_cosmos_opts, address_prefix).await
             }
             ClientSubcommand::CosmosToEth(cosmos_to_eth_opts) => {
                 cosmos_to_eth_cmd(cosmos_to_eth_opts, address_prefix).await

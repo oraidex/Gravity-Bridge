@@ -64,6 +64,15 @@ var (
 	// [0x0bfa165ff4ef558b3d0b62ea4d4a46c5]
 	OracleAttestationKey = HashString("OracleAttestationKey")
 
+	// OracleERC721AttestationKey attestation details by nonce and validator address
+	// i.e. gravityvaloper1ahx7f8wyertuus9r20284ej0asrs085ceqtfnm
+	// An attestation can be thought of as the 'event to be executed' while
+	// the Claims are an individual validator saying that they saw an event
+	// occur the Attestation is 'the event' that multiple claims vote on and
+	// eventually executes
+	// [0xa7d1b4a377977f3c09c38267a1a18bb9]
+	OracleERC721AttestationKey = HashString("OracleERC721AttestationKey")
+
 	// OutgoingTXPoolKey indexes the last nonce for the outgoing tx pool
 	// [0x44f7816ec23d990ee39d9ed4609bbd4d]
 	OutgoingTXPoolKey = HashString("OutgoingTXPoolKey")
@@ -76,13 +85,23 @@ var (
 	// [0x75b935a854d50880236724b9c4822daf]
 	BatchConfirmKey = HashString("BatchConfirmKey")
 
-	// LastEventNonceByValidatorKey indexes lateset event nonce by validator
+	// LastEventNonceByValidatorKey indexes latest event nonce by validator
 	// [0xeefcb999cc3d7b80b052b55106a6ba5e]
 	LastEventNonceByValidatorKey = HashString("LastEventNonceByValidatorKey")
+
+	// LastERC721EventNonceByValidatorKey indexes latest erc721 event nonce by validator
+	// [0xef3880297cf2cebc62c5f35403ba5d63]
+	LastERC721EventNonceByValidatorKey = HashString("LastERC721EventNonceByValidatorKey")
+
+	// TODO: if needed we need to add a "LastERC721EventNonceByValidatorKey" key
 
 	// LastObservedEventNonceKey indexes the latest event nonce
 	// [0xa34e56ab6fab9ee91e82ba216bfeb759]
 	LastObservedEventNonceKey = HashString("LastObservedEventNonceKey")
+
+	// LastObservedERC721EventNonceKey indexes the latest event nonce
+	// [0x0927a9b46c7b88b027d5973970ac31aa]
+	LastObservedERC721EventNonceKey = HashString("LastObservedERC721EventNonceKey")
 
 	// LEGACYSequenceKeyPrefix indexes different txids
 	// Note: This is a LEGACY key, i.e. it is no longer in use!
@@ -114,6 +133,10 @@ var (
 	// LastObservedEvmBlockHeightKey indexes the latest Ethereum block height
 	// [0x8714755324ba0b02be37e2d2a5af913d]
 	LastObservedEvmBlockHeightKey = HashString("LastObservedEvmBlockHeightKey")
+
+	// LastObservedERC721EthereumBlockHeightKey indexes the latest Ethereum block height
+	// [4004926194b2aadbcc5a28cac2d991ae]
+	LastObservedERC721EthereumBlockHeightKey = HashString("LastObservedERC721EthereumBlockHeightKey")
 
 	// DenomToERC20Key prefixes the index of Cosmos originated asset denoms to ERC20s
 	// [0x19fb4f512868744eea13f3eac3672c12]
@@ -175,6 +198,9 @@ var (
 	// The entries are indexed by Attestation Event Nonce
 	// [0xcd68f89bc0dc4b49109abf2f433e2321]
 	BridgeBalanceSnapshotsKey = HashString("BridgeBalanceSnapshots")
+	// PendingERC721IbcAutoForwards indexes pending SendERC721ToCosmos sends via IBC, queued by event nonce
+	// [2d014709a3fb766362bdab029b0a51a2]
+	PendingERC721IbcAutoForwards = HashString("ERC721IbcAutoForwardQueue")
 )
 
 // GetOrchestratorAddressKey returns the following key format
@@ -236,8 +262,17 @@ func GetValsetConfirmKey(evmChainPrefix string, nonce uint64, validator sdk.AccA
 // details because each Attestation is aggregating all claims of a specific event, lets say
 // validator X and validator y were making different claims about the same event nonce
 // Note that the claim hash does NOT include the claimer address and only identifies an event
-func GetAttestationKey(evmChainPrefix string, eventNonce uint64, claimHash []byte) []byte {
-	return AppendBytes(OracleAttestationKey, []byte(evmChainPrefix), UInt64Bytes(eventNonce), claimHash)
+func GetAttestationKey(nonceSource NonceSource, evmChainPrefix string, eventNonce uint64, claimHash []byte) []byte {
+	var oracleKey []byte
+	switch nonceSource {
+	case GravityContractNonce:
+		oracleKey = OracleAttestationKey
+	case ERC721ContractNonce:
+		oracleKey = OracleERC721AttestationKey
+	default:
+		panic("invalid nonce source")
+	}
+	return AppendBytes(oracleKey, []byte(evmChainPrefix), UInt64Bytes(eventNonce), claimHash)
 }
 
 // GetOutgoingTxPoolContractPrefix returns
@@ -293,11 +328,20 @@ func GetBatchConfirmKey(evmChainPrefix string, tokenContract EthAddress, batchNo
 // GetLastEventNonceByValidatorKey returns the following key format
 // prefix  chain				cosmos-validator
 // [0x0][xyzchain][gravity1ahx7f8wyertuus9r20284ej0asrs085ceqtfnm]
-func GetLastEventNonceByValidatorKey(evmChainPrefix string, validator sdk.ValAddress) []byte {
+func GetLastEventNonceByValidatorKey(nonceSource NonceSource, evmChainPrefix string, validator sdk.ValAddress) []byte {
 	if err := sdk.VerifyAddressFormat(validator); err != nil {
 		panic(sdkerrors.Wrap(err, "invalid validator address"))
 	}
-	return AppendBytes(LastEventNonceByValidatorKey, []byte(evmChainPrefix), validator.Bytes())
+	var nonceKey []byte
+	switch nonceSource {
+	case GravityContractNonce:
+		nonceKey = LastEventNonceByValidatorKey
+	case ERC721ContractNonce:
+		nonceKey = LastERC721EventNonceByValidatorKey
+	default:
+		panic("invalid nonce source")
+	}
+	return AppendBytes(nonceSource, []byte(evmChainPrefix), validator.Bytes())
 }
 
 // GetDenomToERC20Key return the following key format
@@ -384,4 +428,34 @@ func ExtractNonceFromBridgeBalanceSnapshotKey(key []byte) (uint64, string, error
 	}
 	evmChainPrefix := string(key[prefixLen+8:])
 	return UInt64FromBytesUnsafe(nonce), evmChainPrefix, nil
+}
+
+func GetPendingIbcAutoForwardsPrefixKey(nonceSource NonceSource) []byte {
+	switch nonceSource {
+	case GravityContractNonce:
+		return PendingIbcAutoForwards
+	case ERC721ContractNonce:
+		return PendingERC721IbcAutoForwards
+	default:
+		panic("invalid nonce source")
+	}
+}
+
+// GetPendingIbcAutoForwardKey returns the following key format
+// prefix		EventNonce
+// [0x0][0 0 0 0 0 0 0 1]
+func GetPendingIbcAutoForwardKey(eventNonce uint64, nonceSource NonceSource) []byte {
+	prefixKey := GetPendingIbcAutoForwardsPrefixKey(nonceSource)
+	return AppendBytes(prefixKey, UInt64Bytes(eventNonce))
+}
+
+func GetLastObservedEthereumBlockHeightKey(nonceSource NonceSource, evmChainPrefix string) []byte {
+	switch nonceSource {
+	case GravityContractNonce:
+		return AppendBytes(LastObservedEthereumBlockHeightKey, []byte(evmChainPrefix))
+	case ERC721ContractNonce:
+		return AppendBytes(LastObservedERC721EthereumBlockHeightKey, []byte(evmChainPrefix))
+	default:
+		panic("invalid nonce source")
+	}
 }

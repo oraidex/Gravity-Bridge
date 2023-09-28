@@ -5,7 +5,7 @@ import (
 	"github.com/cosmos/cosmos-sdk/codec/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/msgservice"
-	govtypes "github.com/cosmos/cosmos-sdk/x/gov/types"
+	govtypesv1beta1 "github.com/cosmos/cosmos-sdk/x/gov/types/v1beta1"
 )
 
 // ModuleCdc is the codec for the module
@@ -25,6 +25,7 @@ func RegisterInterfaces(registry types.InterfaceRegistry) {
 		&MsgConfirmBatch{},
 		&MsgConfirmLogicCall{},
 		&MsgSendToCosmosClaim{},
+		&MsgSendERC721ToCosmosClaim{},
 		&MsgBatchSendToEthClaim{},
 		&MsgERC20DeployedClaim{},
 		&MsgSetOrchestratorAddress{},
@@ -38,13 +39,18 @@ func RegisterInterfaces(registry types.InterfaceRegistry) {
 		"gravity.v1beta1.EthereumClaim",
 		(*EthereumClaim)(nil),
 		&MsgSendToCosmosClaim{},
+		&MsgSendERC721ToCosmosClaim{},
 		&MsgBatchSendToEthClaim{},
 		&MsgERC20DeployedClaim{},
 		&MsgLogicCallExecutedClaim{},
 		&MsgValsetUpdatedClaim{},
 	)
 
+<<<<<<< HEAD
 	registry.RegisterImplementations((*govtypes.Content)(nil), &UnhaltBridgeProposal{}, &AirdropProposal{}, &IBCMetadataProposal{}, &AddEvmChainProposal{}, &RemoveEvmChainProposal{}, &MonitoredERC20TokensProposal{})
+=======
+	registry.RegisterImplementations((*govtypesv1beta1.Content)(nil), &UnhaltBridgeProposal{}, &AirdropProposal{}, &IBCMetadataProposal{})
+>>>>>>> 81057dc97ff3a6f3702fca99300ddbb3a7011770
 
 	registry.RegisterInterface("gravity.v1beta1.EthereumSigned", (*EthereumSigned)(nil), &Valset{}, &OutgoingTxBatch{}, &OutgoingLogicCall{})
 
@@ -63,6 +69,7 @@ func RegisterCodec(cdc *codec.LegacyAmino) {
 	cdc.RegisterConcrete(&MsgConfirmLogicCall{}, "gravity/MsgConfirmLogicCall", nil)
 	cdc.RegisterConcrete(&Valset{}, "gravity/Valset", nil)
 	cdc.RegisterConcrete(&MsgSendToCosmosClaim{}, "gravity/MsgSendToCosmosClaim", nil)
+	cdc.RegisterConcrete(&MsgSendERC721ToCosmosClaim{}, "gravity/MsgSendERC721ToCosmosClaim", nil)
 	cdc.RegisterConcrete(&MsgBatchSendToEthClaim{}, "gravity/MsgBatchSendToEthClaim", nil)
 	cdc.RegisterConcrete(&MsgERC20DeployedClaim{}, "gravity/MsgERC20DeployedClaim", nil)
 	cdc.RegisterConcrete(&MsgLogicCallExecutedClaim{}, "gravity/MsgLogicCallExecutedClaim", nil)

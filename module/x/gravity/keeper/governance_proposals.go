@@ -9,10 +9,12 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 	disttypes "github.com/cosmos/cosmos-sdk/x/distribution/types"
-	govtypes "github.com/cosmos/cosmos-sdk/x/gov/types"
+	govtypesv1beta1 "github.com/cosmos/cosmos-sdk/x/gov/types/v1beta1"
 )
 
 // this file contains code related to custom governance proposals
+
+// TODO: There are probably some ERC721 nonce types that needs to be handled here!
 
 func RegisterProposalTypes() {
 	// use of prefix stripping to prevent a typo between the proposal we check
@@ -23,6 +25,7 @@ func RegisterProposalTypes() {
 	// run during operation of one off tx commands, so we need to run this 'twice'
 	prefix := "gravity/"
 	metadata := "gravity/IBCMetadata"
+<<<<<<< HEAD
 	if !govtypes.IsValidProposalType(strings.TrimPrefix(metadata, prefix)) {
 		govtypes.RegisterProposalType(types.ProposalTypeIBCMetadata)
 		// nolint: exhaustruct
@@ -39,6 +42,18 @@ func RegisterProposalTypes() {
 		govtypes.RegisterProposalType(types.ProposalTypeAirdrop)
 		// nolint: exhaustruct
 		govtypes.RegisterProposalTypeCodec(&types.AirdropProposal{}, airdrop)
+=======
+	if !govtypesv1beta1.IsValidProposalType(strings.TrimPrefix(metadata, prefix)) {
+		govtypesv1beta1.RegisterProposalType(types.ProposalTypeIBCMetadata)
+	}
+	unhalt := "gravity/UnhaltBridge"
+	if !govtypesv1beta1.IsValidProposalType(strings.TrimPrefix(unhalt, prefix)) {
+		govtypesv1beta1.RegisterProposalType(types.ProposalTypeUnhaltBridge)
+	}
+	airdrop := "gravity/Airdrop"
+	if !govtypesv1beta1.IsValidProposalType(strings.TrimPrefix(airdrop, prefix)) {
+		govtypesv1beta1.RegisterProposalType(types.ProposalTypeAirdrop)
+>>>>>>> 81057dc97ff3a6f3702fca99300ddbb3a7011770
 	}
 	addEvmChain := "gravity/AddEvmChain"
 	if !govtypes.IsValidProposalType(strings.TrimPrefix(addEvmChain, prefix)) {
@@ -59,8 +74,8 @@ func RegisterProposalTypes() {
 	}
 }
 
-func NewGravityProposalHandler(k Keeper) govtypes.Handler {
-	return func(ctx sdk.Context, content govtypes.Content) error {
+func NewGravityProposalHandler(k Keeper) govtypesv1beta1.Handler {
+	return func(ctx sdk.Context, content govtypesv1beta1.Content) error {
 		switch c := content.(type) {
 		case *types.UnhaltBridgeProposal:
 			return k.HandleUnhaltBridgeProposal(ctx, c)
@@ -197,14 +212,22 @@ func (k Keeper) HandleRemoveEvmChainProposal(ctx sdk.Context, p *types.RemoveEvm
 // and prune those that are older than nonceCutoff
 func pruneAttestationsAfterNonce(ctx sdk.Context, evmChainPrefix string, k Keeper, nonceCutoff uint64) {
 	// Decide on the most recent nonce we can actually roll back to
+<<<<<<< HEAD
 	lastObserved := k.GetLastObservedEventNonce(ctx, evmChainPrefix)
+=======
+	lastObserved := k.GetLastObservedEventNonce(ctx, types.GravityContractNonce)
+>>>>>>> 81057dc97ff3a6f3702fca99300ddbb3a7011770
 	if nonceCutoff < lastObserved || nonceCutoff == 0 {
 		ctx.Logger().Error("Attempted to reset to a nonce before the last \"observed\" event, which is not allowed", "lastObserved", lastObserved, "nonce", nonceCutoff)
 		return
 	}
 
 	// Get relevant event nonces
+<<<<<<< HEAD
 	attmap, keys := k.GetAttestationMapping(ctx, evmChainPrefix)
+=======
+	attmap, keys := k.GetAttestationMapping(ctx, types.GravityContractNonce)
+>>>>>>> 81057dc97ff3a6f3702fca99300ddbb3a7011770
 
 	// Discover all affected validators whose LastEventNonce must be reset to nonceCutoff
 
@@ -227,7 +250,7 @@ func pruneAttestationsAfterNonce(ctx sdk.Context, evmChainPrefix string, k Keepe
 					}
 				}
 
-				k.DeleteAttestation(ctx, att)
+				k.DeleteAttestation(ctx, att, types.GravityContractNonce)
 			}
 		}
 	}
@@ -238,10 +261,17 @@ func pruneAttestationsAfterNonce(ctx sdk.Context, evmChainPrefix string, k Keepe
 		if err != nil {
 			panic(sdkerrors.Wrap(err, "invalid validator address affected by bridge reset"))
 		}
+<<<<<<< HEAD
 		valLastNonce := k.GetLastEventNonceByValidator(ctx, evmChainPrefix, val)
 		if valLastNonce > nonceCutoff {
 			ctx.Logger().Info("Resetting validator's last event nonce due to bridge unhalt", "validator", vote, "lastEventNonce", valLastNonce, "resetNonce", nonceCutoff)
 			k.SetLastEventNonceByValidator(ctx, evmChainPrefix, val, nonceCutoff)
+=======
+		valLastNonce := k.GetLastEventNonceByValidator(ctx, val, types.GravityContractNonce)
+		if valLastNonce > nonceCutoff {
+			ctx.Logger().Info("Resetting validator's last event nonce due to bridge unhalt", "validator", vote, "lastEventNonce", valLastNonce, "resetNonce", nonceCutoff)
+			k.SetLastEventNonceByValidator(ctx, val, nonceCutoff, types.GravityContractNonce)
+>>>>>>> 81057dc97ff3a6f3702fca99300ddbb3a7011770
 		}
 	}
 }

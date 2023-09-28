@@ -141,6 +141,7 @@ async function deploy() {
     console.log("Test mode, deploying ERC20 contracts");
 
     // this handles several possible locations for the ERC20 artifacts
+<<<<<<< HEAD
     var erc20_a_path: string;
     var erc20_b_path: string;
     var erc20_c_path: string;
@@ -156,6 +157,21 @@ async function deploy() {
       "/gravity/solidity/artifacts/contracts/VulnerableERC20.sol/VulnerableERC20.json";
     const main_location_721_a =
       "/gravity/solidity/artifacts/contracts/TestERC721A.sol/TestERC721A.json";
+=======
+    var erc20_a_path: string
+    var erc20_b_path: string
+    var erc20_c_path: string
+    var erc721_a_path: string
+    const main_location_a = "./artifacts/contracts/TestERC20A.sol/TestERC20A.json"
+    const main_location_b = "./artifacts/contracts/TestERC20B.sol/TestERC20B.json"
+    const main_location_c = "./artifacts/contracts/TestERC20C.sol/TestERC20C.json"
+    const main_location_721_a = "./artifacts/contracts/TestERC721A.sol/TestERC721A.json"
+    
+    const alt_location_1_a = "/solidity/TestERC20A.json"
+    const alt_location_1_b = "/solidity/TestERC20B.json"
+    const alt_location_1_c = "/solidity/TestERC20C.json"
+    const alt_location_1_721a = "/solidity/TestERC721A.json"
+>>>>>>> 81057dc97ff3a6f3702fca99300ddbb3a7011770
 
     const alt_location_1_a = "/solidity/TestERC20A.json";
     const alt_location_1_b = "/solidity/TestERC20B.json";

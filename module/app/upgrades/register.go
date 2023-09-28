@@ -1,6 +1,9 @@
 package upgrades
 
 import (
+	"github.com/Gravity-Bridge/Gravity-Bridge/module/app/upgrades/antares"
+	"github.com/Gravity-Bridge/Gravity-Bridge/module/app/upgrades/orion"
+	"github.com/Gravity-Bridge/Gravity-Bridge/module/app/upgrades/singlestep"
 	gravitykeeper "github.com/Gravity-Bridge/Gravity-Bridge/module/x/gravity/keeper"
 	bech32ibckeeper "github.com/althea-net/bech32-ibc/x/bech32ibc/keeper"
 	"github.com/cosmos/cosmos-sdk/types/module"
@@ -11,11 +14,7 @@ import (
 	mintkeeper "github.com/cosmos/cosmos-sdk/x/mint/keeper"
 	stakingkeeper "github.com/cosmos/cosmos-sdk/x/staking/keeper"
 	upgradekeeper "github.com/cosmos/cosmos-sdk/x/upgrade/keeper"
-	ibctransferkeeper "github.com/cosmos/ibc-go/v4/modules/apps/transfer/keeper"
-
-	"github.com/Gravity-Bridge/Gravity-Bridge/module/app/upgrades/antares"
-	"github.com/Gravity-Bridge/Gravity-Bridge/module/app/upgrades/orion"
-	"github.com/Gravity-Bridge/Gravity-Bridge/module/app/upgrades/singlestep"
+	ibctransferkeeper "github.com/cosmos/ibc-go/v6/modules/apps/transfer/keeper"
 )
 
 // RegisterUpgradeHandlers registers handlers for all upgrades

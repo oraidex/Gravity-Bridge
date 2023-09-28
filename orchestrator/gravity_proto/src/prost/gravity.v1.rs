@@ -13,6 +13,7 @@
 /// the key in which the attestation is stored is keyed on the exact details of the claim
 /// but there is no reason to store those exact details becuause the next message sender
 /// will kindly provide you with them.
+<<<<<<< HEAD
 #[allow(clippy::derive_partial_eq_without_eq)]
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct Attestation {
@@ -23,6 +24,17 @@ pub struct Attestation {
     #[prost(uint64, tag = "3")]
     pub height: u64,
     #[prost(message, optional, tag = "4")]
+=======
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct Attestation {
+    #[prost(bool, tag="1")]
+    pub observed: bool,
+    #[prost(string, repeated, tag="2")]
+    pub votes: ::prost::alloc::vec::Vec<::prost::alloc::string::String>,
+    #[prost(uint64, tag="3")]
+    pub height: u64,
+    #[prost(message, optional, tag="4")]
+>>>>>>> 81057dc97ff3a6f3702fca99300ddbb3a7011770
     pub claim: ::core::option::Option<::prost_types::Any>,
 }
 /// ERC20Token unique identifier for an Ethereum ERC20 token.
@@ -30,6 +42,7 @@ pub struct Attestation {
 /// The contract address on ETH of the token, this could be a Cosmos
 /// originated token, if so it will be the ERC20 address of the representation
 /// (note: developers should look up the token symbol using the address on ETH to display for UI)
+<<<<<<< HEAD
 #[allow(clippy::derive_partial_eq_without_eq)]
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct Erc20Token {
@@ -116,6 +129,152 @@ pub struct EventSendToCosmosExecutedIbcAutoForward {
     #[prost(string, tag = "6")]
     pub timeout_time: ::prost::alloc::string::String,
     #[prost(string, tag = "7")]
+=======
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct Erc20Token {
+    #[prost(string, tag="1")]
+    pub contract: ::prost::alloc::string::String,
+    #[prost(string, tag="2")]
+    pub amount: ::prost::alloc::string::String,
+}
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct EventObservation {
+    #[prost(string, tag="1")]
+    pub attestation_type: ::prost::alloc::string::String,
+    #[prost(string, tag="2")]
+    pub bridge_contract: ::prost::alloc::string::String,
+    #[prost(string, tag="3")]
+    pub bridge_chain_id: ::prost::alloc::string::String,
+    #[prost(string, tag="4")]
+    pub attestation_id: ::prost::alloc::string::String,
+    #[prost(string, tag="5")]
+    pub nonce: ::prost::alloc::string::String,
+}
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct EventInvalidSendToCosmosReceiver {
+    #[prost(string, tag="1")]
+    pub amount: ::prost::alloc::string::String,
+    #[prost(string, tag="2")]
+    pub nonce: ::prost::alloc::string::String,
+    #[prost(string, tag="3")]
+    pub token: ::prost::alloc::string::String,
+    #[prost(string, tag="4")]
+    pub sender: ::prost::alloc::string::String,
+}
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct EventInvalidSendErc721ToCosmosReceiver {
+    #[prost(string, tag="1")]
+    pub contract: ::prost::alloc::string::String,
+    #[prost(string, tag="2")]
+    pub class_id: ::prost::alloc::string::String,
+    #[prost(string, tag="3")]
+    pub token_id: ::prost::alloc::string::String,
+    #[prost(string, tag="4")]
+    pub nonce: ::prost::alloc::string::String,
+    #[prost(string, tag="5")]
+    pub sender: ::prost::alloc::string::String,
+}
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct EventSendToCosmos {
+    #[prost(string, tag="1")]
+    pub amount: ::prost::alloc::string::String,
+    #[prost(string, tag="2")]
+    pub nonce: ::prost::alloc::string::String,
+    #[prost(string, tag="3")]
+    pub token: ::prost::alloc::string::String,
+}
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct EventSendErc721ToCosmos {
+    #[prost(string, tag="1")]
+    pub contract: ::prost::alloc::string::String,
+    #[prost(string, tag="3")]
+    pub class_id: ::prost::alloc::string::String,
+    #[prost(string, tag="4")]
+    pub token_id: ::prost::alloc::string::String,
+    #[prost(string, tag="5")]
+    pub nonce: ::prost::alloc::string::String,
+}
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct EventSendToCosmosLocal {
+    #[prost(string, tag="1")]
+    pub nonce: ::prost::alloc::string::String,
+    #[prost(string, tag="2")]
+    pub receiver: ::prost::alloc::string::String,
+    #[prost(string, tag="3")]
+    pub token: ::prost::alloc::string::String,
+    #[prost(string, tag="4")]
+    pub amount: ::prost::alloc::string::String,
+}
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct EventSendErc721ToCosmosLocal {
+    #[prost(string, tag="1")]
+    pub nonce: ::prost::alloc::string::String,
+    #[prost(string, tag="2")]
+    pub receiver: ::prost::alloc::string::String,
+    #[prost(string, tag="3")]
+    pub class_id: ::prost::alloc::string::String,
+    #[prost(string, tag="4")]
+    pub token_id: ::prost::alloc::string::String,
+}
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct EventSendToCosmosPendingIbcAutoForward {
+    #[prost(string, tag="1")]
+    pub nonce: ::prost::alloc::string::String,
+    #[prost(string, tag="2")]
+    pub receiver: ::prost::alloc::string::String,
+    #[prost(string, tag="3")]
+    pub token: ::prost::alloc::string::String,
+    #[prost(string, tag="4")]
+    pub amount: ::prost::alloc::string::String,
+    #[prost(string, tag="5")]
+    pub channel: ::prost::alloc::string::String,
+}
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct EventSendErc721ToCosmosPendingIbcAutoForward {
+    #[prost(string, tag="1")]
+    pub nonce: ::prost::alloc::string::String,
+    #[prost(string, tag="2")]
+    pub receiver: ::prost::alloc::string::String,
+    #[prost(string, tag="3")]
+    pub class_id: ::prost::alloc::string::String,
+    #[prost(string, tag="4")]
+    pub token_id: ::prost::alloc::string::String,
+    #[prost(string, tag="5")]
+    pub channel: ::prost::alloc::string::String,
+}
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct EventSendToCosmosExecutedIbcAutoForward {
+    #[prost(string, tag="1")]
+    pub nonce: ::prost::alloc::string::String,
+    #[prost(string, tag="2")]
+    pub receiver: ::prost::alloc::string::String,
+    #[prost(string, tag="3")]
+    pub token: ::prost::alloc::string::String,
+    #[prost(string, tag="4")]
+    pub amount: ::prost::alloc::string::String,
+    #[prost(string, tag="5")]
+    pub channel: ::prost::alloc::string::String,
+    #[prost(string, tag="6")]
+    pub timeout_time: ::prost::alloc::string::String,
+    #[prost(string, tag="7")]
+    pub timeout_height: ::prost::alloc::string::String,
+}
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct EventSendErc721ToCosmosExecutedIbcAutoForward {
+    #[prost(string, tag="1")]
+    pub nonce: ::prost::alloc::string::String,
+    #[prost(string, tag="2")]
+    pub receiver: ::prost::alloc::string::String,
+    #[prost(string, tag="3")]
+    pub class_id: ::prost::alloc::string::String,
+    #[prost(string, tag="4")]
+    pub token_id: ::prost::alloc::string::String,
+    #[prost(string, tag="5")]
+    pub channel: ::prost::alloc::string::String,
+    #[prost(string, tag="6")]
+    pub timeout_time: ::prost::alloc::string::String,
+    #[prost(string, tag="7")]
+>>>>>>> 81057dc97ff3a6f3702fca99300ddbb3a7011770
     pub timeout_height: ::prost::alloc::string::String,
 }
 /// ClaimType is the cosmos type of an event from the counterpart chain that can
@@ -135,6 +294,7 @@ pub enum ClaimType {
     LogicCallExecuted = 4,
     /// A claim for when a valset update has happened
     ValsetUpdated = 5,
+<<<<<<< HEAD
 }
 impl ClaimType {
     /// String value of the enum field names used in the ProtoBuf definition.
@@ -293,11 +453,130 @@ pub struct BridgeValidator {
     #[prost(uint64, tag = "1")]
     pub power: u64,
     #[prost(string, tag = "2")]
+=======
+    /// A claim for a SendERC721ToCosmos transaction
+    SendErc721ToCosmos = 6,
+}
+/// IDSet represents a set of IDs
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct IdSet {
+    #[prost(uint64, repeated, tag="1")]
+    pub ids: ::prost::alloc::vec::Vec<u64>,
+}
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct BatchFees {
+    #[prost(string, tag="1")]
+    pub token: ::prost::alloc::string::String,
+    #[prost(string, tag="2")]
+    pub total_fees: ::prost::alloc::string::String,
+    #[prost(uint64, tag="3")]
+    pub tx_count: u64,
+}
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct EventWithdrawalReceived {
+    #[prost(string, tag="1")]
+    pub bridge_contract: ::prost::alloc::string::String,
+    #[prost(string, tag="2")]
+    pub bridge_chain_id: ::prost::alloc::string::String,
+    #[prost(string, tag="3")]
+    pub outgoing_tx_id: ::prost::alloc::string::String,
+    #[prost(string, tag="4")]
+    pub nonce: ::prost::alloc::string::String,
+}
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct EventWithdrawCanceled {
+    #[prost(string, tag="1")]
+    pub sender: ::prost::alloc::string::String,
+    #[prost(string, tag="2")]
+    pub tx_id: ::prost::alloc::string::String,
+    #[prost(string, tag="3")]
+    pub bridge_contract: ::prost::alloc::string::String,
+    #[prost(string, tag="4")]
+    pub bridge_chain_id: ::prost::alloc::string::String,
+}
+/// OutgoingTxBatch represents a batch of transactions going from gravity to ETH
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct OutgoingTxBatch {
+    #[prost(uint64, tag="1")]
+    pub batch_nonce: u64,
+    #[prost(uint64, tag="2")]
+    pub batch_timeout: u64,
+    #[prost(message, repeated, tag="3")]
+    pub transactions: ::prost::alloc::vec::Vec<OutgoingTransferTx>,
+    #[prost(string, tag="4")]
+    pub token_contract: ::prost::alloc::string::String,
+    #[prost(uint64, tag="5")]
+    pub cosmos_block_created: u64,
+}
+/// OutgoingTransferTx represents an individual send from gravity to ETH
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct OutgoingTransferTx {
+    #[prost(uint64, tag="1")]
+    pub id: u64,
+    #[prost(string, tag="2")]
+    pub sender: ::prost::alloc::string::String,
+    #[prost(string, tag="3")]
+    pub dest_address: ::prost::alloc::string::String,
+    #[prost(message, optional, tag="4")]
+    pub erc20_token: ::core::option::Option<Erc20Token>,
+    #[prost(message, optional, tag="5")]
+    pub erc20_fee: ::core::option::Option<Erc20Token>,
+}
+/// OutgoingLogicCall represents an individual logic call from gravity to ETH
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct OutgoingLogicCall {
+    #[prost(message, repeated, tag="1")]
+    pub transfers: ::prost::alloc::vec::Vec<Erc20Token>,
+    #[prost(message, repeated, tag="2")]
+    pub fees: ::prost::alloc::vec::Vec<Erc20Token>,
+    #[prost(string, tag="3")]
+    pub logic_contract_address: ::prost::alloc::string::String,
+    #[prost(bytes="vec", tag="4")]
+    pub payload: ::prost::alloc::vec::Vec<u8>,
+    #[prost(uint64, tag="5")]
+    pub timeout: u64,
+    #[prost(bytes="vec", tag="6")]
+    pub invalidation_id: ::prost::alloc::vec::Vec<u8>,
+    #[prost(uint64, tag="7")]
+    pub invalidation_nonce: u64,
+    #[prost(uint64, tag="8")]
+    pub cosmos_block_created: u64,
+}
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct EventOutgoingBatchCanceled {
+    #[prost(string, tag="1")]
+    pub bridge_contract: ::prost::alloc::string::String,
+    #[prost(string, tag="2")]
+    pub bridge_chain_id: ::prost::alloc::string::String,
+    #[prost(string, tag="3")]
+    pub batch_id: ::prost::alloc::string::String,
+    #[prost(string, tag="4")]
+    pub nonce: ::prost::alloc::string::String,
+}
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct EventOutgoingBatch {
+    #[prost(string, tag="1")]
+    pub bridge_contract: ::prost::alloc::string::String,
+    #[prost(string, tag="2")]
+    pub bridge_chain_id: ::prost::alloc::string::String,
+    #[prost(string, tag="3")]
+    pub batch_id: ::prost::alloc::string::String,
+    #[prost(string, tag="4")]
+    pub nonce: ::prost::alloc::string::String,
+}
+/// BridgeValidator represents a validator's ETH address and its power
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct BridgeValidator {
+    #[prost(uint64, tag="1")]
+    pub power: u64,
+    #[prost(string, tag="2")]
+>>>>>>> 81057dc97ff3a6f3702fca99300ddbb3a7011770
     pub ethereum_address: ::prost::alloc::string::String,
 }
 /// Valset is the Ethereum Bridge Multsig Set, each gravity validator also
 /// maintains an ETH key to sign messages, these are used to check signatures on
 /// ETH because of the significant gas savings
+<<<<<<< HEAD
 #[allow(clippy::derive_partial_eq_without_eq)]
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct Valset {
@@ -311,6 +590,20 @@ pub struct Valset {
     pub reward_amount: ::prost::alloc::string::String,
     /// the reward token in it's Ethereum hex address representation
     #[prost(string, tag = "5")]
+=======
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct Valset {
+    #[prost(uint64, tag="1")]
+    pub nonce: u64,
+    #[prost(message, repeated, tag="2")]
+    pub members: ::prost::alloc::vec::Vec<BridgeValidator>,
+    #[prost(uint64, tag="3")]
+    pub height: u64,
+    #[prost(string, tag="4")]
+    pub reward_amount: ::prost::alloc::string::String,
+    /// the reward token in it's Ethereum hex address representation
+    #[prost(string, tag="5")]
+>>>>>>> 81057dc97ff3a6f3702fca99300ddbb3a7011770
     pub reward_token: ::prost::alloc::string::String,
 }
 /// LastObservedEthereumBlockHeight stores the last observed
@@ -318,16 +611,25 @@ pub struct Valset {
 /// it was observed at. These two numbers can be used to project
 /// outward and always produce batches with timeouts in the future
 /// even if no Ethereum block height has been relayed for a long time
+<<<<<<< HEAD
 #[allow(clippy::derive_partial_eq_without_eq)]
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct LastObservedEthereumBlockHeight {
     #[prost(uint64, tag = "1")]
     pub cosmos_block_height: u64,
     #[prost(uint64, tag = "2")]
+=======
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct LastObservedEthereumBlockHeight {
+    #[prost(uint64, tag="1")]
+    pub cosmos_block_height: u64,
+    #[prost(uint64, tag="2")]
+>>>>>>> 81057dc97ff3a6f3702fca99300ddbb3a7011770
     pub ethereum_block_height: u64,
 }
 /// This records the relationship between an ERC20 token and the denom
 /// of the corresponding Cosmos originated asset
+<<<<<<< HEAD
 #[allow(clippy::derive_partial_eq_without_eq)]
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct Erc20ToDenom {
@@ -486,6 +788,100 @@ pub struct BridgeBalanceSnapshot {
     #[prost(message, repeated, tag = "4")]
     pub balances: ::prost::alloc::vec::Vec<Erc20Token>,
     #[prost(uint64, tag = "5")]
+=======
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct Erc20ToDenom {
+    #[prost(string, tag="1")]
+    pub erc20: ::prost::alloc::string::String,
+    #[prost(string, tag="2")]
+    pub denom: ::prost::alloc::string::String,
+}
+/// UnhaltBridgeProposal defines a custom governance proposal useful for restoring
+/// the bridge after a oracle disagreement. Once this proposal is passed bridge state will roll back events 
+/// to the nonce provided in target_nonce if and only if those events have not yet been observed (executed on the Cosmos chain). This allows for easy
+/// handling of cases where for example an Ethereum hardfork has occured and more than 1/3 of the vlaidtor set
+/// disagrees with the rest. Normally this would require a chain halt, manual genesis editing and restar to resolve
+/// with this feature a governance proposal can be used instead
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct UnhaltBridgeProposal {
+    #[prost(string, tag="1")]
+    pub title: ::prost::alloc::string::String,
+    #[prost(string, tag="2")]
+    pub description: ::prost::alloc::string::String,
+    #[prost(uint64, tag="4")]
+    pub target_nonce: u64,
+}
+/// AirdropProposal defines a custom governance proposal type that allows an airdrop to occur in a decentralized
+/// fashion. A list of destination addresses and an amount per airdrop recipient is provided. The funds for this
+/// airdrop are removed from the Community Pool, if the community pool does not have sufficient funding to perform
+/// the airdrop to all provided recipients nothing will occur
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct AirdropProposal {
+    #[prost(string, tag="1")]
+    pub title: ::prost::alloc::string::String,
+    #[prost(string, tag="2")]
+    pub description: ::prost::alloc::string::String,
+    #[prost(string, tag="3")]
+    pub denom: ::prost::alloc::string::String,
+    #[prost(bytes="vec", tag="4")]
+    pub recipients: ::prost::alloc::vec::Vec<u8>,
+    #[prost(uint64, repeated, tag="5")]
+    pub amounts: ::prost::alloc::vec::Vec<u64>,
+}
+/// IBCMetadataProposal defines a custom governance proposal type that allows governance to set the
+/// metadata for an IBC token, this will allow Gravity to deploy an ERC20 representing this token on
+/// Ethereum
+/// Name: the token name
+/// Symbol: the token symbol
+/// Description: the token description, not sent to ETH at all, only used on Cosmos
+/// Display: the token display name (only used on Cosmos to decide ERC20 Decimals)
+/// Deicmals: the decimals for the display unit
+/// ibc_denom is the denom of the token in question on this chain
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct IbcMetadataProposal {
+    #[prost(string, tag="1")]
+    pub title: ::prost::alloc::string::String,
+    #[prost(string, tag="2")]
+    pub description: ::prost::alloc::string::String,
+    #[prost(message, optional, tag="3")]
+    pub metadata: ::core::option::Option<cosmos_sdk_proto::cosmos::bank::v1beta1::Metadata>,
+    #[prost(string, tag="4")]
+    pub ibc_denom: ::prost::alloc::string::String,
+}
+/// PendingIbcAutoForward represents a SendToCosmos transaction with a foreign CosmosReceiver which will be added to the
+/// PendingIbcAutoForward queue in attestation_handler and sent over IBC on some submission of a MsgExecuteIbcAutoForwards
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct PendingIbcAutoForward {
+    /// the destination address. sdk.AccAddress does not preserve foreign prefixes
+    #[prost(string, tag="1")]
+    pub foreign_receiver: ::prost::alloc::string::String,
+    /// the token sent from ethereum to the ibc-enabled chain over `IbcChannel`
+    #[prost(message, optional, tag="2")]
+    pub token: ::core::option::Option<cosmos_sdk_proto::cosmos::base::v1beta1::Coin>,
+    /// the IBC channel to send `Amount` over via ibc-transfer module
+    #[prost(string, tag="3")]
+    pub ibc_channel: ::prost::alloc::string::String,
+    /// the EventNonce from the MsgSendToCosmosClaim, used for ordering the queue
+    #[prost(uint64, tag="4")]
+    pub event_nonce: u64,
+}
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct PendingErc721IbcAutoForward {
+    /// the destination address. sdk.AccAddress does not preserve foreign prefixes
+    #[prost(string, tag="1")]
+    pub foreign_receiver: ::prost::alloc::string::String,
+    /// the x/nft class id for the NFT token
+    #[prost(string, tag="2")]
+    pub class_id: ::prost::alloc::string::String,
+    /// the token id of the ERC721 token
+    #[prost(string, tag="3")]
+    pub token_id: ::prost::alloc::string::String,
+    /// the IBC channel to send the NFT over via nft-transfer module
+    #[prost(string, tag="4")]
+    pub ibc_channel: ::prost::alloc::string::String,
+    /// the EventNonce from the MsgSendERC721ToCosmosClaim, used for ordering the queue
+    #[prost(uint64, tag="5")]
+>>>>>>> 81057dc97ff3a6f3702fca99300ddbb3a7011770
     pub event_nonce: u64,
 }
 /// MsgSetOrchestratorAddress
@@ -499,6 +895,7 @@ pub struct BridgeBalanceSnapshot {
 /// The orchestrator field is a cosmos1... string  (i.e. sdk.AccAddress) that
 /// references the key that is being delegated to
 /// ETH_ADDRESS
+<<<<<<< HEAD
 /// This is a hex encoded 0x Ethereum public key that will be used by this
 /// validator on Ethereum
 #[allow(clippy::derive_partial_eq_without_eq)]
@@ -514,6 +911,22 @@ pub struct MsgSetOrchestratorAddress {
 #[allow(clippy::derive_partial_eq_without_eq)]
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct MsgSetOrchestratorAddressResponse {}
+=======
+/// This is a hex encoded 0x Ethereum public key that will be used by this validator
+/// on Ethereum
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct MsgSetOrchestratorAddress {
+    #[prost(string, tag="1")]
+    pub validator: ::prost::alloc::string::String,
+    #[prost(string, tag="2")]
+    pub orchestrator: ::prost::alloc::string::String,
+    #[prost(string, tag="3")]
+    pub eth_address: ::prost::alloc::string::String,
+}
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct MsgSetOrchestratorAddressResponse {
+}
+>>>>>>> 81057dc97ff3a6f3702fca99300ddbb3a7011770
 /// MsgValsetConfirm
 /// this is the message sent by the validators when they wish to submit their
 /// signatures over the validator set at a given block height. A validator must
@@ -529,6 +942,7 @@ pub struct MsgSetOrchestratorAddressResponse {}
 /// signatures it is then possible for anyone to view these signatures in the
 /// chain store and submit them to Ethereum to update the validator set
 /// -------------
+<<<<<<< HEAD
 #[allow(clippy::derive_partial_eq_without_eq)]
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct MsgValsetConfirm {
@@ -546,6 +960,22 @@ pub struct MsgValsetConfirm {
 #[allow(clippy::derive_partial_eq_without_eq)]
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct MsgValsetConfirmResponse {}
+=======
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct MsgValsetConfirm {
+    #[prost(uint64, tag="1")]
+    pub nonce: u64,
+    #[prost(string, tag="2")]
+    pub orchestrator: ::prost::alloc::string::String,
+    #[prost(string, tag="3")]
+    pub eth_address: ::prost::alloc::string::String,
+    #[prost(string, tag="4")]
+    pub signature: ::prost::alloc::string::String,
+}
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct MsgValsetConfirmResponse {
+}
+>>>>>>> 81057dc97ff3a6f3702fca99300ddbb3a7011770
 /// MsgSendToEth
 /// This is the message that a user calls when they want to bridge an asset
 /// it will later be removed when it is included in a batch and successfully
@@ -562,6 +992,7 @@ pub struct MsgValsetConfirmResponse {}
 /// the fee paid to the chain for handling the request, which must be a
 /// certain percentage of the AMOUNT, as determined by governance.
 /// This Msg will be rejected if CHAIN_FEE is insufficient.
+<<<<<<< HEAD
 #[allow(clippy::derive_partial_eq_without_eq)]
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct MsgSendToEth {
@@ -581,6 +1012,24 @@ pub struct MsgSendToEth {
 #[allow(clippy::derive_partial_eq_without_eq)]
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct MsgSendToEthResponse {}
+=======
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct MsgSendToEth {
+    #[prost(string, tag="1")]
+    pub sender: ::prost::alloc::string::String,
+    #[prost(string, tag="2")]
+    pub eth_dest: ::prost::alloc::string::String,
+    #[prost(message, optional, tag="3")]
+    pub amount: ::core::option::Option<cosmos_sdk_proto::cosmos::base::v1beta1::Coin>,
+    #[prost(message, optional, tag="4")]
+    pub bridge_fee: ::core::option::Option<cosmos_sdk_proto::cosmos::base::v1beta1::Coin>,
+    #[prost(message, optional, tag="5")]
+    pub chain_fee: ::core::option::Option<cosmos_sdk_proto::cosmos::base::v1beta1::Coin>,
+}
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct MsgSendToEthResponse {
+}
+>>>>>>> 81057dc97ff3a6f3702fca99300ddbb3a7011770
 /// MsgRequestBatch
 /// this is a message anyone can send that requests a batch of transactions to
 /// send across the bridge be created for whatever block height this message is
@@ -590,6 +1039,7 @@ pub struct MsgSendToEthResponse {}
 /// batch, sign it, submit the signatures with a MsgConfirmBatch before a relayer
 /// can finally submit the batch
 /// -------------
+<<<<<<< HEAD
 #[allow(clippy::derive_partial_eq_without_eq)]
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct MsgRequestBatch {
@@ -603,6 +1053,18 @@ pub struct MsgRequestBatch {
 #[allow(clippy::derive_partial_eq_without_eq)]
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct MsgRequestBatchResponse {}
+=======
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct MsgRequestBatch {
+    #[prost(string, tag="1")]
+    pub sender: ::prost::alloc::string::String,
+    #[prost(string, tag="2")]
+    pub denom: ::prost::alloc::string::String,
+}
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct MsgRequestBatchResponse {
+}
+>>>>>>> 81057dc97ff3a6f3702fca99300ddbb3a7011770
 /// MsgConfirmBatch
 /// When validators observe a MsgRequestBatch they form a batch by ordering
 /// transactions currently in the txqueue in order of highest to lowest fee,
@@ -611,6 +1073,7 @@ pub struct MsgRequestBatchResponse {}
 /// (TODO determine this without nondeterminism) This message includes the batch
 /// as well as an Ethereum signature over this batch by the validator
 /// -------------
+<<<<<<< HEAD
 #[allow(clippy::derive_partial_eq_without_eq)]
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct MsgConfirmBatch {
@@ -630,6 +1093,24 @@ pub struct MsgConfirmBatch {
 #[allow(clippy::derive_partial_eq_without_eq)]
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct MsgConfirmBatchResponse {}
+=======
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct MsgConfirmBatch {
+    #[prost(uint64, tag="1")]
+    pub nonce: u64,
+    #[prost(string, tag="2")]
+    pub token_contract: ::prost::alloc::string::String,
+    #[prost(string, tag="3")]
+    pub eth_signer: ::prost::alloc::string::String,
+    #[prost(string, tag="4")]
+    pub orchestrator: ::prost::alloc::string::String,
+    #[prost(string, tag="5")]
+    pub signature: ::prost::alloc::string::String,
+}
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct MsgConfirmBatchResponse {
+}
+>>>>>>> 81057dc97ff3a6f3702fca99300ddbb3a7011770
 /// MsgConfirmLogicCall
 /// When validators observe a MsgRequestBatch they form a batch by ordering
 /// transactions currently in the txqueue in order of highest to lowest fee,
@@ -638,6 +1119,7 @@ pub struct MsgConfirmBatchResponse {}
 /// (TODO determine this without nondeterminism) This message includes the batch
 /// as well as an Ethereum signature over this batch by the validator
 /// -------------
+<<<<<<< HEAD
 #[allow(clippy::derive_partial_eq_without_eq)]
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct MsgConfirmLogicCall {
@@ -657,11 +1139,30 @@ pub struct MsgConfirmLogicCall {
 #[allow(clippy::derive_partial_eq_without_eq)]
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct MsgConfirmLogicCallResponse {}
+=======
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct MsgConfirmLogicCall {
+    #[prost(string, tag="1")]
+    pub invalidation_id: ::prost::alloc::string::String,
+    #[prost(uint64, tag="2")]
+    pub invalidation_nonce: u64,
+    #[prost(string, tag="3")]
+    pub eth_signer: ::prost::alloc::string::String,
+    #[prost(string, tag="4")]
+    pub orchestrator: ::prost::alloc::string::String,
+    #[prost(string, tag="5")]
+    pub signature: ::prost::alloc::string::String,
+}
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct MsgConfirmLogicCallResponse {
+}
+>>>>>>> 81057dc97ff3a6f3702fca99300ddbb3a7011770
 /// MsgSendToCosmosClaim
 /// When more than 66% of the active validator set has
 /// claimed to have seen the deposit enter the ethereum blockchain coins are
 /// issued to the Cosmos address in question
 /// -------------
+<<<<<<< HEAD
 #[allow(clippy::derive_partial_eq_without_eq)]
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct MsgSendToCosmosClaim {
@@ -952,13 +1453,295 @@ pub struct EventSendToEthFeeCollected {
     #[prost(string, tag = "2")]
     pub send_amount: ::prost::alloc::string::String,
     #[prost(string, tag = "3")]
+=======
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct MsgSendToCosmosClaim {
+    #[prost(uint64, tag="1")]
+    pub event_nonce: u64,
+    #[prost(uint64, tag="2")]
+    pub eth_block_height: u64,
+    #[prost(string, tag="3")]
+    pub token_contract: ::prost::alloc::string::String,
+    #[prost(string, tag="4")]
+    pub amount: ::prost::alloc::string::String,
+    #[prost(string, tag="5")]
+    pub ethereum_sender: ::prost::alloc::string::String,
+    #[prost(string, tag="6")]
+    pub cosmos_receiver: ::prost::alloc::string::String,
+    #[prost(string, tag="7")]
+    pub orchestrator: ::prost::alloc::string::String,
+}
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct MsgSendToCosmosClaimResponse {
+}
+/// MsgSendERC721ToCosmosClaim
+/// When more than 66% of the active validator set has
+/// claimed to have seen the ERC621 deposit enter the ethereum blockchain NFT is minted and
+/// issued to the Cosmos address in question
+/// -------------
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct MsgSendErc721ToCosmosClaim {
+    #[prost(uint64, tag="1")]
+    pub event_nonce: u64,
+    #[prost(uint64, tag="2")]
+    pub eth_block_height: u64,
+    #[prost(string, tag="3")]
+    pub token_contract: ::prost::alloc::string::String,
+    #[prost(string, tag="4")]
+    pub token_id: ::prost::alloc::string::String,
+    #[prost(string, tag="5")]
+    pub token_uri: ::prost::alloc::string::String,
+    #[prost(string, tag="6")]
+    pub ethereum_sender: ::prost::alloc::string::String,
+    #[prost(string, tag="7")]
+    pub cosmos_receiver: ::prost::alloc::string::String,
+    #[prost(string, tag="8")]
+    pub orchestrator: ::prost::alloc::string::String,
+}
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct MsgSendErc721ToCosmosClaimResponse {
+}
+/// MsgExecuteIbcAutoForwards
+/// Prompts the forwarding of Pending IBC Auto-Forwards in the queue
+/// The Pending forwards will be executed in order of their original SendToCosmos.EventNonce
+/// The funds in the queue will be sent to a local gravity-prefixed address if IBC transfer is not possible
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct MsgExecuteIbcAutoForwards {
+    /// How many queued forwards to clear, be careful about gas limits
+    #[prost(uint64, tag="1")]
+    pub forwards_to_clear: u64,
+    /// This message's sender
+    #[prost(string, tag="2")]
+    pub executor: ::prost::alloc::string::String,
+}
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct MsgExecuteIbcAutoForwardsResponse {
+}
+/// BatchSendToEthClaim claims that a batch of send to eth
+/// operations on the bridge contract was executed.
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct MsgBatchSendToEthClaim {
+    #[prost(uint64, tag="1")]
+    pub event_nonce: u64,
+    #[prost(uint64, tag="2")]
+    pub eth_block_height: u64,
+    #[prost(uint64, tag="3")]
+    pub batch_nonce: u64,
+    #[prost(string, tag="4")]
+    pub token_contract: ::prost::alloc::string::String,
+    #[prost(string, tag="5")]
+    pub orchestrator: ::prost::alloc::string::String,
+}
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct MsgBatchSendToEthClaimResponse {
+}
+/// ERC20DeployedClaim allows the Cosmos module
+/// to learn about an ERC20 that someone deployed
+/// to represent a Cosmos asset
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct MsgErc20DeployedClaim {
+    #[prost(uint64, tag="1")]
+    pub event_nonce: u64,
+    #[prost(uint64, tag="2")]
+    pub eth_block_height: u64,
+    #[prost(string, tag="3")]
+    pub cosmos_denom: ::prost::alloc::string::String,
+    #[prost(string, tag="4")]
+    pub token_contract: ::prost::alloc::string::String,
+    #[prost(string, tag="5")]
+    pub name: ::prost::alloc::string::String,
+    #[prost(string, tag="6")]
+    pub symbol: ::prost::alloc::string::String,
+    #[prost(uint64, tag="7")]
+    pub decimals: u64,
+    #[prost(string, tag="8")]
+    pub orchestrator: ::prost::alloc::string::String,
+}
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct MsgErc20DeployedClaimResponse {
+}
+/// This informs the Cosmos module that a logic
+/// call has been executed
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct MsgLogicCallExecutedClaim {
+    #[prost(uint64, tag="1")]
+    pub event_nonce: u64,
+    #[prost(uint64, tag="2")]
+    pub eth_block_height: u64,
+    #[prost(bytes="vec", tag="3")]
+    pub invalidation_id: ::prost::alloc::vec::Vec<u8>,
+    #[prost(uint64, tag="4")]
+    pub invalidation_nonce: u64,
+    #[prost(string, tag="5")]
+    pub orchestrator: ::prost::alloc::string::String,
+}
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct MsgLogicCallExecutedClaimResponse {
+}
+/// This informs the Cosmos module that a validator
+/// set has been updated.
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct MsgValsetUpdatedClaim {
+    #[prost(uint64, tag="1")]
+    pub event_nonce: u64,
+    #[prost(uint64, tag="2")]
+    pub valset_nonce: u64,
+    #[prost(uint64, tag="3")]
+    pub eth_block_height: u64,
+    #[prost(message, repeated, tag="4")]
+    pub members: ::prost::alloc::vec::Vec<BridgeValidator>,
+    #[prost(string, tag="5")]
+    pub reward_amount: ::prost::alloc::string::String,
+    #[prost(string, tag="6")]
+    pub reward_token: ::prost::alloc::string::String,
+    #[prost(string, tag="7")]
+    pub orchestrator: ::prost::alloc::string::String,
+}
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct MsgValsetUpdatedClaimResponse {
+}
+/// This call allows the sender (and only the sender)
+/// to cancel a given MsgSendToEth and recieve a refund
+/// of the tokens
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct MsgCancelSendToEth {
+    #[prost(uint64, tag="1")]
+    pub transaction_id: u64,
+    #[prost(string, tag="2")]
+    pub sender: ::prost::alloc::string::String,
+}
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct MsgCancelSendToEthResponse {
+}
+/// This call allows anyone to submit evidence that a
+/// validator has signed a valset, batch, or logic call that never
+/// existed on the Cosmos chain. 
+/// Subject contains the batch, valset, or logic call.
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct MsgSubmitBadSignatureEvidence {
+    #[prost(message, optional, tag="1")]
+    pub subject: ::core::option::Option<::prost_types::Any>,
+    #[prost(string, tag="2")]
+    pub signature: ::prost::alloc::string::String,
+    #[prost(string, tag="3")]
+    pub sender: ::prost::alloc::string::String,
+}
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct MsgSubmitBadSignatureEvidenceResponse {
+}
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct EventSetOperatorAddress {
+    #[prost(string, tag="1")]
+    pub message: ::prost::alloc::string::String,
+    #[prost(string, tag="2")]
+    pub address: ::prost::alloc::string::String,
+}
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct EventValsetConfirmKey {
+    #[prost(string, tag="1")]
+    pub message: ::prost::alloc::string::String,
+    #[prost(string, tag="2")]
+    pub key: ::prost::alloc::string::String,
+}
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct EventBatchCreated {
+    #[prost(string, tag="1")]
+    pub message: ::prost::alloc::string::String,
+    #[prost(string, tag="2")]
+    pub batch_nonce: ::prost::alloc::string::String,
+}
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct EventBatchConfirmKey {
+    #[prost(string, tag="1")]
+    pub message: ::prost::alloc::string::String,
+    #[prost(string, tag="2")]
+    pub batch_confirm_key: ::prost::alloc::string::String,
+}
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct EventBatchSendToEthClaim {
+    #[prost(string, tag="1")]
+    pub nonce: ::prost::alloc::string::String,
+}
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct EventClaim {
+    #[prost(string, tag="1")]
+    pub message: ::prost::alloc::string::String,
+    #[prost(string, tag="2")]
+    pub claim_hash: ::prost::alloc::string::String,
+    #[prost(string, tag="3")]
+    pub attestation_id: ::prost::alloc::string::String,
+}
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct EventBadSignatureEvidence {
+    #[prost(string, tag="1")]
+    pub message: ::prost::alloc::string::String,
+    #[prost(string, tag="2")]
+    pub bad_eth_signature: ::prost::alloc::string::String,
+    #[prost(string, tag="3")]
+    pub bad_eth_signature_subject: ::prost::alloc::string::String,
+}
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct EventErc20DeployedClaim {
+    #[prost(string, tag="1")]
+    pub token: ::prost::alloc::string::String,
+    #[prost(string, tag="2")]
+    pub nonce: ::prost::alloc::string::String,
+}
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct EventValsetUpdatedClaim {
+    #[prost(string, tag="1")]
+    pub nonce: ::prost::alloc::string::String,
+}
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct EventMultisigUpdateRequest {
+    #[prost(string, tag="1")]
+    pub bridge_contract: ::prost::alloc::string::String,
+    #[prost(string, tag="2")]
+    pub bridge_chain_id: ::prost::alloc::string::String,
+    #[prost(string, tag="3")]
+    pub multisig_id: ::prost::alloc::string::String,
+    #[prost(string, tag="4")]
+    pub nonce: ::prost::alloc::string::String,
+}
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct EventOutgoingLogicCallCanceled {
+    #[prost(string, tag="1")]
+    pub logic_call_invalidation_id: ::prost::alloc::string::String,
+    #[prost(string, tag="2")]
+    pub logic_call_invalidation_nonce: ::prost::alloc::string::String,
+}
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct EventSignatureSlashing {
+    #[prost(string, tag="1")]
+    pub r#type: ::prost::alloc::string::String,
+    #[prost(string, tag="2")]
+    pub address: ::prost::alloc::string::String,
+}
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct EventOutgoingTxId {
+    #[prost(string, tag="1")]
+    pub message: ::prost::alloc::string::String,
+    #[prost(string, tag="2")]
+    pub tx_id: ::prost::alloc::string::String,
+}
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct EventSendToEthFeeCollected {
+    #[prost(string, tag="1")]
+    pub sender: ::prost::alloc::string::String,
+    #[prost(string, tag="2")]
+    pub send_amount: ::prost::alloc::string::String,
+    #[prost(string, tag="3")]
+>>>>>>> 81057dc97ff3a6f3702fca99300ddbb3a7011770
     pub fee_amount: ::prost::alloc::string::String,
 }
 /// Generated client implementations.
 pub mod msg_client {
     #![allow(unused_variables, dead_code, missing_docs, clippy::let_unit_value)]
     use tonic::codegen::*;
+<<<<<<< HEAD
     use tonic::codegen::http::Uri;
+=======
+>>>>>>> 81057dc97ff3a6f3702fca99300ddbb3a7011770
     /// Msg defines the state transitions possible within gravity
     #[derive(Debug, Clone)]
     pub struct MsgClient<T> {
@@ -986,10 +1769,13 @@ pub mod msg_client {
             let inner = tonic::client::Grpc::new(inner);
             Self { inner }
         }
+<<<<<<< HEAD
         pub fn with_origin(inner: T, origin: Uri) -> Self {
             let inner = tonic::client::Grpc::with_origin(inner, origin);
             Self { inner }
         }
+=======
+>>>>>>> 81057dc97ff3a6f3702fca99300ddbb3a7011770
         pub fn with_interceptor<F>(
             inner: T,
             interceptor: F,
@@ -1009,11 +1795,16 @@ pub mod msg_client {
         {
             MsgClient::new(InterceptedService::new(inner, interceptor))
         }
+<<<<<<< HEAD
         /// Compress requests with the given encoding.
+=======
+        /// Compress requests with `gzip`.
+>>>>>>> 81057dc97ff3a6f3702fca99300ddbb3a7011770
         ///
         /// This requires the server to support it otherwise it might respond with an
         /// error.
         #[must_use]
+<<<<<<< HEAD
         pub fn send_compressed(mut self, encoding: CompressionEncoding) -> Self {
             self.inner = self.inner.send_compressed(encoding);
             self
@@ -1022,6 +1813,16 @@ pub mod msg_client {
         #[must_use]
         pub fn accept_compressed(mut self, encoding: CompressionEncoding) -> Self {
             self.inner = self.inner.accept_compressed(encoding);
+=======
+        pub fn send_gzip(mut self) -> Self {
+            self.inner = self.inner.send_gzip();
+            self
+        }
+        /// Enable decompressing responses with `gzip`.
+        #[must_use]
+        pub fn accept_gzip(mut self) -> Self {
+            self.inner = self.inner.accept_gzip();
+>>>>>>> 81057dc97ff3a6f3702fca99300ddbb3a7011770
             self
         }
         pub async fn valset_confirm(
@@ -1139,6 +1940,31 @@ pub mod msg_client {
             );
             self.inner.unary(request.into_request(), path, codec).await
         }
+<<<<<<< HEAD
+=======
+        pub async fn send_erc721_to_cosmos_claim(
+            &mut self,
+            request: impl tonic::IntoRequest<super::MsgSendErc721ToCosmosClaim>,
+        ) -> Result<
+            tonic::Response<super::MsgSendErc721ToCosmosClaimResponse>,
+            tonic::Status,
+        > {
+            self.inner
+                .ready()
+                .await
+                .map_err(|e| {
+                    tonic::Status::new(
+                        tonic::Code::Unknown,
+                        format!("Service was not ready: {}", e.into()),
+                    )
+                })?;
+            let codec = tonic::codec::ProstCodec::default();
+            let path = http::uri::PathAndQuery::from_static(
+                "/gravity.v1.Msg/SendERC721ToCosmosClaim",
+            );
+            self.inner.unary(request.into_request(), path, codec).await
+        }
+>>>>>>> 81057dc97ff3a6f3702fca99300ddbb3a7011770
         pub async fn execute_ibc_auto_forwards(
             &mut self,
             request: impl tonic::IntoRequest<super::MsgExecuteIbcAutoForwards>,
@@ -1314,9 +2140,73 @@ pub mod msg_client {
         }
     }
 }
+<<<<<<< HEAD
 /// The slashing fractions for the various gravity related slashing conditions.
 /// The first three refer to not submitting a particular message, the third for
 /// submitting a different claim for the same Ethereum event
+=======
+// Params represent the Gravity genesis and store parameters
+// gravity_id:
+// a random 32 byte value to prevent signature reuse, for example if the
+// cosmos validators decided to use the same Ethereum keys for another chain
+// also running Gravity we would not want it to be possible to play a deposit
+// from chain A back on chain B's Gravity. This value IS USED ON ETHEREUM so
+// it must be set in your genesis.json before launch and not changed after
+// deploying Gravity
+
+// contract_hash:
+// the code hash of a known good version of the Gravity contract
+// solidity code. This can be used to verify the correct version
+// of the contract has been deployed. This is a reference value for
+// goernance action only it is never read by any Gravity code
+
+// bridge_ethereum_address:
+// is address of the bridge contract on the Ethereum side, this is a
+// reference value for governance only and is not actually used by any
+// Gravity code
+
+// bridge_chain_id:
+// the unique identifier of the Ethereum chain, this is a reference value
+// only and is not actually used by any Gravity code
+
+// These reference values may be used by future Gravity client implemetnations
+// to allow for saftey features or convenience features like the Gravity address
+// in your relayer. A relayer would require a configured Gravity address if
+// governance had not set the address on the chain it was relaying for.
+
+// signed_valsets_window
+// signed_batches_window
+// signed_logiccall_window
+// signed_claims_window
+
+// These values represent the time in blocks that a validator has to submit
+// a signature for a batch or valset, or to submit a claim for a particular
+// attestation nonce. In the case of attestations this clock starts when the
+// attestation is created, but only allows for slashing once the event has passed
+
+// target_batch_timeout:
+
+// This is the 'target' value for when batches time out, this is a target becuase
+// Ethereum is a probabalistic chain and you can't say for sure what the block
+// frequency is ahead of time.
+
+// average_block_time
+// average_ethereum_block_time
+
+// These values are the average Cosmos block time and Ethereum block time repsectively
+// and they are used to compute what the target batch timeout is. It is important that
+// governance updates these in case of any major, prolonged change in the time it takes
+// to produce a block
+
+// slash_fraction_valset
+// slash_fraction_batch
+// slash_fraction_claim
+// slash_fraction_conflicting_claim
+
+/// The slashing fractions for the various gravity related slashing conditions. The first three
+/// refer to not submitting a particular message, the third for submitting a different claim
+/// for the same Ethereum event
+>>>>>>> 81057dc97ff3a6f3702fca99300ddbb3a7011770
 ///
 /// unbond_slashing_valsets_window
 ///
@@ -1359,6 +2249,7 @@ pub mod msg_client {
 #[allow(clippy::derive_partial_eq_without_eq)]
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct Params {
+<<<<<<< HEAD
     #[prost(uint64, tag = "1")]
     pub signed_valsets_window: u64,
     #[prost(uint64, tag = "2")]
@@ -1385,14 +2276,59 @@ pub struct Params {
     pub min_chain_fee_basis_points: u64,
     #[prost(message, repeated, tag = "13")]
     pub evm_chain_params: ::prost::alloc::vec::Vec<EvmChainParam>,
+=======
+    #[prost(string, tag="1")]
+    pub gravity_id: ::prost::alloc::string::String,
+    #[prost(string, tag="2")]
+    pub contract_source_hash: ::prost::alloc::string::String,
+    #[prost(string, tag="4")]
+    pub bridge_ethereum_address: ::prost::alloc::string::String,
+    #[prost(uint64, tag="5")]
+    pub bridge_chain_id: u64,
+    #[prost(uint64, tag="6")]
+    pub signed_valsets_window: u64,
+    #[prost(uint64, tag="7")]
+    pub signed_batches_window: u64,
+    #[prost(uint64, tag="8")]
+    pub signed_logic_calls_window: u64,
+    #[prost(uint64, tag="9")]
+    pub target_batch_timeout: u64,
+    #[prost(uint64, tag="10")]
+    pub average_block_time: u64,
+    #[prost(uint64, tag="11")]
+    pub average_ethereum_block_time: u64,
+    #[prost(bytes="vec", tag="12")]
+    pub slash_fraction_valset: ::prost::alloc::vec::Vec<u8>,
+    #[prost(bytes="vec", tag="13")]
+    pub slash_fraction_batch: ::prost::alloc::vec::Vec<u8>,
+    #[prost(bytes="vec", tag="14")]
+    pub slash_fraction_logic_call: ::prost::alloc::vec::Vec<u8>,
+    #[prost(uint64, tag="15")]
+    pub unbond_slashing_valsets_window: u64,
+    #[prost(bytes="vec", tag="16")]
+    pub slash_fraction_bad_eth_signature: ::prost::alloc::vec::Vec<u8>,
+    #[prost(message, optional, tag="17")]
+    pub valset_reward: ::core::option::Option<cosmos_sdk_proto::cosmos::base::v1beta1::Coin>,
+    #[prost(bool, tag="18")]
+    pub bridge_active: bool,
+    /// addresses on this blacklist are forbidden from depositing or withdrawing
+    /// from Ethereum to the bridge
+    #[prost(string, repeated, tag="19")]
+    pub ethereum_blacklist: ::prost::alloc::vec::Vec<::prost::alloc::string::String>,
+    #[prost(uint64, tag="20")]
+    pub min_chain_fee_basis_points: u64,
+    #[prost(string, tag="21")]
+    pub bridge_erc721_ethereum_address: ::prost::alloc::string::String,
+>>>>>>> 81057dc97ff3a6f3702fca99300ddbb3a7011770
 }
 /// GenesisState struct, containing all persistant data required by the Gravity
 /// module
 #[allow(clippy::derive_partial_eq_without_eq)]
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct GenesisState {
-    #[prost(message, optional, tag = "1")]
+    #[prost(message, optional, tag="1")]
     pub params: ::core::option::Option<Params>,
+<<<<<<< HEAD
     #[prost(message, repeated, tag = "2")]
     pub evm_chains: ::prost::alloc::vec::Vec<EvmChainData>,
 }
@@ -1431,30 +2367,38 @@ pub struct EvmChainData {
     #[prost(message, optional, tag = "1")]
     pub evm_chain: ::core::option::Option<EvmChain>,
     #[prost(message, optional, tag = "2")]
+=======
+    #[prost(message, optional, tag="2")]
+>>>>>>> 81057dc97ff3a6f3702fca99300ddbb3a7011770
     pub gravity_nonces: ::core::option::Option<GravityNonces>,
-    #[prost(message, repeated, tag = "3")]
+    #[prost(message, repeated, tag="3")]
     pub valsets: ::prost::alloc::vec::Vec<Valset>,
-    #[prost(message, repeated, tag = "4")]
+    #[prost(message, repeated, tag="4")]
     pub valset_confirms: ::prost::alloc::vec::Vec<MsgValsetConfirm>,
-    #[prost(message, repeated, tag = "5")]
+    #[prost(message, repeated, tag="5")]
     pub batches: ::prost::alloc::vec::Vec<OutgoingTxBatch>,
-    #[prost(message, repeated, tag = "6")]
+    #[prost(message, repeated, tag="6")]
     pub batch_confirms: ::prost::alloc::vec::Vec<MsgConfirmBatch>,
-    #[prost(message, repeated, tag = "7")]
+    #[prost(message, repeated, tag="7")]
     pub logic_calls: ::prost::alloc::vec::Vec<OutgoingLogicCall>,
-    #[prost(message, repeated, tag = "8")]
+    #[prost(message, repeated, tag="8")]
     pub logic_call_confirms: ::prost::alloc::vec::Vec<MsgConfirmLogicCall>,
-    #[prost(message, repeated, tag = "9")]
+    #[prost(message, repeated, tag="9")]
     pub attestations: ::prost::alloc::vec::Vec<Attestation>,
-    #[prost(message, repeated, tag = "10")]
+    #[prost(message, repeated, tag="10")]
     pub delegate_keys: ::prost::alloc::vec::Vec<MsgSetOrchestratorAddress>,
-    #[prost(message, repeated, tag = "11")]
+    #[prost(message, repeated, tag="11")]
     pub erc20_to_denoms: ::prost::alloc::vec::Vec<Erc20ToDenom>,
-    #[prost(message, repeated, tag = "12")]
+    #[prost(message, repeated, tag="12")]
     pub unbatched_transfers: ::prost::alloc::vec::Vec<OutgoingTransferTx>,
-    #[prost(message, repeated, tag = "13")]
+    #[prost(message, repeated, tag="13")]
     pub pending_ibc_auto_forwards: ::prost::alloc::vec::Vec<PendingIbcAutoForward>,
+    #[prost(message, repeated, tag="14")]
+    pub pending_erc721_ibc_auto_forwards: ::prost::alloc::vec::Vec<PendingErc721IbcAutoForward>,
+    #[prost(message, repeated, tag="15")]
+    pub erc721_attestations: ::prost::alloc::vec::Vec<Attestation>,
 }
+<<<<<<< HEAD
 /// EvmChain struct contains EVM chain specific data
 #[allow(clippy::derive_partial_eq_without_eq)]
 #[derive(Clone, PartialEq, ::prost::Message)]
@@ -1469,33 +2413,37 @@ pub struct EvmChain {
 /// GravityCounters contains the many noces and counters required to maintain the
 /// bridge state in the genesis
 #[allow(clippy::derive_partial_eq_without_eq)]
+=======
+/// GravityCounters contains the many noces and counters required to maintain the bridge state in the genesis
+>>>>>>> 81057dc97ff3a6f3702fca99300ddbb3a7011770
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct GravityNonces {
     /// the nonce of the last generated validator set
-    #[prost(uint64, tag = "1")]
+    #[prost(uint64, tag="1")]
     pub latest_valset_nonce: u64,
     /// the last observed Gravity.sol contract event nonce
-    #[prost(uint64, tag = "2")]
+    #[prost(uint64, tag="2")]
     pub last_observed_nonce: u64,
     /// the last valset nonce we have slashed, to prevent double slashing
-    #[prost(uint64, tag = "3")]
+    #[prost(uint64, tag="3")]
     pub last_slashed_valset_nonce: u64,
     /// the last batch Cosmos chain block that batch slashing has completed for
     /// there is an individual batch nonce for each token type so this removes
     /// the need to store them all
-    #[prost(uint64, tag = "4")]
+    #[prost(uint64, tag="4")]
     pub last_slashed_batch_block: u64,
     /// the last cosmos block that logic call slashing has completed for
-    #[prost(uint64, tag = "5")]
+    #[prost(uint64, tag="5")]
     pub last_slashed_logic_call_block: u64,
     /// the last transaction id from the Gravity TX pool, this prevents ID
     /// duplication during chain upgrades
-    #[prost(uint64, tag = "6")]
+    #[prost(uint64, tag="6")]
     pub last_tx_pool_id: u64,
     /// the last batch id from the Gravity batch pool, this prevents ID duplication
     /// during chain upgrades
-    #[prost(uint64, tag = "7")]
+    #[prost(uint64, tag="7")]
     pub last_batch_id: u64,
+<<<<<<< HEAD
     /// last observed evm block height
     #[prost(uint64, tag = "8")]
     pub last_observed_evm_block_height: u64,
@@ -1504,11 +2452,21 @@ pub struct GravityNonces {
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct QueryParamsRequest {}
 #[allow(clippy::derive_partial_eq_without_eq)]
+=======
+    /// the last observed GravityERC721.sol contract event nonce
+    #[prost(uint64, tag="8")]
+    pub last_erc721_observed_nonce: u64,
+}
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct QueryParamsRequest {
+}
+>>>>>>> 81057dc97ff3a6f3702fca99300ddbb3a7011770
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct QueryParamsResponse {
-    #[prost(message, optional, tag = "1")]
+    #[prost(message, optional, tag="1")]
     pub params: ::core::option::Option<Params>,
 }
+<<<<<<< HEAD
 #[allow(clippy::derive_partial_eq_without_eq)]
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct QueryCurrentValsetRequest {
@@ -1516,55 +2474,79 @@ pub struct QueryCurrentValsetRequest {
     pub evm_chain_prefix: ::prost::alloc::string::String,
 }
 #[allow(clippy::derive_partial_eq_without_eq)]
+=======
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct QueryCurrentValsetRequest {
+}
+>>>>>>> 81057dc97ff3a6f3702fca99300ddbb3a7011770
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct QueryCurrentValsetResponse {
-    #[prost(message, optional, tag = "1")]
+    #[prost(message, optional, tag="1")]
     pub valset: ::core::option::Option<Valset>,
 }
+<<<<<<< HEAD
 #[allow(clippy::derive_partial_eq_without_eq)]
+=======
+>>>>>>> 81057dc97ff3a6f3702fca99300ddbb3a7011770
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct QueryValsetRequestRequest {
-    #[prost(uint64, tag = "1")]
+    #[prost(uint64, tag="1")]
     pub nonce: u64,
     #[prost(string, tag = "2")]
     pub evm_chain_prefix: ::prost::alloc::string::String,
 }
+<<<<<<< HEAD
 #[allow(clippy::derive_partial_eq_without_eq)]
+=======
+>>>>>>> 81057dc97ff3a6f3702fca99300ddbb3a7011770
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct QueryValsetRequestResponse {
-    #[prost(message, optional, tag = "1")]
+    #[prost(message, optional, tag="1")]
     pub valset: ::core::option::Option<Valset>,
 }
+<<<<<<< HEAD
 #[allow(clippy::derive_partial_eq_without_eq)]
+=======
+>>>>>>> 81057dc97ff3a6f3702fca99300ddbb3a7011770
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct QueryValsetConfirmRequest {
-    #[prost(uint64, tag = "1")]
+    #[prost(uint64, tag="1")]
     pub nonce: u64,
-    #[prost(string, tag = "2")]
+    #[prost(string, tag="2")]
     pub address: ::prost::alloc::string::String,
     #[prost(string, tag = "3")]
     pub evm_chain_prefix: ::prost::alloc::string::String,
 }
+<<<<<<< HEAD
 #[allow(clippy::derive_partial_eq_without_eq)]
+=======
+>>>>>>> 81057dc97ff3a6f3702fca99300ddbb3a7011770
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct QueryValsetConfirmResponse {
-    #[prost(message, optional, tag = "1")]
+    #[prost(message, optional, tag="1")]
     pub confirm: ::core::option::Option<MsgValsetConfirm>,
 }
+<<<<<<< HEAD
 #[allow(clippy::derive_partial_eq_without_eq)]
+=======
+>>>>>>> 81057dc97ff3a6f3702fca99300ddbb3a7011770
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct QueryValsetConfirmsByNonceRequest {
-    #[prost(uint64, tag = "1")]
+    #[prost(uint64, tag="1")]
     pub nonce: u64,
     #[prost(string, tag = "2")]
     pub evm_chain_prefix: ::prost::alloc::string::String,
 }
+<<<<<<< HEAD
 #[allow(clippy::derive_partial_eq_without_eq)]
+=======
+>>>>>>> 81057dc97ff3a6f3702fca99300ddbb3a7011770
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct QueryValsetConfirmsByNonceResponse {
-    #[prost(message, repeated, tag = "1")]
+    #[prost(message, repeated, tag="1")]
     pub confirms: ::prost::alloc::vec::Vec<MsgValsetConfirm>,
 }
+<<<<<<< HEAD
 #[allow(clippy::derive_partial_eq_without_eq)]
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct QueryLastValsetRequestsRequest {
@@ -1572,25 +2554,37 @@ pub struct QueryLastValsetRequestsRequest {
     pub evm_chain_prefix: ::prost::alloc::string::String,
 }
 #[allow(clippy::derive_partial_eq_without_eq)]
+=======
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct QueryLastValsetRequestsRequest {
+}
+>>>>>>> 81057dc97ff3a6f3702fca99300ddbb3a7011770
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct QueryLastValsetRequestsResponse {
-    #[prost(message, repeated, tag = "1")]
+    #[prost(message, repeated, tag="1")]
     pub valsets: ::prost::alloc::vec::Vec<Valset>,
 }
+<<<<<<< HEAD
 #[allow(clippy::derive_partial_eq_without_eq)]
+=======
+>>>>>>> 81057dc97ff3a6f3702fca99300ddbb3a7011770
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct QueryLastPendingValsetRequestByAddrRequest {
-    #[prost(string, tag = "1")]
+    #[prost(string, tag="1")]
     pub address: ::prost::alloc::string::String,
     #[prost(string, tag = "2")]
     pub evm_chain_prefix: ::prost::alloc::string::String,
 }
+<<<<<<< HEAD
 #[allow(clippy::derive_partial_eq_without_eq)]
+=======
+>>>>>>> 81057dc97ff3a6f3702fca99300ddbb3a7011770
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct QueryLastPendingValsetRequestByAddrResponse {
-    #[prost(message, repeated, tag = "1")]
+    #[prost(message, repeated, tag="1")]
     pub valsets: ::prost::alloc::vec::Vec<Valset>,
 }
+<<<<<<< HEAD
 #[allow(clippy::derive_partial_eq_without_eq)]
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct QueryBatchFeeRequest {
@@ -1598,39 +2592,57 @@ pub struct QueryBatchFeeRequest {
     pub evm_chain_prefix: ::prost::alloc::string::String,
 }
 #[allow(clippy::derive_partial_eq_without_eq)]
+=======
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct QueryBatchFeeRequest {
+}
+>>>>>>> 81057dc97ff3a6f3702fca99300ddbb3a7011770
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct QueryBatchFeeResponse {
-    #[prost(message, repeated, tag = "1")]
+    #[prost(message, repeated, tag="1")]
     pub batch_fees: ::prost::alloc::vec::Vec<BatchFees>,
 }
+<<<<<<< HEAD
 #[allow(clippy::derive_partial_eq_without_eq)]
+=======
+>>>>>>> 81057dc97ff3a6f3702fca99300ddbb3a7011770
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct QueryLastPendingBatchRequestByAddrRequest {
-    #[prost(string, tag = "1")]
+    #[prost(string, tag="1")]
     pub address: ::prost::alloc::string::String,
     #[prost(string, tag = "2")]
     pub evm_chain_prefix: ::prost::alloc::string::String,
 }
+<<<<<<< HEAD
 #[allow(clippy::derive_partial_eq_without_eq)]
+=======
+>>>>>>> 81057dc97ff3a6f3702fca99300ddbb3a7011770
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct QueryLastPendingBatchRequestByAddrResponse {
-    #[prost(message, repeated, tag = "1")]
+    #[prost(message, repeated, tag="1")]
     pub batch: ::prost::alloc::vec::Vec<OutgoingTxBatch>,
 }
+<<<<<<< HEAD
 #[allow(clippy::derive_partial_eq_without_eq)]
+=======
+>>>>>>> 81057dc97ff3a6f3702fca99300ddbb3a7011770
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct QueryLastPendingLogicCallByAddrRequest {
-    #[prost(string, tag = "1")]
+    #[prost(string, tag="1")]
     pub address: ::prost::alloc::string::String,
     #[prost(string, tag = "2")]
     pub evm_chain_prefix: ::prost::alloc::string::String,
 }
+<<<<<<< HEAD
 #[allow(clippy::derive_partial_eq_without_eq)]
+=======
+>>>>>>> 81057dc97ff3a6f3702fca99300ddbb3a7011770
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct QueryLastPendingLogicCallByAddrResponse {
-    #[prost(message, repeated, tag = "1")]
+    #[prost(message, repeated, tag="1")]
     pub call: ::prost::alloc::vec::Vec<OutgoingLogicCall>,
 }
+<<<<<<< HEAD
 #[allow(clippy::derive_partial_eq_without_eq)]
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct QueryOutgoingTxBatchesRequest {
@@ -1638,11 +2650,17 @@ pub struct QueryOutgoingTxBatchesRequest {
     pub evm_chain_prefix: ::prost::alloc::string::String,
 }
 #[allow(clippy::derive_partial_eq_without_eq)]
+=======
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct QueryOutgoingTxBatchesRequest {
+}
+>>>>>>> 81057dc97ff3a6f3702fca99300ddbb3a7011770
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct QueryOutgoingTxBatchesResponse {
-    #[prost(message, repeated, tag = "1")]
+    #[prost(message, repeated, tag="1")]
     pub batches: ::prost::alloc::vec::Vec<OutgoingTxBatch>,
 }
+<<<<<<< HEAD
 #[allow(clippy::derive_partial_eq_without_eq)]
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct QueryOutgoingLogicCallsRequest {
@@ -1650,105 +2668,157 @@ pub struct QueryOutgoingLogicCallsRequest {
     pub evm_chain_prefix: ::prost::alloc::string::String,
 }
 #[allow(clippy::derive_partial_eq_without_eq)]
+=======
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct QueryOutgoingLogicCallsRequest {
+}
+>>>>>>> 81057dc97ff3a6f3702fca99300ddbb3a7011770
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct QueryOutgoingLogicCallsResponse {
-    #[prost(message, repeated, tag = "1")]
+    #[prost(message, repeated, tag="1")]
     pub calls: ::prost::alloc::vec::Vec<OutgoingLogicCall>,
 }
+<<<<<<< HEAD
 #[allow(clippy::derive_partial_eq_without_eq)]
+=======
+>>>>>>> 81057dc97ff3a6f3702fca99300ddbb3a7011770
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct QueryBatchRequestByNonceRequest {
-    #[prost(uint64, tag = "1")]
+    #[prost(uint64, tag="1")]
     pub nonce: u64,
-    #[prost(string, tag = "2")]
+    #[prost(string, tag="2")]
     pub contract_address: ::prost::alloc::string::String,
     #[prost(string, tag = "3")]
     pub evm_chain_prefix: ::prost::alloc::string::String,
 }
+<<<<<<< HEAD
 #[allow(clippy::derive_partial_eq_without_eq)]
+=======
+>>>>>>> 81057dc97ff3a6f3702fca99300ddbb3a7011770
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct QueryBatchRequestByNonceResponse {
-    #[prost(message, optional, tag = "1")]
+    #[prost(message, optional, tag="1")]
     pub batch: ::core::option::Option<OutgoingTxBatch>,
 }
+<<<<<<< HEAD
 #[allow(clippy::derive_partial_eq_without_eq)]
+=======
+>>>>>>> 81057dc97ff3a6f3702fca99300ddbb3a7011770
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct QueryBatchConfirmsRequest {
-    #[prost(uint64, tag = "1")]
+    #[prost(uint64, tag="1")]
     pub nonce: u64,
-    #[prost(string, tag = "2")]
+    #[prost(string, tag="2")]
     pub contract_address: ::prost::alloc::string::String,
     #[prost(string, tag = "3")]
     pub evm_chain_prefix: ::prost::alloc::string::String,
 }
+<<<<<<< HEAD
 #[allow(clippy::derive_partial_eq_without_eq)]
+=======
+>>>>>>> 81057dc97ff3a6f3702fca99300ddbb3a7011770
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct QueryBatchConfirmsResponse {
-    #[prost(message, repeated, tag = "1")]
+    #[prost(message, repeated, tag="1")]
     pub confirms: ::prost::alloc::vec::Vec<MsgConfirmBatch>,
 }
+<<<<<<< HEAD
 #[allow(clippy::derive_partial_eq_without_eq)]
+=======
+>>>>>>> 81057dc97ff3a6f3702fca99300ddbb3a7011770
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct QueryLogicConfirmsRequest {
-    #[prost(bytes = "vec", tag = "1")]
+    #[prost(bytes="vec", tag="1")]
     pub invalidation_id: ::prost::alloc::vec::Vec<u8>,
-    #[prost(uint64, tag = "2")]
+    #[prost(uint64, tag="2")]
     pub invalidation_nonce: u64,
     #[prost(string, tag = "3")]
     pub evm_chain_prefix: ::prost::alloc::string::String,
 }
+<<<<<<< HEAD
 #[allow(clippy::derive_partial_eq_without_eq)]
+=======
+>>>>>>> 81057dc97ff3a6f3702fca99300ddbb3a7011770
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct QueryLogicConfirmsResponse {
-    #[prost(message, repeated, tag = "1")]
+    #[prost(message, repeated, tag="1")]
     pub confirms: ::prost::alloc::vec::Vec<MsgConfirmLogicCall>,
 }
+<<<<<<< HEAD
 #[allow(clippy::derive_partial_eq_without_eq)]
+=======
+>>>>>>> 81057dc97ff3a6f3702fca99300ddbb3a7011770
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct QueryLastEventNonceByAddrRequest {
-    #[prost(string, tag = "1")]
+    #[prost(string, tag="1")]
     pub address: ::prost::alloc::string::String,
     #[prost(string, tag = "2")]
     pub evm_chain_prefix: ::prost::alloc::string::String,
 }
+<<<<<<< HEAD
 #[allow(clippy::derive_partial_eq_without_eq)]
+=======
+>>>>>>> 81057dc97ff3a6f3702fca99300ddbb3a7011770
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct QueryLastEventNonceByAddrResponse {
-    #[prost(uint64, tag = "1")]
+    #[prost(uint64, tag="1")]
     pub event_nonce: u64,
 }
+<<<<<<< HEAD
 #[allow(clippy::derive_partial_eq_without_eq)]
+=======
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct QueryLastErc721EventNonceByAddrRequest {
+    #[prost(string, tag="1")]
+    pub address: ::prost::alloc::string::String,
+}
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct QueryLastErc721EventNonceByAddrResponse {
+    #[prost(uint64, tag="1")]
+    pub event_nonce: u64,
+}
+>>>>>>> 81057dc97ff3a6f3702fca99300ddbb3a7011770
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct QueryErc20ToDenomRequest {
-    #[prost(string, tag = "1")]
+    #[prost(string, tag="1")]
     pub erc20: ::prost::alloc::string::String,
     #[prost(string, tag = "2")]
     pub evm_chain_prefix: ::prost::alloc::string::String,
 }
+<<<<<<< HEAD
 #[allow(clippy::derive_partial_eq_without_eq)]
+=======
+>>>>>>> 81057dc97ff3a6f3702fca99300ddbb3a7011770
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct QueryErc20ToDenomResponse {
-    #[prost(string, tag = "1")]
+    #[prost(string, tag="1")]
     pub denom: ::prost::alloc::string::String,
-    #[prost(bool, tag = "2")]
+    #[prost(bool, tag="2")]
     pub cosmos_originated: bool,
 }
+<<<<<<< HEAD
 #[allow(clippy::derive_partial_eq_without_eq)]
+=======
+>>>>>>> 81057dc97ff3a6f3702fca99300ddbb3a7011770
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct QueryDenomToErc20Request {
-    #[prost(string, tag = "1")]
+    #[prost(string, tag="1")]
     pub denom: ::prost::alloc::string::String,
     #[prost(string, tag = "2")]
     pub evm_chain_prefix: ::prost::alloc::string::String,
 }
+<<<<<<< HEAD
 #[allow(clippy::derive_partial_eq_without_eq)]
+=======
+>>>>>>> 81057dc97ff3a6f3702fca99300ddbb3a7011770
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct QueryDenomToErc20Response {
-    #[prost(string, tag = "1")]
+    #[prost(string, tag="1")]
     pub erc20: ::prost::alloc::string::String,
-    #[prost(bool, tag = "2")]
+    #[prost(bool, tag="2")]
     pub cosmos_originated: bool,
 }
+<<<<<<< HEAD
 /// QueryLastObservedEthBlockRequest defines the request for getting the height
 /// of the last applied Ethereum Event on the bridge. This is expected to lag the
 /// actual Ethereum block height significantly due to 1. Ethereum Finality and
@@ -1760,11 +2830,23 @@ pub struct QueryLastObservedEthBlockRequest {
     /// "LastObservedEthereumBlockHeightKey" Note that queries before the Mercury
     /// upgrade at height 1282013 must set this to true
     #[prost(bool, tag = "1")]
+=======
+/// QueryLastObservedEthBlockRequest defines the request for getting the height of the
+/// last applied Ethereum Event on the bridge. This is expected to lag the actual
+/// Ethereum block height significantly due to 1. Ethereum Finality and
+///  2. Consensus mirroring the state on Ethereum
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct QueryLastObservedEthBlockRequest {
+    /// indicates whether to search for store data using the old Gravity v1 key "LastObservedEthereumBlockHeightKey"
+    /// Note that queries before the Mercury upgrade at height 1282013 must set this to true
+    #[prost(bool, tag="1")]
+>>>>>>> 81057dc97ff3a6f3702fca99300ddbb3a7011770
     pub use_v1_key: bool,
     /// new version query by evm chain prefix
     #[prost(string, tag = "2")]
     pub evm_chain_prefix: ::prost::alloc::string::String,
 }
+<<<<<<< HEAD
 #[allow(clippy::derive_partial_eq_without_eq)]
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct QueryLastObservedEthBlockResponse {
@@ -1784,17 +2866,63 @@ pub struct QueryLastObservedEthNonceRequest {
     /// "LastObservedEventNonceKey" Note that queries before the Mercury upgrade at
     /// height 1282013 must set this to true
     #[prost(bool, tag = "1")]
+=======
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct QueryLastObservedEthBlockResponse {
+    /// a response of 0 indicates that no Ethereum events have been observed, and thus
+    /// the bridge is inactive
+    #[prost(uint64, tag="1")]
+    pub block: u64,
+}
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct QueryLastObservedErc721EthBlockRequest {
+}
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct QueryLastObservedErc721EthBlockResponse {
+    /// a response of 0 indicates that no Ethereum events have been observed, and thus
+    /// the bridge is inactive
+    #[prost(uint64, tag="1")]
+    pub block: u64,
+}
+/// QueryLastObservedEthNonceRequest defines the request for getting the event nonce
+/// of the last applied Ethereum Event on the bridge.
+/// Note that this is likely to lag the last executed event a little
+/// due to 1. Ethereum Finality and 2. Consensus mirroring the Ethereum state
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct QueryLastObservedEthNonceRequest {
+    /// indicates whether to search for store data using the old Gravity v1 key "LastObservedEventNonceKey"
+    /// Note that queries before the Mercury upgrade at height 1282013 must set this to true
+    #[prost(bool, tag="1")]
+>>>>>>> 81057dc97ff3a6f3702fca99300ddbb3a7011770
     pub use_v1_key: bool,
     /// new version query by evm chain prefix
     #[prost(string, tag = "2")]
     pub evm_chain_prefix: ::prost::alloc::string::String,
 }
+<<<<<<< HEAD
 #[allow(clippy::derive_partial_eq_without_eq)]
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct QueryLastObservedEthNonceResponse {
     /// a response of 0 indicates that no Ethereum events have been observed, and
     /// thus the bridge is inactive
     #[prost(uint64, tag = "1")]
+=======
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct QueryLastObservedEthNonceResponse {
+    /// a response of 0 indicates that no Ethereum events have been observed, and thus
+    /// the bridge is inactive
+    #[prost(uint64, tag="1")]
+    pub nonce: u64,
+}
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct QueryLastObservedErc721EthNonceRequest {
+}
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct QueryLastObservedErc721EthNonceResponse {
+    /// a response of 0 indicates that no Ethereum events have been observed, and thus
+    /// the bridge is inactive
+    #[prost(uint64, tag="1")]
+>>>>>>> 81057dc97ff3a6f3702fca99300ddbb3a7011770
     pub nonce: u64,
 }
 /// QueryAttestationsRequest defines the request structure for getting recent
@@ -1804,30 +2932,39 @@ pub struct QueryLastObservedEthNonceResponse {
 /// Filtering criteria may also be provided, including nonce, claim type, and
 /// height. Note, that an attestation will be returned if it matches ANY of the
 /// filter query parameters provided.
+<<<<<<< HEAD
 #[allow(clippy::derive_partial_eq_without_eq)]
+=======
+>>>>>>> 81057dc97ff3a6f3702fca99300ddbb3a7011770
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct QueryAttestationsRequest {
     /// limit defines how many attestations to limit in the response.
-    #[prost(uint64, tag = "1")]
+    #[prost(uint64, tag="1")]
     pub limit: u64,
     /// order_by provides ordering of atteststions by nonce in the response. Either
     /// 'asc' or 'desc' can be provided. If no value is provided, it defaults to
     /// 'asc'.
-    #[prost(string, tag = "2")]
+    #[prost(string, tag="2")]
     pub order_by: ::prost::alloc::string::String,
     /// claim_type allows filtering attestations by Ethereum claim type.
-    #[prost(string, tag = "3")]
+    #[prost(string, tag="3")]
     pub claim_type: ::prost::alloc::string::String,
     /// nonce allows filtering attestations by Ethereum claim nonce.
-    #[prost(uint64, tag = "4")]
+    #[prost(uint64, tag="4")]
     pub nonce: u64,
     /// height allows filtering attestations by Ethereum claim height.
-    #[prost(uint64, tag = "5")]
+    #[prost(uint64, tag="5")]
     pub height: u64,
+<<<<<<< HEAD
     /// indicates whether to search for store data using the old Gravity v1 key
     /// "OracleAttestationKey" Note that queries before the Mercury upgrade at
     /// height 1282013 must set this to true
     #[prost(bool, tag = "6")]
+=======
+    /// indicates whether to search for store data using the old Gravity v1 key "OracleAttestationKey"
+    /// Note that queries before the Mercury upgrade at height 1282013 must set this to true
+    #[prost(bool, tag="6")]
+>>>>>>> 81057dc97ff3a6f3702fca99300ddbb3a7011770
     pub use_v1_key: bool,
     #[prost(string, tag = "7")]
     pub evm_chain_prefix: ::prost::alloc::string::String,
@@ -1835,73 +2972,129 @@ pub struct QueryAttestationsRequest {
 #[allow(clippy::derive_partial_eq_without_eq)]
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct QueryAttestationsResponse {
-    #[prost(message, repeated, tag = "1")]
+    #[prost(message, repeated, tag="1")]
     pub attestations: ::prost::alloc::vec::Vec<Attestation>,
 }
+<<<<<<< HEAD
 #[allow(clippy::derive_partial_eq_without_eq)]
+=======
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct QueryErc721AttestationsRequest {
+    /// limit defines how many attestations to limit in the response.
+    #[prost(uint64, tag="1")]
+    pub limit: u64,
+    /// order_by provides ordering of atteststions by nonce in the response. Either
+    /// 'asc' or 'desc' can be provided. If no value is provided, it defaults to
+    /// 'asc'.
+    #[prost(string, tag="2")]
+    pub order_by: ::prost::alloc::string::String,
+    /// claim_type allows filtering attestations by Ethereum claim type.
+    #[prost(string, tag="3")]
+    pub claim_type: ::prost::alloc::string::String,
+    /// nonce allows filtering attestations by Ethereum claim nonce.
+    #[prost(uint64, tag="4")]
+    pub nonce: u64,
+    /// height allows filtering attestations by Ethereum claim height.
+    #[prost(uint64, tag="5")]
+    pub height: u64,
+}
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct QueryErc721AttestationsResponse {
+    #[prost(message, repeated, tag="1")]
+    pub attestations: ::prost::alloc::vec::Vec<Attestation>,
+}
+>>>>>>> 81057dc97ff3a6f3702fca99300ddbb3a7011770
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct QueryDelegateKeysByValidatorAddress {
-    #[prost(string, tag = "1")]
+    #[prost(string, tag="1")]
     pub validator_address: ::prost::alloc::string::String,
 }
+<<<<<<< HEAD
 #[allow(clippy::derive_partial_eq_without_eq)]
+=======
+>>>>>>> 81057dc97ff3a6f3702fca99300ddbb3a7011770
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct QueryDelegateKeysByValidatorAddressResponse {
-    #[prost(string, tag = "1")]
+    #[prost(string, tag="1")]
     pub eth_address: ::prost::alloc::string::String,
-    #[prost(string, tag = "2")]
+    #[prost(string, tag="2")]
     pub orchestrator_address: ::prost::alloc::string::String,
 }
+<<<<<<< HEAD
 #[allow(clippy::derive_partial_eq_without_eq)]
+=======
+>>>>>>> 81057dc97ff3a6f3702fca99300ddbb3a7011770
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct QueryDelegateKeysByEthAddress {
-    #[prost(string, tag = "1")]
+    #[prost(string, tag="1")]
     pub eth_address: ::prost::alloc::string::String,
 }
+<<<<<<< HEAD
 #[allow(clippy::derive_partial_eq_without_eq)]
+=======
+>>>>>>> 81057dc97ff3a6f3702fca99300ddbb3a7011770
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct QueryDelegateKeysByEthAddressResponse {
-    #[prost(string, tag = "1")]
+    #[prost(string, tag="1")]
     pub validator_address: ::prost::alloc::string::String,
-    #[prost(string, tag = "2")]
+    #[prost(string, tag="2")]
     pub orchestrator_address: ::prost::alloc::string::String,
 }
+<<<<<<< HEAD
 #[allow(clippy::derive_partial_eq_without_eq)]
+=======
+>>>>>>> 81057dc97ff3a6f3702fca99300ddbb3a7011770
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct QueryDelegateKeysByOrchestratorAddress {
-    #[prost(string, tag = "1")]
+    #[prost(string, tag="1")]
     pub orchestrator_address: ::prost::alloc::string::String,
 }
+<<<<<<< HEAD
 #[allow(clippy::derive_partial_eq_without_eq)]
+=======
+>>>>>>> 81057dc97ff3a6f3702fca99300ddbb3a7011770
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct QueryDelegateKeysByOrchestratorAddressResponse {
-    #[prost(string, tag = "1")]
+    #[prost(string, tag="1")]
     pub validator_address: ::prost::alloc::string::String,
-    #[prost(string, tag = "2")]
+    #[prost(string, tag="2")]
     pub eth_address: ::prost::alloc::string::String,
 }
+<<<<<<< HEAD
 #[allow(clippy::derive_partial_eq_without_eq)]
+=======
+>>>>>>> 81057dc97ff3a6f3702fca99300ddbb3a7011770
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct QueryPendingSendToEth {
-    #[prost(string, tag = "1")]
+    #[prost(string, tag="1")]
     pub sender_address: ::prost::alloc::string::String,
     #[prost(string, tag = "2")]
     pub evm_chain_prefix: ::prost::alloc::string::String,
 }
+<<<<<<< HEAD
 #[allow(clippy::derive_partial_eq_without_eq)]
+=======
+>>>>>>> 81057dc97ff3a6f3702fca99300ddbb3a7011770
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct QueryPendingSendToEthResponse {
-    #[prost(message, repeated, tag = "1")]
+    #[prost(message, repeated, tag="1")]
     pub transfers_in_batches: ::prost::alloc::vec::Vec<OutgoingTransferTx>,
-    #[prost(message, repeated, tag = "2")]
+    #[prost(message, repeated, tag="2")]
     pub unbatched_transfers: ::prost::alloc::vec::Vec<OutgoingTransferTx>,
 }
+<<<<<<< HEAD
 #[allow(clippy::derive_partial_eq_without_eq)]
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct QueryPendingIbcAutoForwards {
     /// limit defines the number of pending forwards to return, in order of their
     /// SendToCosmos.EventNonce
     #[prost(uint64, tag = "1")]
+=======
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct QueryPendingIbcAutoForwards {
+    /// limit defines the number of pending forwards to return, in order of their SendToCosmos.EventNonce
+    #[prost(uint64, tag="1")]
+>>>>>>> 81057dc97ff3a6f3702fca99300ddbb3a7011770
     pub limit: u64,
     #[prost(string, tag = "2")]
     pub evm_chain_prefix: ::prost::alloc::string::String,
@@ -1909,9 +3102,10 @@ pub struct QueryPendingIbcAutoForwards {
 #[allow(clippy::derive_partial_eq_without_eq)]
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct QueryPendingIbcAutoForwardsResponse {
-    #[prost(message, repeated, tag = "1")]
+    #[prost(message, repeated, tag="1")]
     pub pending_ibc_auto_forwards: ::prost::alloc::vec::Vec<PendingIbcAutoForward>,
 }
+<<<<<<< HEAD
 #[allow(clippy::derive_partial_eq_without_eq)]
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct QueryListEvmChains {
@@ -1966,6 +3160,18 @@ pub struct QueryBridgeBalanceSnapshotByEventNonce {
 pub struct QueryBridgeBalanceSnapshotByEventNonceResponse {
     #[prost(message, optional, tag = "1")]
     pub snapshot: ::core::option::Option<BridgeBalanceSnapshot>,
+=======
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct QueryPendingErc721IbcAutoForwardsRequest {
+    /// limit defines the number of pending forwards to return, in order of their SendToCosmos.EventNonce
+    #[prost(uint64, tag="1")]
+    pub limit: u64,
+}
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct QueryPendingErc721IbcAutoForwardsResponse {
+    #[prost(message, repeated, tag="1")]
+    pub pending_erc721_ibc_auto_forwards: ::prost::alloc::vec::Vec<PendingErc721IbcAutoForward>,
+>>>>>>> 81057dc97ff3a6f3702fca99300ddbb3a7011770
 }
 /// Generated client implementations.
 pub mod query_client {
@@ -2248,6 +3454,33 @@ pub mod query_client {
             let path = http::uri::PathAndQuery::from_static(
                 "/gravity.v1.Query/LastEventNonceByAddr",
             );
+<<<<<<< HEAD
+=======
+            self.inner.unary(request.into_request(), path, codec).await
+        }
+        pub async fn last_erc721_event_nonce_by_addr(
+            &mut self,
+            request: impl tonic::IntoRequest<
+                super::QueryLastErc721EventNonceByAddrRequest,
+            >,
+        ) -> Result<
+            tonic::Response<super::QueryLastErc721EventNonceByAddrResponse>,
+            tonic::Status,
+        > {
+            self.inner
+                .ready()
+                .await
+                .map_err(|e| {
+                    tonic::Status::new(
+                        tonic::Code::Unknown,
+                        format!("Service was not ready: {}", e.into()),
+                    )
+                })?;
+            let codec = tonic::codec::ProstCodec::default();
+            let path = http::uri::PathAndQuery::from_static(
+                "/gravity.v1.Query/LastERC721EventNonceByAddr",
+            );
+>>>>>>> 81057dc97ff3a6f3702fca99300ddbb3a7011770
             self.inner.unary(request.into_request(), path, codec).await
         }
         pub async fn batch_fees(
@@ -2431,6 +3664,33 @@ pub mod query_client {
             let path = http::uri::PathAndQuery::from_static(
                 "/gravity.v1.Query/GetLastObservedEthBlock",
             );
+<<<<<<< HEAD
+=======
+            self.inner.unary(request.into_request(), path, codec).await
+        }
+        pub async fn get_last_observed_erc721_eth_block(
+            &mut self,
+            request: impl tonic::IntoRequest<
+                super::QueryLastObservedErc721EthBlockRequest,
+            >,
+        ) -> Result<
+            tonic::Response<super::QueryLastObservedErc721EthBlockResponse>,
+            tonic::Status,
+        > {
+            self.inner
+                .ready()
+                .await
+                .map_err(|e| {
+                    tonic::Status::new(
+                        tonic::Code::Unknown,
+                        format!("Service was not ready: {}", e.into()),
+                    )
+                })?;
+            let codec = tonic::codec::ProstCodec::default();
+            let path = http::uri::PathAndQuery::from_static(
+                "/gravity.v1.Query/GetLastObservedERC721EthBlock",
+            );
+>>>>>>> 81057dc97ff3a6f3702fca99300ddbb3a7011770
             self.inner.unary(request.into_request(), path, codec).await
         }
         pub async fn get_last_observed_eth_nonce(
@@ -2453,6 +3713,33 @@ pub mod query_client {
             let path = http::uri::PathAndQuery::from_static(
                 "/gravity.v1.Query/GetLastObservedEthNonce",
             );
+<<<<<<< HEAD
+=======
+            self.inner.unary(request.into_request(), path, codec).await
+        }
+        pub async fn get_last_observed_erc721_eth_nonce(
+            &mut self,
+            request: impl tonic::IntoRequest<
+                super::QueryLastObservedErc721EthNonceRequest,
+            >,
+        ) -> Result<
+            tonic::Response<super::QueryLastObservedErc721EthNonceResponse>,
+            tonic::Status,
+        > {
+            self.inner
+                .ready()
+                .await
+                .map_err(|e| {
+                    tonic::Status::new(
+                        tonic::Code::Unknown,
+                        format!("Service was not ready: {}", e.into()),
+                    )
+                })?;
+            let codec = tonic::codec::ProstCodec::default();
+            let path = http::uri::PathAndQuery::from_static(
+                "/gravity.v1.Query/GetLastObservedERC721EthNonce",
+            );
+>>>>>>> 81057dc97ff3a6f3702fca99300ddbb3a7011770
             self.inner.unary(request.into_request(), path, codec).await
         }
         pub async fn get_attestations(
@@ -2472,6 +3759,31 @@ pub mod query_client {
             let path = http::uri::PathAndQuery::from_static(
                 "/gravity.v1.Query/GetAttestations",
             );
+<<<<<<< HEAD
+=======
+            self.inner.unary(request.into_request(), path, codec).await
+        }
+        pub async fn get_erc721_attestations(
+            &mut self,
+            request: impl tonic::IntoRequest<super::QueryErc721AttestationsRequest>,
+        ) -> Result<
+            tonic::Response<super::QueryErc721AttestationsResponse>,
+            tonic::Status,
+        > {
+            self.inner
+                .ready()
+                .await
+                .map_err(|e| {
+                    tonic::Status::new(
+                        tonic::Code::Unknown,
+                        format!("Service was not ready: {}", e.into()),
+                    )
+                })?;
+            let codec = tonic::codec::ProstCodec::default();
+            let path = http::uri::PathAndQuery::from_static(
+                "/gravity.v1.Query/GetERC721Attestations",
+            );
+>>>>>>> 81057dc97ff3a6f3702fca99300ddbb3a7011770
             self.inner.unary(request.into_request(), path, codec).await
         }
         pub async fn get_delegate_key_by_validator(
@@ -2586,6 +3898,7 @@ pub mod query_client {
             );
             self.inner.unary(request.into_request(), path, codec).await
         }
+<<<<<<< HEAD
         pub async fn get_list_evm_chains(
             &mut self,
             request: impl tonic::IntoRequest<super::QueryListEvmChains>,
@@ -2656,6 +3969,15 @@ pub mod query_client {
             >,
         ) -> Result<
             tonic::Response<super::QueryBridgeBalanceSnapshotByEventNonceResponse>,
+=======
+        pub async fn get_pending_erc721_ibc_auto_forwards(
+            &mut self,
+            request: impl tonic::IntoRequest<
+                super::QueryPendingErc721IbcAutoForwardsRequest,
+            >,
+        ) -> Result<
+            tonic::Response<super::QueryPendingErc721IbcAutoForwardsResponse>,
+>>>>>>> 81057dc97ff3a6f3702fca99300ddbb3a7011770
             tonic::Status,
         > {
             self.inner
@@ -2669,7 +3991,11 @@ pub mod query_client {
                 })?;
             let codec = tonic::codec::ProstCodec::default();
             let path = http::uri::PathAndQuery::from_static(
+<<<<<<< HEAD
                 "/gravity.v1.Query/GetBridgeBalanceSnapshotByEventNonce",
+=======
+                "/gravity.v1.Query/GetPendingERC721IbcAutoForwards",
+>>>>>>> 81057dc97ff3a6f3702fca99300ddbb3a7011770
             );
             self.inner.unary(request.into_request(), path, codec).await
         }

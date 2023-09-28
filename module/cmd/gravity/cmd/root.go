@@ -2,11 +2,16 @@ package cmd
 
 import (
 	"context"
+	"fmt"
 	"io"
+	"math/rand"
 	"os"
-	"path/filepath"
 
-	"github.com/cosmos/cosmos-sdk/baseapp"
+	tmcfg "github.com/tendermint/tendermint/config"
+	tmcli "github.com/tendermint/tendermint/libs/cli"
+	"github.com/tendermint/tendermint/libs/log"
+	dbm "github.com/tendermint/tm-db"
+
 	"github.com/cosmos/cosmos-sdk/client"
 	clientconfig "github.com/cosmos/cosmos-sdk/client/config"
 	"github.com/cosmos/cosmos-sdk/client/debug"
@@ -17,9 +22,6 @@ import (
 	"github.com/cosmos/cosmos-sdk/server"
 	serverconfig "github.com/cosmos/cosmos-sdk/server/config"
 	servertypes "github.com/cosmos/cosmos-sdk/server/types"
-	"github.com/cosmos/cosmos-sdk/snapshots"
-	"github.com/cosmos/cosmos-sdk/store"
-	sdk "github.com/cosmos/cosmos-sdk/types"
 	authcmd "github.com/cosmos/cosmos-sdk/x/auth/client/cli"
 	"github.com/cosmos/cosmos-sdk/x/auth/types"
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
@@ -27,14 +29,8 @@ import (
 	genutilcli "github.com/cosmos/cosmos-sdk/x/genutil/client/cli"
 	"github.com/spf13/cast"
 	"github.com/spf13/cobra"
-	tmcli "github.com/tendermint/tendermint/libs/cli"
-	"github.com/tendermint/tendermint/libs/log"
-	dbm "github.com/tendermint/tm-db"
 
 	ethermint "github.com/evmos/ethermint/crypto/hd"
-
-	"fmt"
-	"math/rand"
 
 	"github.com/Gravity-Bridge/Gravity-Bridge/module/app"
 	"github.com/Gravity-Bridge/Gravity-Bridge/module/app/params"
@@ -47,6 +43,9 @@ import (
 // b) in the worst case the chain will halt ~ 20 minutes after invariant failure with more likely halt at ~13 minutes after,
 // c) a recent improvement to the sdk brings faster invariant checks
 var InvCheckPeriodPrimes = []uint{17, 19, 23, 29, 31, 37, 41, 43, 47, 53, 59, 61, 67, 71, 73, 79, 83, 89, 97, 101, 103, 107, 109, 113, 127, 131, 137, 139, 149, 151, 157, 163, 167, 173, 179, 181, 191, 193, 197, 199}
+
+// A default value for the min gas prices if the default app template is unused and no flag is provided
+const defaultGravMinGasPrices = "0ugraviton"
 
 // NewRootCmd creates a new root command for simd. It is called once in the
 // main function.
@@ -75,6 +74,11 @@ func NewRootCmd() (*cobra.Command, params.EncodingConfig) {
 		Use:   "gravity",
 		Short: "Stargate Gravity App",
 		PersistentPreRunE: func(cmd *cobra.Command, _ []string) error {
+			// set the default command outputs
+			cmd.SetOut(cmd.OutOrStdout())
+			cmd.SetErr(cmd.ErrOrStderr())
+
+			setDefaultFlagValues(initClientCtx, cmd)
 
 			initClientCtx, err := client.ReadPersistentCommandFlags(initClientCtx, cmd.Flags())
 			if err != nil {
@@ -91,14 +95,35 @@ func NewRootCmd() (*cobra.Command, params.EncodingConfig) {
 			}
 
 			gravityAppTemplate, gravityAppConfig := initAppConfig()
+			customTMConfig := initTendermintConfig()
 
-			return server.InterceptConfigsPreRunHandler(cmd, gravityAppTemplate, gravityAppConfig)
+			return server.InterceptConfigsPreRunHandler(cmd, gravityAppTemplate, gravityAppConfig, customTMConfig)
 		},
 	}
 
 	initRootCmd(rootCmd, encodingConfig)
 
 	return rootCmd, encodingConfig
+}
+
+// Sets default values if the appropriate flags have not been provided
+func setDefaultFlagValues(initClientCtx client.Context, cmd *cobra.Command) {
+	if v, err := cmd.Flags().GetString(server.FlagMinGasPrices); err != nil || v == "" {
+		cmd.Flags().Set(server.FlagMinGasPrices, defaultGravMinGasPrices)
+	}
+}
+
+// Note: Copied from github.com/cosmos/cosmos-sdk over at simapp/simd/cmd/root.go
+// initTendermintConfig helps to override default Tendermint Config values.
+// return tmcfg.DefaultConfig if no custom configuration is required for the application.
+func initTendermintConfig() *tmcfg.Config {
+	cfg := tmcfg.DefaultConfig()
+
+	// these values put a higher strain on node memory
+	// cfg.P2P.MaxNumInboundPeers = 100
+	// cfg.P2P.MaxNumOutboundPeers = 40
+
+	return cfg
 }
 
 // initAppConfig defines the default configuration for a gravity instance. These defaults can be overridden via an
@@ -117,8 +142,11 @@ func initAppConfig() (string, interface{}) {
 		Config: *srvConfig,
 	}
 
-	// CUSTOM CONFIG TEMPLATE - add to this string when adding gravity-specific configurations have been added to
-	// GravityAppConfig above, an example can be seen at https://github.com/cosmos/cosmos-sdk/blob/master/simapp/simd/cmd/root.go
+	// CUSTOM CONFIG TEMPLATE - this copy of the default sdk app config template has a default value
+	// for the minimum-gas-prices added.
+	// It is necessary to add to this string when creating gravity-specific configurations in the
+	// GravityAppConfig above, an example can be seen at
+	// https://github.com/cosmos/cosmos-sdk/blob/master/simapp/simd/cmd/root.go
 	gravityAppTemplate := serverconfig.DefaultConfigTemplate
 
 	return gravityAppTemplate, gravityAppConfig
@@ -145,7 +173,6 @@ func Execute(rootCmd *cobra.Command) error {
 }
 
 func initRootCmd(rootCmd *cobra.Command, encodingConfig params.EncodingConfig) {
-
 	rootCmd.AddCommand(
 		genutilcli.InitCmd(app.ModuleBasics, app.DefaultNodeHome),
 		CollectGenTxsCmd(banktypes.GenesisBalancesIterator{}, app.DefaultNodeHome),
@@ -229,30 +256,9 @@ func txCommand() *cobra.Command {
 }
 
 func newApp(logger log.Logger, db dbm.DB, traceStore io.Writer, appOpts servertypes.AppOptions) servertypes.Application {
-	var cache sdk.MultiStorePersistentCache
-
-	if cast.ToBool(appOpts.Get(server.FlagInterBlockCache)) {
-		cache = store.NewCommitKVStoreCacheManager()
-	}
-
 	skipUpgradeHeights := make(map[int64]bool)
 	for _, h := range cast.ToIntSlice(appOpts.Get(server.FlagUnsafeSkipUpgrades)) {
 		skipUpgradeHeights[int64(h)] = true
-	}
-
-	pruningOpts, err := server.GetPruningOptionsFromFlags(appOpts)
-	if err != nil {
-		panic(err)
-	}
-
-	snapshotDir := filepath.Join(cast.ToString(appOpts.Get(flags.FlagHome)), "data", "snapshots")
-	snapshotDB, err := sdk.NewLevelDB("metadata", snapshotDir)
-	if err != nil {
-		panic(err)
-	}
-	snapshotStore, err := snapshots.NewStore(snapshotDB, snapshotDir)
-	if err != nil {
-		panic(err)
 	}
 
 	invCheckPer := cast.ToUint(appOpts.Get(server.FlagInvCheckPeriod))
@@ -262,23 +268,18 @@ func newApp(logger log.Logger, db dbm.DB, traceStore io.Writer, appOpts serverty
 		logger.Info(fmt.Sprintf("This node will check invariants every %d blocks", invCheckPer))
 	}
 
+	// Creates options for Pruning, MinGasPrices, HaltHeight, HaltTime, MinRetainBlocks, InterBlockCache
+	// Trace, IndexEvents, Snapshot, IAVLCacheSize, IAVLDisableFastNode, IAVLLazyLoading options for baseapp
+	// Note: Gravity's previous configurations were all the default options, but potentially using deprecated methods
+	baseappOptions := server.DefaultBaseappOptions(appOpts)
+
 	return app.NewGravityApp(
 		logger, db, traceStore, true, skipUpgradeHeights,
 		cast.ToString(appOpts.Get(flags.FlagHome)),
 		invCheckPer,
 		app.MakeEncodingConfig(), // Ideally, we would reuse the one created by NewRootCmd.
 		appOpts,
-		baseapp.SetPruning(pruningOpts),
-		baseapp.SetMinGasPrices(cast.ToString(appOpts.Get(server.FlagMinGasPrices))),
-		baseapp.SetHaltHeight(cast.ToUint64(appOpts.Get(server.FlagHaltHeight))),
-		baseapp.SetHaltTime(cast.ToUint64(appOpts.Get(server.FlagHaltTime))),
-		baseapp.SetMinRetainBlocks(cast.ToUint64(appOpts.Get(server.FlagMinRetainBlocks))),
-		baseapp.SetInterBlockCache(cache),
-		baseapp.SetTrace(cast.ToBool(appOpts.Get(server.FlagTrace))),
-		baseapp.SetIndexEvents(cast.ToStringSlice(appOpts.Get(server.FlagIndexEvents))),
-		baseapp.SetSnapshotStore(snapshotStore),
-		baseapp.SetSnapshotInterval(cast.ToUint64(appOpts.Get(server.FlagStateSyncSnapshotInterval))),
-		baseapp.SetSnapshotKeepRecent(cast.ToUint32(appOpts.Get(server.FlagStateSyncSnapshotKeepRecent))),
+		baseappOptions...,
 	)
 }
 

@@ -10,6 +10,7 @@ import (
 	"github.com/Gravity-Bridge/Gravity-Bridge/module/x/gravity/types"
 )
 
+// TODO: Deprecated
 // NewHandler returns a handler for "Gravity" type messages.
 func NewHandler(k keeper.Keeper) sdk.Handler {
 	msgServer := keeper.NewMsgServerImpl(k)
@@ -37,6 +38,9 @@ func NewHandler(k keeper.Keeper) sdk.Handler {
 			return sdk.WrapServiceResult(ctx, res, err)
 		case *types.MsgSendToCosmosClaim:
 			res, err := msgServer.SendToCosmosClaim(sdk.WrapSDKContext(ctx), msg)
+			return sdk.WrapServiceResult(ctx, res, err)
+		case *types.MsgSendERC721ToCosmosClaim:
+			res, err := msgServer.SendERC721ToCosmosClaim(sdk.WrapSDKContext(ctx), msg)
 			return sdk.WrapServiceResult(ctx, res, err)
 		case *types.MsgExecuteIbcAutoForwards:
 			res, err := msgServer.ExecuteIbcAutoForwards(sdk.WrapSDKContext(ctx), msg)
