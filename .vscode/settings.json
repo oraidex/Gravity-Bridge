@@ -9,11 +9,5 @@
     "files.associations": {
         "validator-eth-keys": "cpp"
     },
-<<<<<<< HEAD
     "vue.features.codeActions.enable": false
-=======
-    "rust-analyzer.cargo.extraEnv": {
-        "CARGO_TARGET_DIR": "${userHome}/.cargo/target/analyzer"
-    }
->>>>>>> perf/optimize-find-latest-valset
 }
