@@ -409,11 +409,7 @@ func TestMigrateAttestation(t *testing.T) {
 	require.NoError(t, err)
 
 	oldKeyEntry := store.Get(attestationOldKey)
-<<<<<<< HEAD
-	newKeyEntry := store.Get(types.GetAttestationKey(v3.EthereumChainPrefix, nonce, newClaimHash))
-=======
-	newKeyEntry := store.Get(types.GetAttestationKey(nonce, newClaimHash, types.GravityContractNonce))
->>>>>>> 81057dc97ff3a6f3702fca99300ddbb3a7011770
+	newKeyEntry := store.Get(types.GetAttestationKey(types.GravityContractNonce, v3.EthereumChainPrefix, nonce, newClaimHash))
 	// Check migration results:
 	require.Empty(t, oldKeyEntry)
 	require.NotEqual(t, oldKeyEntry, newKeyEntry)

@@ -2,10 +2,11 @@ package keeper
 
 import (
 	"fmt"
-	"github.com/cosmos/cosmos-sdk/x/nft"
 	"sort"
 	"testing"
 	"time"
+
+	"github.com/cosmos/cosmos-sdk/x/nft"
 
 	"github.com/stretchr/testify/require"
 
@@ -13,12 +14,9 @@ import (
 	bech32ibctypes "github.com/althea-net/bech32-ibc/x/bech32ibc/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/bech32"
-<<<<<<< HEAD
-=======
 
 	"github.com/althea-net/bech32-ibc/x/bech32ibc"
 	bech32ibctypes "github.com/althea-net/bech32-ibc/x/bech32ibc/types"
->>>>>>> 81057dc97ff3a6f3702fca99300ddbb3a7011770
 
 	"github.com/Gravity-Bridge/Gravity-Bridge/module/x/gravity/types"
 )
@@ -107,12 +105,12 @@ func TestBatchAndTxImportExport(t *testing.T) {
 	nfts := make([]nft.NFT, len(erc721Contracts))
 	for i, v := range erc721Contracts {
 		class := nft.Class{
-			Id:       types.GravityERC721ClassId(*v),
+			Id: types.GravityERC721ClassId(*v),
 		}
 		classes[i] = class
 
 		nfts[i] = nft.NFT{
-			Id: "1",
+			Id:      "1",
 			ClassId: class.Id,
 		}
 
@@ -201,12 +199,7 @@ func TestBatchAndTxImportExport(t *testing.T) {
 	hrpRecords := input.GravityKeeper.bech32IbcKeeper.GetHrpIbcRecords(ctx)
 	require.Equal(t, len(hrpRecords), 2)
 	require.Equal(t, hrpRecords[0], rec)
-<<<<<<< HEAD
 	forwards := input.GravityKeeper.PendingIbcAutoForwards(ctx, evmChain.EvmChainPrefix, 0)
-=======
-	require.Equal(t, hrpRecords[1], ics721Rec)
-	forwards := input.GravityKeeper.PendingIbcAutoForwards(ctx, 0)
->>>>>>> 81057dc97ff3a6f3702fca99300ddbb3a7011770
 	require.Equal(t, 0, len(forwards))
 	erc721Forwards := input.GravityKeeper.PendingERC721IbcAutoForwards(ctx, 0)
 	require.Equal(t, 0, len(erc721Forwards))
@@ -230,18 +223,13 @@ func TestBatchAndTxImportExport(t *testing.T) {
 			IbcChannel:      sourceChannel,
 			EventNonce:      uint64(i + 1),
 		}
-<<<<<<< HEAD
-		input.GravityKeeper.setLastObservedEventNonce(ctx, evmChain.EvmChainPrefix, fwd.EventNonce)
-		input.GravityKeeper.SetLastObservedEvmChainBlockHeight(ctx, evmChain.EvmChainPrefix, 100)
+		input.GravityKeeper.setLastObservedEventNonce(ctx, types.GravityContractNonce, evmChain.EvmChainPrefix, fwd.EventNonce)
+		input.GravityKeeper.SetLastObservedEvmChainBlockHeight(ctx, types.GravityContractNonce, evmChain.EvmChainPrefix, 100)
 		err = input.GravityKeeper.addPendingIbcAutoForward(ctx, fwd, evmChain.EvmChainPrefix, stake)
-=======
-		input.GravityKeeper.setLastObservedEventNonce(ctx, fwd.EventNonce, types.GravityContractNonce)
-		err = input.GravityKeeper.addPendingIbcAutoForward(ctx, fwd, stake)
->>>>>>> 81057dc97ff3a6f3702fca99300ddbb3a7011770
 		require.NoError(t, err)
 		forwards[i] = &fwd
 
-		erc721Index := i%len(erc721Contracts)
+		erc721Index := i % len(erc721Contracts)
 		//erc721Contract := erc721Contracts[erc721Index]
 		nftToken := nfts[erc721Index]
 		// Transfer nft to module account
@@ -249,7 +237,7 @@ func TestBatchAndTxImportExport(t *testing.T) {
 		require.NoError(t, input.NftKeeper.Transfer(ctx, nftToken.ClassId, nftToken.Id, modAcc.GetAddress()))
 		erc721Fwd := types.PendingERC721IbcAutoForward{
 			ForeignReceiver: foreignRcv,
-			ClassId:        nftToken.ClassId,
+			ClassId:         nftToken.ClassId,
 			TokenId:         nftToken.Id,
 			IbcChannel:      ics721SourceChannel,
 			EventNonce:      uint64(i + 1),
@@ -260,15 +248,20 @@ func TestBatchAndTxImportExport(t *testing.T) {
 		erc721Forwards[i] = &erc721Fwd
 	}
 
-<<<<<<< HEAD
-	checkAllTransactionsExist(t, input.GravityKeeper, ctx, evmChain.EvmChainPrefix, txs, forwards)
+	checkAllTransactionsExist(t, input.GravityKeeper, ctx, evmChain.EvmChainPrefix, txs, forwards, erc721Forwards)
 	exportImport(t, &input)
-	checkAllTransactionsExist(t, input.GravityKeeper, ctx, evmChain.EvmChainPrefix, txs, forwards)
+	checkAllTransactionsExist(t, input.GravityKeeper, ctx, evmChain.EvmChainPrefix, txs, forwards, erc721Forwards)
 
 	// Clear the pending ibc auto forwards so the invariant won't fail
 	input.GravityKeeper.IteratePendingIbcAutoForwards(ctx, evmChain.EvmChainPrefix, func(_ []byte, fwd *types.PendingIbcAutoForward) bool {
 		require.NoError(t, input.GravityKeeper.deletePendingIbcAutoForward(ctx, evmChain.EvmChainPrefix, fwd.EventNonce))
 		require.NoError(t, input.BankKeeper.BurnCoins(ctx, types.ModuleName, sdk.NewCoins(*fwd.Token)))
+		return false
+	})
+
+	input.GravityKeeper.IteratePendingERC721IbcAutoForwards(ctx, func(_ []byte, fwd *types.PendingERC721IbcAutoForward) bool {
+		require.NoError(t, input.GravityKeeper.deletePendingIbcAutoForward(ctx, fwd.EventNonce, types.ERC721ContractNonce))
+		require.NoError(t, input.NftKeeper.Burn(ctx, fwd.ClassId, fwd.TokenId))
 		return false
 	})
 
@@ -278,32 +271,10 @@ func TestBatchAndTxImportExport(t *testing.T) {
 }
 
 // Requires that all transactions in txs exist in keeper
-func checkAllTransactionsExist(t *testing.T, keeper Keeper, ctx sdk.Context, evmChainPrefix string, txs []*types.InternalOutgoingTransferTx, forwards []*types.PendingIbcAutoForward) {
+func checkAllTransactionsExist(t *testing.T, keeper Keeper, ctx sdk.Context, evmChainPrefix string, txs []*types.InternalOutgoingTransferTx, forwards []*types.PendingIbcAutoForward, erc721Forwards []*types.PendingERC721IbcAutoForward) {
 	unbatched := keeper.GetUnbatchedTransactions(ctx, evmChainPrefix)
 	batches := keeper.GetOutgoingTxBatches(ctx, evmChainPrefix)
-=======
-	checkAllTransactionsExist(t, input.GravityKeeper, ctx, txs, forwards, erc721Forwards)
-	exportImport(t, &input)
-	checkAllTransactionsExist(t, input.GravityKeeper, ctx, txs, forwards, erc721Forwards)
 
-	// Clear the pending ibc auto forwards so the invariant won't fail
-	input.GravityKeeper.IteratePendingIbcAutoForwards(ctx, func(_ []byte, fwd *types.PendingIbcAutoForward) bool {
-		require.NoError(t, input.GravityKeeper.deletePendingIbcAutoForward(ctx, fwd.EventNonce, types.GravityContractNonce))
-		require.NoError(t, input.BankKeeper.BurnCoins(ctx, types.ModuleName, sdk.NewCoins(*fwd.Token)))
-		return false
-	})
-	input.GravityKeeper.IteratePendingERC721IbcAutoForwards(ctx, func(_ []byte, fwd *types.PendingERC721IbcAutoForward) bool {
-		require.NoError(t, input.GravityKeeper.deletePendingIbcAutoForward(ctx, fwd.EventNonce, types.ERC721ContractNonce))
-		require.NoError(t, input.NftKeeper.Burn(ctx, fwd.ClassId, fwd.TokenId))
-		return false
-	})
-}
-
-// Requires that all transactions in txs exist in keeper
-func checkAllTransactionsExist(t *testing.T, keeper Keeper, ctx sdk.Context, txs []*types.InternalOutgoingTransferTx, forwards []*types.PendingIbcAutoForward, erc721Forwards []*types.PendingERC721IbcAutoForward) {
-	unbatched := keeper.GetUnbatchedTransactions(ctx)
-	batches := keeper.GetOutgoingTxBatches(ctx)
->>>>>>> 81057dc97ff3a6f3702fca99300ddbb3a7011770
 	// Collect all txs into an array
 	var gotTxs []*types.InternalOutgoingTransferTx
 	gotTxs = append(gotTxs, unbatched...)
@@ -346,12 +317,11 @@ func checkAllTransactionsExist(t *testing.T, keeper Keeper, ctx sdk.Context, txs
 func exportImport(t *testing.T, input *TestInput) {
 	bankGenesis := input.BankKeeper.ExportGenesis(input.Context)                                     // Required for ibc auto forwards
 	bech32ibcGenesis := bech32ibc.ExportGenesis(input.Context, *input.GravityKeeper.bech32IbcKeeper) // Required for ibc auto forwards
-	nftGenesis := input.NftKeeper.ExportGenesis(input.Context) // Required for ibc auto forwards
+	nftGenesis := input.NftKeeper.ExportGenesis(input.Context)                                       // Required for ibc auto forwards
 
 	genesisState := ExportGenesis(input.Context, input.GravityKeeper)
 	newEnv := CreateTestEnv(t)
 	input = &newEnv
-<<<<<<< HEAD
 
 	for _, evmChain := range newEnv.GravityKeeper.GetEvmChains(newEnv.Context) {
 
@@ -363,20 +333,8 @@ func exportImport(t *testing.T, input *TestInput) {
 		require.Empty(t, forwards)
 		bech32ibc.InitGenesis(input.Context, *input.GravityKeeper.bech32IbcKeeper, *bech32ibcGenesis)
 		input.BankKeeper.InitGenesis(input.Context, bankGenesis)
+		input.NftKeeper.InitGenesis(input.Context, nftGenesis)
 	}
 
-=======
-	unbatched := input.GravityKeeper.GetUnbatchedTransactions(input.Context)
-	require.Empty(t, unbatched)
-	batches := input.GravityKeeper.GetOutgoingTxBatches(input.Context)
-	require.Empty(t, batches)
-	forwards := input.GravityKeeper.PendingIbcAutoForwards(input.Context, 0)
-	require.Empty(t, forwards)
-	erc721Forwards := input.GravityKeeper.PendingERC721IbcAutoForwards(input.Context, 0)
-	require.Empty(t, erc721Forwards)
-	bech32ibc.InitGenesis(input.Context, *input.GravityKeeper.bech32IbcKeeper, *bech32ibcGenesis)
-	input.BankKeeper.InitGenesis(input.Context, bankGenesis)
-	input.NftKeeper.InitGenesis(input.Context, nftGenesis)
->>>>>>> 81057dc97ff3a6f3702fca99300ddbb3a7011770
 	InitGenesis(input.Context, input.GravityKeeper, genesisState)
 }

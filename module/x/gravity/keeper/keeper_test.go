@@ -154,23 +154,13 @@ func TestAttestationIterator(t *testing.T) {
 	hash2, err := claim2.ClaimHash()
 	require.NoError(t, err)
 
-<<<<<<< HEAD
-	input.GravityKeeper.SetAttestation(ctx, evmChain.EvmChainPrefix, claim1.EventNonce, hash1, att1)
-	input.GravityKeeper.setLastObservedEventNonce(ctx, evmChain.EvmChainPrefix, claim1.EventNonce)
-	input.GravityKeeper.SetAttestation(ctx, evmChain.EvmChainPrefix, claim2.EventNonce, hash2, att2)
-	input.GravityKeeper.setLastObservedEventNonce(ctx, evmChain.EvmChainPrefix, claim2.EventNonce)
+	input.GravityKeeper.SetAttestation(ctx, types.GravityContractNonce, evmChain.EvmChainPrefix, claim1.EventNonce, hash1, att1)
+	input.GravityKeeper.setLastObservedEventNonce(ctx, types.GravityContractNonce, evmChain.EvmChainPrefix, claim1.EventNonce)
+	input.GravityKeeper.SetAttestation(ctx, types.GravityContractNonce, evmChain.EvmChainPrefix, claim2.EventNonce, hash2, att2)
+	input.GravityKeeper.setLastObservedEventNonce(ctx, types.GravityContractNonce, evmChain.EvmChainPrefix, claim2.EventNonce)
 
 	atts := []types.Attestation{}
-	input.GravityKeeper.IterateAttestations(ctx, evmChain.EvmChainPrefix, false, func(_ []byte, att types.Attestation) bool {
-=======
-	input.GravityKeeper.SetAttestation(ctx, claim1.EventNonce, hash1, att1, types.GravityContractNonce)
-	input.GravityKeeper.setLastObservedEventNonce(ctx, claim1.EventNonce, types.GravityContractNonce)
-	input.GravityKeeper.SetAttestation(ctx, claim2.EventNonce, hash2, att2, types.GravityContractNonce)
-	input.GravityKeeper.setLastObservedEventNonce(ctx, claim2.EventNonce, types.GravityContractNonce)
-
-	atts := []types.Attestation{}
-	input.GravityKeeper.IterateAttestations(ctx, types.GravityContractNonce, false, func(_ []byte, att types.Attestation) bool {
->>>>>>> 81057dc97ff3a6f3702fca99300ddbb3a7011770
+	input.GravityKeeper.IterateAttestations(ctx, types.GravityContractNonce, evmChain.EvmChainPrefix, false, func(_ []byte, att types.Attestation) bool {
 		atts = append(atts, att)
 		return false
 	})

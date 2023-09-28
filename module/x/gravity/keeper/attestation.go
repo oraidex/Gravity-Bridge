@@ -187,16 +187,16 @@ func (k Keeper) emitObservedEvent(ctx sdk.Context, att *types.Attestation, claim
 }
 
 // SetAttestation sets the attestation in the store
-func (k Keeper) SetAttestation(ctx sdk.Context, evmChainPrefix string, eventNonce uint64, claimHash []byte, att *types.Attestation) {
+func (k Keeper) SetAttestation(ctx sdk.Context, nonceSource types.NonceSource, evmChainPrefix string, eventNonce uint64, claimHash []byte, att *types.Attestation) {
 	store := ctx.KVStore(k.storeKey)
-	aKey := types.GetAttestationKey(evmChainPrefix, eventNonce, claimHash)
+	aKey := types.GetAttestationKey(nonceSource, evmChainPrefix, eventNonce, claimHash)
 	store.Set(aKey, k.cdc.MustMarshal(att))
 }
 
 // GetAttestation return an attestation given a nonce
-func (k Keeper) GetAttestation(ctx sdk.Context, evmChainPrefix string, eventNonce uint64, claimHash []byte) *types.Attestation {
+func (k Keeper) GetAttestation(ctx sdk.Context, nonceSource types.NonceSource, evmChainPrefix string, eventNonce uint64, claimHash []byte) *types.Attestation {
 	store := ctx.KVStore(k.storeKey)
-	aKey := types.GetAttestationKey(evmChainPrefix, eventNonce, claimHash)
+	aKey := types.GetAttestationKey(nonceSource, evmChainPrefix, eventNonce, claimHash)
 	bz := store.Get(aKey)
 	if len(bz) == 0 {
 		return nil
@@ -207,7 +207,7 @@ func (k Keeper) GetAttestation(ctx sdk.Context, evmChainPrefix string, eventNonc
 }
 
 // DeleteAttestation deletes the given attestation
-func (k Keeper) DeleteAttestation(ctx sdk.Context, att types.Attestation, nonceSource types.NonceSource) {
+func (k Keeper) DeleteAttestation(ctx sdk.Context, nonceSource types.NonceSource, att types.Attestation) {
 	claim, err := k.UnpackAttestationClaim(&att)
 	if err != nil {
 		panic("Bad Attestation in DeleteAttestation")
@@ -218,7 +218,7 @@ func (k Keeper) DeleteAttestation(ctx sdk.Context, att types.Attestation, nonceS
 	}
 	store := ctx.KVStore(k.storeKey)
 
-	store.Delete(types.GetAttestationKey(claim.GetEvmChainPrefix(), claim.GetEventNonce(), hash))
+	store.Delete(types.GetAttestationKey(nonceSource, claim.GetEvmChainPrefix(), claim.GetEventNonce(), hash))
 }
 
 // GetAttestationMapping returns a mapping of eventnonce -> attestations at that nonce

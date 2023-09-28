@@ -220,7 +220,6 @@ func TestBatches(t *testing.T) {
 			BatchTimeout:       input.GravityKeeper.getBatchTimeoutHeight(ctx, evmChain.EvmChainPrefix),
 		}
 
-<<<<<<< HEAD
 		assert.Equal(t, expSecondBatch.BatchTimeout, secondBatch.BatchTimeout)
 		assert.Equal(t, expSecondBatch.BatchNonce, secondBatch.BatchNonce)
 		assert.Equal(t, expSecondBatch.CosmosBlockCreated, secondBatch.CosmosBlockCreated)
@@ -229,15 +228,13 @@ func TestBatches(t *testing.T) {
 		for i := 0; i < len(expSecondBatch.Transactions); i++ {
 			assert.Equal(t, expSecondBatch.Transactions[i], secondBatch.Transactions[i].ToExternal())
 		}
-=======
-	// when
-	ctx = ctx.WithBlockTime(now)
-	input.GravityKeeper.SetLastObservedEthereumBlockHeight(ctx, 1234567, types.GravityContractNonce)
-	// maxElements must be greater then 0, otherwise the batch would not be created
-	noBatch, err = input.GravityKeeper.BuildOutgoingTXBatch(ctx, *myTokenContractAddr, 0)
-	require.Nil(t, noBatch)
-	require.Error(t, err)
->>>>>>> 81057dc97ff3a6f3702fca99300ddbb3a7011770
+		// when
+		ctx = ctx.WithBlockTime(now)
+		input.GravityKeeper.SetLastObservedEthereumBlockHeight(ctx, 1234567, types.GravityContractNonce)
+		// maxElements must be greater then 0, otherwise the batch would not be created
+		noBatch, err = input.GravityKeeper.BuildOutgoingTXBatch(ctx, *myTokenContractAddr, 0)
+		require.Nil(t, noBatch)
+		require.Error(t, err)
 
 		// persist confirmations for second batch
 		for i, orch := range OrchAddrs {
@@ -295,119 +292,10 @@ func TestBatches(t *testing.T) {
 			},
 			{
 				Id:          3,
-<<<<<<< HEAD
 				Erc20Fee:    twoFee,
 				Sender:      mySender,
 				DestAddress: myReceiver,
 				Erc20Token:  oneHundredTwoTok,
-=======
-				Erc20Fee:    types.NewERC20Token(2, myTokenContractAddr.GetAddress().Hex()),
-				Sender:      mySender.String(),
-				DestAddress: myReceiver.GetAddress().Hex(),
-				Erc20Token:  types.NewERC20Token(102, myTokenContractAddr.GetAddress().Hex()),
-			},
-		},
-		TokenContract:      myTokenContractAddr.GetAddress().Hex(),
-		CosmosBlockCreated: 1234567,
-		BatchTimeout:       input.GravityKeeper.getBatchTimeoutHeight(ctx),
-	}
-	assert.Equal(t, expFirstBatch.BatchTimeout, gotFirstBatch.BatchTimeout)
-	assert.Equal(t, expFirstBatch.BatchNonce, gotFirstBatch.BatchNonce)
-	assert.Equal(t, expFirstBatch.CosmosBlockCreated, gotFirstBatch.CosmosBlockCreated)
-	assert.Equal(t, expFirstBatch.TokenContract, gotFirstBatch.TokenContract.GetAddress().Hex())
-	assert.Equal(t, len(expFirstBatch.Transactions), len(gotFirstBatch.Transactions))
-	for i := 0; i < len(expFirstBatch.Transactions); i++ {
-		assert.Equal(t, expFirstBatch.Transactions[i], gotFirstBatch.Transactions[i].ToExternal())
-	}
-
-	// persist confirmations for first batch
-	for i, orch := range OrchAddrs {
-		ethAddr, err := types.NewEthAddress(EthAddrs[i].String())
-		require.NoError(t, err)
-
-		conf := &types.MsgConfirmBatch{
-			Nonce:         firstBatch.BatchNonce,
-			TokenContract: firstBatch.TokenContract.GetAddress().Hex(),
-			EthSigner:     ethAddr.GetAddress().Hex(),
-			Orchestrator:  orch.String(),
-			Signature:     "dummysig",
-		}
-
-		input.GravityKeeper.SetBatchConfirm(ctx, conf)
-	}
-
-	// verify that confirms are persisted
-	firstBatchConfirms := input.GravityKeeper.GetBatchConfirmByNonceAndTokenContract(ctx, firstBatch.BatchNonce, firstBatch.TokenContract)
-	require.Equal(t, len(OrchAddrs), len(firstBatchConfirms))
-
-	// and verify remaining available Tx in the pool
-	// Should still have 1: and 4: above
-	gotUnbatchedTx := input.GravityKeeper.GetUnbatchedTransactionsByContract(ctx, *myTokenContractAddr)
-	oneFee, _ := types.NewInternalERC20Token(sdk.NewInt(1), myTokenContractAddr.GetAddress().Hex())
-	oneHundredTok, _ := types.NewInternalERC20Token(sdk.NewInt(100), myTokenContractAddr.GetAddress().Hex())
-	twoFee, _ := types.NewInternalERC20Token(sdk.NewInt(2), myTokenContractAddr.GetAddress().Hex())
-	oneHundredThreeTok, _ := types.NewInternalERC20Token(sdk.NewInt(103), myTokenContractAddr.GetAddress().Hex())
-	expUnbatchedTx := []*types.InternalOutgoingTransferTx{
-		{
-			Id:          1,
-			Erc20Fee:    twoFee,
-			Sender:      mySender,
-			DestAddress: myReceiver,
-			Erc20Token:  oneHundredTok,
-		},
-		{
-			Id:          4,
-			Erc20Fee:    oneFee,
-			Sender:      mySender,
-			DestAddress: myReceiver,
-			Erc20Token:  oneHundredThreeTok,
-		},
-	}
-	assert.Equal(t, expUnbatchedTx, gotUnbatchedTx)
-
-	// CREATE SECOND, MORE PROFITABLE BATCH
-	// ====================================
-
-	// first check that less profitable batch cannot be created
-	noBatch, err = input.GravityKeeper.BuildOutgoingTXBatch(ctx, *myTokenContractAddr, 2)
-	require.Nil(t, noBatch)
-	require.Error(t, err)
-
-	// add some more TX to the pool to create a more profitable batch
-	for i, v := range []uint64{4, 5} {
-		amountToken, err := types.NewInternalERC20Token(sdk.NewInt(int64(i+100)), myTokenContractAddr.GetAddress().Hex())
-		require.NoError(t, err)
-		amount := amountToken.GravityCoin()
-		feeToken, err := types.NewInternalERC20Token(sdk.NewIntFromUint64(v), myTokenContractAddr.GetAddress().Hex())
-		require.NoError(t, err)
-		fee := feeToken.GravityCoin()
-
-		_, err = input.GravityKeeper.AddToOutgoingPool(ctx, mySender, *myReceiver, amount, fee)
-		require.NoError(t, err)
-		// Creates the following:
-		// 5: amount 100, fee 4, id 5
-		// 6: amount 101, fee 5, id 6
-	}
-
-	// create the more profitable batch
-	ctx = ctx.WithBlockTime(now)
-	// tx batch size is 2, so that some of them stay behind
-	secondBatch, err := input.GravityKeeper.BuildOutgoingTXBatch(ctx, *myTokenContractAddr, 2)
-	require.NoError(t, err)
-
-	input.GravityKeeper.SetLastObservedEthereumBlockHeight(ctx, 1234567, types.GravityContractNonce)
-	// check that the more profitable batch has the right txs in it
-	// Should only have 5: and 6: above
-	expSecondBatch := types.OutgoingTxBatch{
-		BatchNonce: 2,
-		Transactions: []types.OutgoingTransferTx{
-			{
-				Id:          6,
-				Erc20Fee:    types.NewERC20Token(5, myTokenContractAddr.GetAddress().Hex()),
-				Sender:      mySender.String(),
-				DestAddress: myReceiver.GetAddress().Hex(),
-				Erc20Token:  types.NewERC20Token(101, myTokenContractAddr.GetAddress().Hex()),
->>>>>>> 81057dc97ff3a6f3702fca99300ddbb3a7011770
 			},
 			{
 				Id:          1,
@@ -568,11 +456,7 @@ func TestBatchesFullCoins(t *testing.T) {
 
 	// create the more profitable batch
 	ctx = ctx.WithBlockTime(now)
-<<<<<<< HEAD
-	input.GravityKeeper.SetLastObservedEvmChainBlockHeight(ctx, evmChain.EvmChainPrefix, 1234567)
-=======
-	input.GravityKeeper.SetLastObservedEthereumBlockHeight(ctx, 1234567, types.GravityContractNonce)
->>>>>>> 81057dc97ff3a6f3702fca99300ddbb3a7011770
+	input.GravityKeeper.SetLastObservedEvmChainBlockHeight(ctx, types.GravityContractNonce, evmChain.EvmChainPrefix, 1234567)
 	// tx batch size is 2, so that some of them stay behind
 	secondBatch, err := input.GravityKeeper.BuildOutgoingTxBatch(ctx, evmChain.EvmChainPrefix, *tokenContract, 2)
 	require.NoError(t, err)
@@ -704,11 +588,7 @@ func TestManyBatches(t *testing.T) {
 	// set senders balance
 	input.AccountKeeper.NewAccountWithAddress(ctx, mySender)
 	require.NoError(t, input.BankKeeper.SendCoinsFromModuleToAccount(ctx, types.ModuleName, mySender, allVouchers))
-<<<<<<< HEAD
-	input.GravityKeeper.SetLastObservedEvmChainBlockHeight(ctx, evmChain.EvmChainPrefix, 1234567)
-=======
-	input.GravityKeeper.SetLastObservedEthereumBlockHeight(ctx, 1234567, types.GravityContractNonce)
->>>>>>> 81057dc97ff3a6f3702fca99300ddbb3a7011770
+	input.GravityKeeper.SetLastObservedEvmChainBlockHeight(ctx, types.GravityContractNonce, evmChain.EvmChainPrefix, 1234567)
 
 	// CREATE FIRST BATCH
 	// ==================

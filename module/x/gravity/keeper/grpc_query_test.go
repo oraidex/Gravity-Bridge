@@ -164,10 +164,6 @@ func createAttestations(t *testing.T, k keeper.Keeper, ctx sdk.Context, evmChain
 		hash, err := msg.ClaimHash()
 		require.NoError(t, err)
 
-<<<<<<< HEAD
-		k.SetAttestation(ctx, evmChainPrefix, nonce, hash, att)
-=======
-		k.SetAttestation(ctx, nonce, hash, att, types.GravityContractNonce)
->>>>>>> 81057dc97ff3a6f3702fca99300ddbb3a7011770
+		k.SetAttestation(ctx, types.GravityContractNonce, evmChainPrefix, nonce, hash, att)
 	}
 }
