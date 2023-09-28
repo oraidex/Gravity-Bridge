@@ -2,10 +2,11 @@ package keeper
 
 import (
 	"fmt"
+	"sort"
+
 	ibcnfttransferkeeper "github.com/bianjieai/nft-transfer/keeper"
 	"github.com/cosmos/cosmos-sdk/x/nft"
 	nftkeeper "github.com/cosmos/cosmos-sdk/x/nft/keeper"
-	"sort"
 
 	gethcommon "github.com/ethereum/go-ethereum/common"
 
@@ -21,11 +22,7 @@ import (
 	slashingkeeper "github.com/cosmos/cosmos-sdk/x/slashing/keeper"
 	stakingkeeper "github.com/cosmos/cosmos-sdk/x/staking/keeper"
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
-<<<<<<< HEAD
 	ibctransferkeeper "github.com/cosmos/ibc-go/v6/modules/apps/transfer/keeper"
-=======
-	ibctransferkeeper "github.com/cosmos/ibc-go/v6/modules/apps/transfer/keeper"
->>>>>>> 81057dc97ff3a6f3702fca99300ddbb3a7011770
 	"github.com/tendermint/tendermint/libs/log"
 
 	bech32ibckeeper "github.com/althea-net/bech32-ibc/x/bech32ibc/keeper"
@@ -47,17 +44,6 @@ type Keeper struct {
 	paramSpace paramtypes.Subspace
 
 	// NOTE: If you add anything to this struct, add a nil check to ValidateMembers below!
-<<<<<<< HEAD
-	cdc               codec.BinaryCodec // The wire codec for binary encoding/decoding.
-	bankKeeper        *bankkeeper.BaseKeeper
-	StakingKeeper     *stakingkeeper.Keeper
-	SlashingKeeper    *slashingkeeper.Keeper
-	DistKeeper        *distrkeeper.Keeper
-	accountKeeper     *authkeeper.AccountKeeper
-	ibcTransferKeeper *ibctransferkeeper.Keeper
-	bech32IbcKeeper   *bech32ibckeeper.Keeper
-	ics4Wrapper       ibctransfertypes.ICS4Wrapper
-=======
 	cdc                  codec.BinaryCodec // The wire codec for binary encoding/decoding.
 	bankKeeper           *bankkeeper.BaseKeeper
 	StakingKeeper        *stakingkeeper.Keeper
@@ -66,9 +52,9 @@ type Keeper struct {
 	accountKeeper        *authkeeper.AccountKeeper
 	ibcTransferKeeper    *ibctransferkeeper.Keeper
 	bech32IbcKeeper      *bech32ibckeeper.Keeper
+	ics4Wrapper          ibctransfertypes.ICS4Wrapper
 	nftKeeper            *nftkeeper.Keeper
 	ibcNftTransferKeeper *ibcnfttransferkeeper.Keeper
->>>>>>> 81057dc97ff3a6f3702fca99300ddbb3a7011770
 
 	AttestationHandler interface {
 		Handle(sdk.Context, types.Attestation, types.EthereumClaim) error
@@ -118,12 +104,9 @@ func NewKeeper(
 	accKeeper *authkeeper.AccountKeeper,
 	ibcTransferKeeper *ibctransferkeeper.Keeper,
 	bech32IbcKeeper *bech32ibckeeper.Keeper,
-<<<<<<< HEAD
 	ics4Wrapper ibctransfertypes.ICS4Wrapper,
-=======
 	nftKeeper *nftkeeper.Keeper,
 	ibcNftTransferKeeper *ibcnfttransferkeeper.Keeper,
->>>>>>> 81057dc97ff3a6f3702fca99300ddbb3a7011770
 ) Keeper {
 	// set KeyTable if it has not already been set
 	if !paramSpace.HasKeyTable() {
@@ -134,18 +117,6 @@ func NewKeeper(
 		storeKey:   storeKey,
 		paramSpace: paramSpace,
 
-<<<<<<< HEAD
-		cdc:                cdc,
-		bankKeeper:         bankKeeper,
-		StakingKeeper:      stakingKeeper,
-		SlashingKeeper:     slashingKeeper,
-		DistKeeper:         distKeeper,
-		accountKeeper:      accKeeper,
-		ibcTransferKeeper:  ibcTransferKeeper,
-		bech32IbcKeeper:    bech32IbcKeeper,
-		ics4Wrapper:        ics4Wrapper,
-		AttestationHandler: nil,
-=======
 		cdc:                  cdc,
 		bankKeeper:           bankKeeper,
 		StakingKeeper:        stakingKeeper,
@@ -154,10 +125,10 @@ func NewKeeper(
 		accountKeeper:        accKeeper,
 		ibcTransferKeeper:    ibcTransferKeeper,
 		bech32IbcKeeper:      bech32IbcKeeper,
+		ics4Wrapper:          ics4Wrapper,
+		AttestationHandler:   nil,
 		nftKeeper:            nftKeeper,
 		ibcNftTransferKeeper: ibcNftTransferKeeper,
-		AttestationHandler:   nil,
->>>>>>> 81057dc97ff3a6f3702fca99300ddbb3a7011770
 	}
 	attestationHandler := AttestationHandler{keeper: &k}
 	attestationHandler.ValidateMembers()

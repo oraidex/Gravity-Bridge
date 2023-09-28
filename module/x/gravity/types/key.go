@@ -130,9 +130,9 @@ var (
 	// [0xd244ded2fa29e95a7719ec40696221e4]
 	KeyOutgoingLogicConfirm = HashString("KeyOutgoingLogicConfirm")
 
-	// LastObservedEvmBlockHeightKey indexes the latest Ethereum block height
+	// LastObservedEthereumBlockHeightKey indexes the latest Ethereum block height
 	// [0x8714755324ba0b02be37e2d2a5af913d]
-	LastObservedEvmBlockHeightKey = HashString("LastObservedEvmBlockHeightKey")
+	LastObservedEthereumBlockHeightKey = HashString("LastObservedEthereumBlockHeightKey")
 
 	// LastObservedERC721EthereumBlockHeightKey indexes the latest Ethereum block height
 	// [4004926194b2aadbcc5a28cac2d991ae]
@@ -341,7 +341,7 @@ func GetLastEventNonceByValidatorKey(nonceSource NonceSource, evmChainPrefix str
 	default:
 		panic("invalid nonce source")
 	}
-	return AppendBytes(nonceSource, []byte(evmChainPrefix), validator.Bytes())
+	return AppendBytes(nonceKey, []byte(evmChainPrefix), validator.Bytes())
 }
 
 // GetDenomToERC20Key return the following key format
@@ -383,8 +383,9 @@ func GetPastEvmSignatureCheckpointKey(evmChainPrefix string, checkpoint []byte) 
 // GetPendingIbcAutoForwardKey returns the following key format
 // prefix	EventNonce
 // [0x0][0 0 0 0 0 0 0 1]
-func GetPendingIbcAutoForwardKey(evmChainPrefix string, eventNonce uint64) []byte {
-	return AppendBytes(PendingIbcAutoForwards, []byte(evmChainPrefix), UInt64Bytes(eventNonce))
+func GetPendingIbcAutoForwardKey(nonceSource NonceSource, evmChainPrefix string, eventNonce uint64) []byte {
+	prefixKey := GetPendingIbcAutoForwardsPrefixKey(nonceSource, evmChainPrefix)
+	return AppendBytes(prefixKey, UInt64Bytes(eventNonce))
 }
 
 // GetEvmChainKey returns the following key format
@@ -430,23 +431,15 @@ func ExtractNonceFromBridgeBalanceSnapshotKey(key []byte) (uint64, string, error
 	return UInt64FromBytesUnsafe(nonce), evmChainPrefix, nil
 }
 
-func GetPendingIbcAutoForwardsPrefixKey(nonceSource NonceSource) []byte {
+func GetPendingIbcAutoForwardsPrefixKey(nonceSource NonceSource, evmChainPrefix string) []byte {
 	switch nonceSource {
 	case GravityContractNonce:
-		return PendingIbcAutoForwards
+		return AppendBytes(PendingIbcAutoForwards, []byte(evmChainPrefix))
 	case ERC721ContractNonce:
-		return PendingERC721IbcAutoForwards
+		return AppendBytes(PendingERC721IbcAutoForwards, []byte(evmChainPrefix))
 	default:
 		panic("invalid nonce source")
 	}
-}
-
-// GetPendingIbcAutoForwardKey returns the following key format
-// prefix		EventNonce
-// [0x0][0 0 0 0 0 0 0 1]
-func GetPendingIbcAutoForwardKey(eventNonce uint64, nonceSource NonceSource) []byte {
-	prefixKey := GetPendingIbcAutoForwardsPrefixKey(nonceSource)
-	return AppendBytes(prefixKey, UInt64Bytes(eventNonce))
 }
 
 func GetLastObservedEthereumBlockHeightKey(nonceSource NonceSource, evmChainPrefix string) []byte {

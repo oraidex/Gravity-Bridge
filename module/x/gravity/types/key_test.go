@@ -50,7 +50,7 @@ func getAllKeys() [][]byte {
 	keys[*inc(&i)] = KeyOrchestratorAddress
 	keys[*inc(&i)] = KeyOutgoingLogicCall
 	keys[*inc(&i)] = KeyOutgoingLogicConfirm
-	keys[*inc(&i)] = LastObservedEvmBlockHeightKey
+	keys[*inc(&i)] = LastObservedEthereumBlockHeightKey
 	keys[*inc(&i)] = DenomToERC20Key
 	keys[*inc(&i)] = ERC20ToDenomKey
 	keys[*inc(&i)] = LastSlashedValsetNonce

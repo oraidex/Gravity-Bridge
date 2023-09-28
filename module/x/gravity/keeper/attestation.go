@@ -225,9 +225,9 @@ func (k Keeper) DeleteAttestation(ctx sdk.Context, att types.Attestation, nonceS
 // it also returns a pre-sorted array of the keys, this assists callers of this function
 // by providing a deterministic iteration order. You should always iterate over ordered keys
 // if you are iterating this map at all.
-func (k Keeper) GetAttestationMapping(ctx sdk.Context, evmChainPrefix string) (attestationMapping map[uint64][]types.Attestation, orderedKeys []uint64) {
+func (k Keeper) GetAttestationMapping(ctx sdk.Context, nonceSource types.NonceSource, evmChainPrefix string) (attestationMapping map[uint64][]types.Attestation, orderedKeys []uint64) {
 	attestationMapping = make(map[uint64][]types.Attestation)
-	k.IterateAttestations(ctx, evmChainPrefix, false, func(_ []byte, att types.Attestation) bool {
+	k.IterateAttestations(ctx, nonceSource, evmChainPrefix, false, func(_ []byte, att types.Attestation) bool {
 		claim, err := k.UnpackAttestationClaim(&att)
 		if err != nil {
 			panic("couldn't cast to claim")
@@ -252,7 +252,7 @@ func (k Keeper) GetAttestationMapping(ctx sdk.Context, evmChainPrefix string) (a
 // IterateAttestations iterates through all attestations executing a given callback on each discovered attestation
 // If reverse is true, attestations will be returned in descending order by key (aka by event nonce and then claim hash)
 // cb should return true to stop iteration, false to continue
-func (k Keeper) IterateAttestations(ctx sdk.Context, nonceSource types.NonceSource, reverse bool, cb func(key []byte, att types.Attestation) (stop bool)) {
+func (k Keeper) IterateAttestations(ctx sdk.Context, nonceSource types.NonceSource, evmChainPrefix string, reverse bool, cb func(key []byte, att types.Attestation) (stop bool)) {
 	store := ctx.KVStore(k.storeKey)
 
 	var keyPrefix []byte
@@ -302,7 +302,7 @@ func (k Keeper) IterateAttestations(ctx sdk.Context, nonceSource types.NonceSour
 // IterateClaims iterates through all attestations, filtering them for claims of a given type
 // If reverse is true, attestations will be returned in descending order by key (aka by event nonce and then claim hash)
 // cb should return true to stop iteration, false to continue
-func (k Keeper) IterateClaims(ctx sdk.Context, nonceSource types.NonceSource, reverse bool, claimType types.ClaimType, cb func(key []byte, att types.Attestation, claim types.EthereumClaim) (stop bool)) {
+func (k Keeper) IterateClaims(ctx sdk.Context, nonceSource types.NonceSource, evmChainPrefix string, reverse bool, claimType types.ClaimType, cb func(key []byte, att types.Attestation, claim types.EthereumClaim) (stop bool)) {
 	typeUrl := types.ClaimTypeToTypeUrl(claimType) // Used to avoid unpacking undesired attestations
 
 	k.IterateAttestations(ctx, nonceSource, evmChainPrefix, reverse, func(key []byte, att types.Attestation) bool {
@@ -321,7 +321,7 @@ func (k Keeper) IterateClaims(ctx sdk.Context, nonceSource types.NonceSource, re
 // GetMostRecentAttestations returns sorted (by nonce) attestations up to a provided limit number of attestations
 // Note: calls GetAttestationMapping in the hopes that there are potentially many attestations
 // which are distributed between few nonces to minimize sorting time
-func (k Keeper) GetMostRecentAttestations(ctx sdk.Context, nonceSource types.NonceSource, limit uint64) []types.Attestation {
+func (k Keeper) GetMostRecentAttestations(ctx sdk.Context, nonceSource types.NonceSource, evmChainPrefix string, limit uint64) []types.Attestation {
 	attestationMapping, keys := k.GetAttestationMapping(ctx, nonceSource, evmChainPrefix)
 	attestations := make([]types.Attestation, 0, limit)
 

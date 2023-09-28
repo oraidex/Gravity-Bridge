@@ -31,7 +31,7 @@ func MigrateStore(ctx sdk.Context, storeKey storetypes.StoreKey, cdc codec.Binar
 	// single key with chain
 	updateKeyPrefixToEvm(store, v2.KeyLastOutgoingBatchID, types.KeyLastOutgoingBatchID)
 	updateKeyPrefixToEvm(store, v2.LastObservedEventNonceKey, types.LastObservedEventNonceKey)
-	updateKeyPrefixToEvm(store, v2.LastObservedEthereumBlockHeightKey, types.LastObservedEvmBlockHeightKey)
+	updateKeyPrefixToEvm(store, v2.LastObservedEthereumBlockHeightKey, types.LastObservedEthereumBlockHeightKey)
 	updateKeyPrefixToEvm(store, v2.KeyLastTXPoolID, types.KeyLastTXPoolID)
 	updateKeyPrefixToEvm(store, v2.LastSlashedValsetNonce, types.LastSlashedValsetNonce)
 	updateKeyPrefixToEvm(store, v2.LatestValsetNonce, types.LatestValsetNonce)
@@ -86,7 +86,7 @@ func RemoveEvmChainFromStore(ctx sdk.Context, storeKey storetypes.StoreKey, cdc 
 	// single key with chain
 	removeKeyPrefixFromEvm(store, types.KeyLastOutgoingBatchID, evmChainPrefix)
 	removeKeyPrefixFromEvm(store, types.LastObservedEventNonceKey, evmChainPrefix)
-	removeKeyPrefixFromEvm(store, types.LastObservedEvmBlockHeightKey, evmChainPrefix)
+	removeKeyPrefixFromEvm(store, types.LastObservedEthereumBlockHeightKey, evmChainPrefix)
 	removeKeyPrefixFromEvm(store, types.KeyLastTXPoolID, evmChainPrefix)
 	removeKeyPrefixFromEvm(store, types.LastSlashedValsetNonce, evmChainPrefix)
 	removeKeyPrefixFromEvm(store, types.LatestValsetNonce, evmChainPrefix)
@@ -160,7 +160,6 @@ func getAttestationConverter(ctx sdk.Context, store sdk.KVStore) func([]byte, co
 			return nil, nil, err
 		}
 
-<<<<<<< HEAD
 		// migrate last observed block height if needed because of the export genesis bug
 		migrateLastObservedEvmBlockHeight(ctx, store, cdc, att.Observed, claim.GetEthBlockHeight())
 
@@ -169,10 +168,7 @@ func getAttestationConverter(ctx sdk.Context, store sdk.KVStore) func([]byte, co
 			return nil, nil, err
 		}
 
-		newKey := types.GetAttestationKey(EthereumChainPrefix, claim.GetEventNonce(), hash)
-=======
-		newKey, err := types.GetAttestationKey(claim.GetEventNonce(), hash, types.GravityContractNonce), nil
->>>>>>> 81057dc97ff3a6f3702fca99300ddbb3a7011770
+		newKey := types.GetAttestationKey(types.GravityContractNonce, EthereumChainPrefix, claim.GetEventNonce(), hash)
 		// The new key must be returned without a prefix, since it will be set on a PrefixStore
 		newKeyNoPrefix := newKey[len(implicitPrefix):]
 
@@ -286,7 +282,7 @@ func removeKeysPrefixFromEvm(store storetypes.KVStore, key []byte, evmChainPrefi
 }
 
 func migrateLastObservedEvmBlockHeight(ctx sdk.Context, store sdk.KVStore, cdc codec.BinaryCodec, observed bool, claimHeight uint64) {
-	key := types.AppendChainPrefix(types.LastObservedEvmBlockHeightKey, EthereumChainPrefix)
+	key := types.AppendChainPrefix(types.LastObservedEthereumBlockHeightKey, EthereumChainPrefix)
 	bytes := store.Get(key)
 	height := types.LastObservedEthereumBlockHeight{
 		CosmosBlockHeight:   0,

@@ -12,26 +12,20 @@ package keeper
 
 import (
 	"fmt"
-<<<<<<< HEAD
-=======
+	"time"
+
 	ibcnfttransfertypes "github.com/bianjieai/nft-transfer/types"
 	"github.com/cosmos/cosmos-sdk/x/nft"
->>>>>>> 81057dc97ff3a6f3702fca99300ddbb3a7011770
-	"time"
 
 	"github.com/Gravity-Bridge/Gravity-Bridge/module/x/gravity/types"
 	"github.com/cosmos/cosmos-sdk/store/prefix"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	"github.com/cosmos/cosmos-sdk/types/bech32"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
-<<<<<<< HEAD
-	ibctransfertypes "github.com/cosmos/ibc-go/v6/modules/apps/transfer/types"
-	ibcclienttypes "github.com/cosmos/ibc-go/v6/modules/core/02-client/types"
-=======
 	ibctransfertypes "github.com/cosmos/ibc-go/v6/modules/apps/transfer/types"
 	ibcclienttypes "github.com/cosmos/ibc-go/v6/modules/core/02-client/types"
 
 	bech32ibctypes "github.com/althea-net/bech32-ibc/x/bech32ibc/types"
->>>>>>> 81057dc97ff3a6f3702fca99300ddbb3a7011770
 )
 
 // ValidatePendingIbcAutoForward performs basic validation, asserts the nonce is not ahead of what gravity is aware of,
@@ -43,11 +37,7 @@ func (k Keeper) ValidatePendingIbcAutoForward(ctx sdk.Context, evmChainPrefix st
 		return err
 	}
 
-<<<<<<< HEAD
-	latestEventNonce := k.GetLastObservedEventNonce(ctx, evmChainPrefix)
-=======
-	latestEventNonce := k.GetLastObservedEventNonce(ctx, types.GravityContractNonce)
->>>>>>> 81057dc97ff3a6f3702fca99300ddbb3a7011770
+	latestEventNonce := k.GetLastObservedEventNonce(ctx, types.GravityContractNonce, evmChainPrefix)
 	if forward.EventNonce > latestEventNonce {
 		return sdkerrors.Wrap(types.ErrInvalid, "EventNonce must be <= latest observed event nonce")
 	}
@@ -105,11 +95,7 @@ func (k Keeper) ValidatePendingERC721IbcAutoForward(ctx sdk.Context, forward typ
 // GetNextPendingIbcAutoForward returns the first pending IBC Auto-Forward in the queue
 func (k Keeper) GetNextPendingIbcAutoForward(ctx sdk.Context, evmChainPrefix string) *types.PendingIbcAutoForward {
 	store := ctx.KVStore(k.storeKey)
-<<<<<<< HEAD
-	prefix := types.AppendChainPrefix(types.PendingIbcAutoForwards, evmChainPrefix)
-=======
-	prefix := types.GetPendingIbcAutoForwardsPrefixKey(types.GravityContractNonce)
->>>>>>> 81057dc97ff3a6f3702fca99300ddbb3a7011770
+	prefix := types.GetPendingIbcAutoForwardsPrefixKey(types.GravityContractNonce, evmChainPrefix)
 	iter := store.Iterator(prefixRange(prefix))
 	defer iter.Close()
 	if iter.Valid() {
@@ -175,11 +161,7 @@ func (k Keeper) PendingERC721IbcAutoForwards(ctx sdk.Context, limit uint64) []*t
 // cb should return true to stop iteration, false to continue
 func (k Keeper) IteratePendingIbcAutoForwards(ctx sdk.Context, evmChainPrefix string, cb func(key []byte, forward *types.PendingIbcAutoForward) (stop bool)) {
 	store := ctx.KVStore(k.storeKey)
-<<<<<<< HEAD
-	prefixStore := prefix.NewStore(store, types.AppendChainPrefix(types.PendingIbcAutoForwards, evmChainPrefix))
-=======
-	prefixStore := prefix.NewStore(store, types.GetPendingIbcAutoForwardsPrefixKey(types.GravityContractNonce))
->>>>>>> 81057dc97ff3a6f3702fca99300ddbb3a7011770
+	prefixStore := prefix.NewStore(store, types.GetPendingIbcAutoForwardsPrefixKey(types.GravityContractNonce, evmChainPrefix))
 	iter := prefixStore.Iterator(nil, nil)
 	defer iter.Close()
 	for ; iter.Valid(); iter.Next() {
@@ -216,11 +198,7 @@ func (k Keeper) addPendingIbcAutoForward(ctx sdk.Context, forward types.PendingI
 		return err
 	}
 	store := ctx.KVStore(k.storeKey)
-<<<<<<< HEAD
-	key := types.GetPendingIbcAutoForwardKey(evmChainPrefix, forward.EventNonce)
-=======
-	key := types.GetPendingIbcAutoForwardKey(forward.EventNonce, types.GravityContractNonce)
->>>>>>> 81057dc97ff3a6f3702fca99300ddbb3a7011770
+	key := types.GetPendingIbcAutoForwardKey(types.GravityContractNonce, evmChainPrefix, forward.EventNonce)
 
 	if store.Has(key) {
 		return sdkerrors.Wrapf(types.ErrDuplicate,
@@ -275,15 +253,9 @@ func (k Keeper) addPendingERC721PendingIbcAutoForward(ctx sdk.Context, forward t
 
 // deletePendingIbcAutoForward removes a single pending IBC Auto-Forward send to an IBC-enabled chain from the store
 // WARNING: this should only be called while clearing the queue in ClearNextPendingIbcAutoForward
-<<<<<<< HEAD
-func (k Keeper) deletePendingIbcAutoForward(ctx sdk.Context, evmChainPrefix string, eventNonce uint64) error {
+func (k Keeper) deletePendingIbcAutoForward(ctx sdk.Context, nonceSource types.NonceSource, evmChainPrefix string, eventNonce uint64) error {
 	store := ctx.KVStore(k.storeKey)
-	key := types.GetPendingIbcAutoForwardKey(evmChainPrefix, eventNonce)
-=======
-func (k Keeper) deletePendingIbcAutoForward(ctx sdk.Context, eventNonce uint64, nonceSource types.NonceSource) error {
-	store := ctx.KVStore(k.storeKey)
-	key := types.GetPendingIbcAutoForwardKey(eventNonce, nonceSource)
->>>>>>> 81057dc97ff3a6f3702fca99300ddbb3a7011770
+	key := types.GetPendingIbcAutoForwardKey(nonceSource, evmChainPrefix, eventNonce)
 	if !store.Has(key) {
 		return sdkerrors.Wrapf(types.ErrInvalid, "No PendingIbcAutoForward with nonce %v in the store", eventNonce)
 	}
@@ -294,25 +266,19 @@ func (k Keeper) deletePendingIbcAutoForward(ctx sdk.Context, eventNonce uint64, 
 // ProcessPendingIbcAutoForwards processes and dequeues many pending IBC Auto-Forwards, either sending the funds to their
 // respective destination chains or on error sending the funds to the local gravity-prefixed account
 // See ProcessNextPendingIbcAutoForward for more details
-<<<<<<< HEAD
-func (k Keeper) ProcessPendingIbcAutoForwards(ctx sdk.Context, evmChainPrefix string, forwardsToClear uint64) error {
-	for i := uint64(0); i < forwardsToClear; i++ {
-		stop, err := k.ProcessNextPendingIbcAutoForward(ctx, evmChainPrefix)
-=======
-func (k Keeper) ProcessPendingIbcAutoForwards(ctx sdk.Context, forwardsToClear uint64, nonceSource types.NonceSource) error {
+func (k Keeper) ProcessPendingIbcAutoForwards(ctx sdk.Context, nonceSource types.NonceSource, evmChainPrefix string, forwardsToClear uint64) error {
 	for i := uint64(0); i < forwardsToClear; i++ {
 		var stop bool
 		var err error
 		switch nonceSource {
 		case types.GravityContractNonce:
-			stop, err = k.ProcessNextPendingIbcAutoForward(ctx)
+			stop, err = k.ProcessNextPendingIbcAutoForward(ctx, evmChainPrefix)
 		case types.ERC721ContractNonce:
-			stop, err = k.ProcessNextPendingERC721IbcAutoForward(ctx)
+			stop, err = k.ProcessNextPendingERC721IbcAutoForward(ctx, evmChainPrefix)
 		default:
 			panic("unknown nonce source")
 		}
 
->>>>>>> 81057dc97ff3a6f3702fca99300ddbb3a7011770
 		if err != nil {
 			return sdkerrors.Wrapf(err, "unable to process Pending IBC Auto-Forward number %v", i)
 		}
@@ -341,11 +307,7 @@ func (k Keeper) ProcessNextPendingIbcAutoForward(ctx sdk.Context, evmChainPrefix
 		panic(fmt.Sprintf("Invalid forward found in Pending IBC Auto-Forward queue: %s", err.Error()))
 	}
 	// Point of no return: the funds will be sent somewhere, either the IBC address, local address or the community pool
-<<<<<<< HEAD
-	err = k.deletePendingIbcAutoForward(ctx, evmChainPrefix, forward.EventNonce)
-=======
-	err = k.deletePendingIbcAutoForward(ctx, forward.EventNonce, types.GravityContractNonce)
->>>>>>> 81057dc97ff3a6f3702fca99300ddbb3a7011770
+	err = k.deletePendingIbcAutoForward(ctx, types.GravityContractNonce, evmChainPrefix, forward.EventNonce)
 	if err != nil {
 		// Fail this tx
 		panic(fmt.Sprintf("Discovered nonexistent Pending IBC Auto-Forward in the queue %s", forward.String()))
@@ -456,7 +418,6 @@ func (k Keeper) ProcessNextPendingERC721IbcAutoForward(ctx sdk.Context) (stop bo
 // with the given timeout timestamp and a zero timeout block height
 func createIbcMsgTransfer(portId string, forward types.PendingIbcAutoForward, sender, receiver, memo string, timeoutTimestampNs uint64) ibctransfertypes.MsgTransfer {
 	zeroHeight := ibcclienttypes.Height{}
-<<<<<<< HEAD
 	msgTransfer := ibctransfertypes.MsgTransfer{
 		SourcePort:       portId,
 		SourceChannel:    forward.IbcChannel,
@@ -473,33 +434,6 @@ func createIbcMsgTransfer(portId string, forward types.PendingIbcAutoForward, se
 	}
 
 	return msgTransfer
-=======
-	return *ibctransfertypes.NewMsgTransfer(
-		portId,
-		forward.IbcChannel,
-		*forward.Token,
-		sender,
-		forward.ForeignReceiver,
-		zeroHeight, // Do not use block height based timeout
-		timeoutTimestampNs,
-		"IBC Auto-Forwarded by Gravity Bridge",
-	)
-}
-
-func createERC721IbcMsgTransfer(portId string, forward types.PendingERC721IbcAutoForward, sender string, timeoutTimestampNs uint64) ibcnfttransfertypes.MsgTransfer {
-	zeroHeight := ibcclienttypes.Height{}
-	return *ibcnfttransfertypes.NewMsgTransfer(
-		portId,
-		forward.IbcChannel,
-		forward.ClassId,
-		[]string{forward.TokenId},
-		sender,
-		forward.ForeignReceiver,
-		zeroHeight, // Do not use block height based timeout
-		timeoutTimestampNs,
-		"IBC Auto-Forwarded by Gravity Bridge",
-	)
->>>>>>> 81057dc97ff3a6f3702fca99300ddbb3a7011770
 }
 
 // thirtyDaysInFuture creates a time.Time exactly 30 days from the last BlockTime for use in createIbcMsgTransfer

@@ -25,7 +25,6 @@ func RegisterProposalTypes() {
 	// run during operation of one off tx commands, so we need to run this 'twice'
 	prefix := "gravity/"
 	metadata := "gravity/IBCMetadata"
-<<<<<<< HEAD
 	if !govtypes.IsValidProposalType(strings.TrimPrefix(metadata, prefix)) {
 		govtypes.RegisterProposalType(types.ProposalTypeIBCMetadata)
 		// nolint: exhaustruct
@@ -42,18 +41,6 @@ func RegisterProposalTypes() {
 		govtypes.RegisterProposalType(types.ProposalTypeAirdrop)
 		// nolint: exhaustruct
 		govtypes.RegisterProposalTypeCodec(&types.AirdropProposal{}, airdrop)
-=======
-	if !govtypesv1beta1.IsValidProposalType(strings.TrimPrefix(metadata, prefix)) {
-		govtypesv1beta1.RegisterProposalType(types.ProposalTypeIBCMetadata)
-	}
-	unhalt := "gravity/UnhaltBridge"
-	if !govtypesv1beta1.IsValidProposalType(strings.TrimPrefix(unhalt, prefix)) {
-		govtypesv1beta1.RegisterProposalType(types.ProposalTypeUnhaltBridge)
-	}
-	airdrop := "gravity/Airdrop"
-	if !govtypesv1beta1.IsValidProposalType(strings.TrimPrefix(airdrop, prefix)) {
-		govtypesv1beta1.RegisterProposalType(types.ProposalTypeAirdrop)
->>>>>>> 81057dc97ff3a6f3702fca99300ddbb3a7011770
 	}
 	addEvmChain := "gravity/AddEvmChain"
 	if !govtypes.IsValidProposalType(strings.TrimPrefix(addEvmChain, prefix)) {
@@ -212,22 +199,14 @@ func (k Keeper) HandleRemoveEvmChainProposal(ctx sdk.Context, p *types.RemoveEvm
 // and prune those that are older than nonceCutoff
 func pruneAttestationsAfterNonce(ctx sdk.Context, evmChainPrefix string, k Keeper, nonceCutoff uint64) {
 	// Decide on the most recent nonce we can actually roll back to
-<<<<<<< HEAD
-	lastObserved := k.GetLastObservedEventNonce(ctx, evmChainPrefix)
-=======
-	lastObserved := k.GetLastObservedEventNonce(ctx, types.GravityContractNonce)
->>>>>>> 81057dc97ff3a6f3702fca99300ddbb3a7011770
+	lastObserved := k.GetLastObservedEventNonce(ctx, types.GravityContractNonce, evmChainPrefix)
 	if nonceCutoff < lastObserved || nonceCutoff == 0 {
 		ctx.Logger().Error("Attempted to reset to a nonce before the last \"observed\" event, which is not allowed", "lastObserved", lastObserved, "nonce", nonceCutoff)
 		return
 	}
 
 	// Get relevant event nonces
-<<<<<<< HEAD
-	attmap, keys := k.GetAttestationMapping(ctx, evmChainPrefix)
-=======
-	attmap, keys := k.GetAttestationMapping(ctx, types.GravityContractNonce)
->>>>>>> 81057dc97ff3a6f3702fca99300ddbb3a7011770
+	attmap, keys := k.GetAttestationMapping(ctx, types.GravityContractNonce, evmChainPrefix)
 
 	// Discover all affected validators whose LastEventNonce must be reset to nonceCutoff
 
@@ -261,17 +240,10 @@ func pruneAttestationsAfterNonce(ctx sdk.Context, evmChainPrefix string, k Keepe
 		if err != nil {
 			panic(sdkerrors.Wrap(err, "invalid validator address affected by bridge reset"))
 		}
-<<<<<<< HEAD
-		valLastNonce := k.GetLastEventNonceByValidator(ctx, evmChainPrefix, val)
+		valLastNonce := k.GetLastEventNonceByValidator(ctx, types.GravityContractNonce, evmChainPrefix, val)
 		if valLastNonce > nonceCutoff {
 			ctx.Logger().Info("Resetting validator's last event nonce due to bridge unhalt", "validator", vote, "lastEventNonce", valLastNonce, "resetNonce", nonceCutoff)
-			k.SetLastEventNonceByValidator(ctx, evmChainPrefix, val, nonceCutoff)
-=======
-		valLastNonce := k.GetLastEventNonceByValidator(ctx, val, types.GravityContractNonce)
-		if valLastNonce > nonceCutoff {
-			ctx.Logger().Info("Resetting validator's last event nonce due to bridge unhalt", "validator", vote, "lastEventNonce", valLastNonce, "resetNonce", nonceCutoff)
-			k.SetLastEventNonceByValidator(ctx, val, nonceCutoff, types.GravityContractNonce)
->>>>>>> 81057dc97ff3a6f3702fca99300ddbb3a7011770
+			k.SetLastEventNonceByValidator(ctx, types.GravityContractNonce, evmChainPrefix, val, nonceCutoff)
 		}
 	}
 }

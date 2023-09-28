@@ -208,7 +208,7 @@ func TestMigrateStoreKeys(t *testing.T) {
 		{
 			"LastObservedEthereumBlockHeightKey",
 			v2.LastObservedEthereumBlockHeightKey,
-			types.AppendChainPrefix(types.LastObservedEvmBlockHeightKey, v3.EthereumChainPrefix),
+			types.AppendChainPrefix(types.LastObservedEthereumBlockHeightKey, v3.EthereumChainPrefix),
 			marshaler.MustMarshal(&dummyLastObservedEthereumBlockHeight),
 		},
 		{
@@ -471,7 +471,7 @@ func TestMigrateAttestation(t *testing.T) {
 
 	// after migrating, the last observed evm block should increase to 1
 	// check last observed ethereum block. It should be empty initially
-	lastObservedHeightBytes = store.Get(types.AppendChainPrefix(types.LastObservedEvmBlockHeightKey, v3.EthereumChainPrefix))
+	lastObservedHeightBytes = store.Get(types.AppendChainPrefix(types.LastObservedEthereumBlockHeightKey, v3.EthereumChainPrefix))
 	require.NotEqual(t, 0, len(lastObservedHeightBytes))
 	lastObservedHeight := types.LastObservedEthereumBlockHeight{
 		CosmosBlockHeight:   0,

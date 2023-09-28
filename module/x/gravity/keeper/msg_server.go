@@ -333,13 +333,8 @@ func (k msgServer) checkOrchestratorValidatorInSet(ctx sdk.Context, orchestrator
 }
 
 // claimHandlerCommon is an internal function that provides common code for processing claims once they are
-<<<<<<< HEAD
 // translated from the message to the evm chain claim interface
-func (k msgServer) claimHandlerCommon(ctx sdk.Context, msgAny *codectypes.Any, msg types.EthereumClaim) error {
-=======
-// translated from the message to the Ethereum claim interface
-func (k msgServer) claimHandlerCommon(ctx sdk.Context, msgAny *codectypes.Any, msg types.EthereumClaim, nonceSource types.NonceSource) error {
->>>>>>> 81057dc97ff3a6f3702fca99300ddbb3a7011770
+func (k msgServer) claimHandlerCommon(ctx sdk.Context, nonceSource types.NonceSource, msgAny *codectypes.Any, msg types.EthereumClaim) error {
 	// Add the claim to the store
 	_, err := k.Attest(ctx, msg, msgAny, nonceSource)
 	if err != nil {
@@ -355,11 +350,7 @@ func (k msgServer) claimHandlerCommon(ctx sdk.Context, msgAny *codectypes.Any, m
 		&types.EventClaim{
 			Message:       string(msg.GetType()),
 			ClaimHash:     string(hash),
-<<<<<<< HEAD
-			AttestationId: string(types.GetAttestationKey(msg.GetEvmChainPrefix(), msg.GetEventNonce(), hash)),
-=======
-			AttestationId: string(types.GetAttestationKey(msg.GetEventNonce(), hash, nonceSource)),
->>>>>>> 81057dc97ff3a6f3702fca99300ddbb3a7011770
+			AttestationId: string(types.GetAttestationKey(nonceSource, msg.GetEvmChainPrefix(), msg.GetEventNonce(), hash)),
 		},
 	)
 }
@@ -457,15 +448,11 @@ func (k msgServer) SendERC721ToCosmosClaim(c context.Context, msg *types.MsgSend
 func (k msgServer) ExecuteIbcAutoForwards(c context.Context, msg *types.MsgExecuteIbcAutoForwards) (*types.MsgExecuteIbcAutoForwardsResponse, error) {
 	ctx := sdk.UnwrapSDKContext(c)
 
-<<<<<<< HEAD
-	if err := k.ProcessPendingIbcAutoForwards(ctx, msg.EvmChainPrefix, msg.GetForwardsToClear()); err != nil {
-=======
-	if err := k.ProcessPendingIbcAutoForwards(ctx, msg.GetForwardsToClear(), types.GravityContractNonce); err != nil {
+	if err := k.ProcessPendingIbcAutoForwards(ctx, types.GravityContractNonce, msg.EvmChainPrefix, .GetForwardsToClear()); err != nil {
 		return nil, err
 	}
 
-	if err := k.ProcessPendingIbcAutoForwards(ctx, msg.GetForwardsToClear(), types.ERC721ContractNonce); err != nil {
->>>>>>> 81057dc97ff3a6f3702fca99300ddbb3a7011770
+	if err := k.ProcessPendingIbcAutoForwards(ctx, types.ERC721ContractNonce, msg.EvmChainPrefix, .GetForwardsToClear()); err != nil {
 		return nil, err
 	}
 
