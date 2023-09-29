@@ -192,6 +192,8 @@ message EvmChainData {
       [ (gogoproto.nullable) = false ];
   repeated PendingIbcAutoForward pending_ibc_auto_forwards = 13
       [ (gogoproto.nullable) = false ];
+  repeated PendingERC721IbcAutoForward pending_erc721_ibc_auto_forwards = 14
+      [ (gogoproto.nullable) = false ];
 }
 
 // EvmChain struct contains EVM chain specific data
@@ -226,4 +228,5 @@ message GravityNonces {
   uint64 last_observed_evm_block_height = 8;
   // the last observed GravityERC721.sol contract event nonce
   uint64 last_erc721_observed_nonce = 9;
+  uint64 last_observed_erc721_evm_block_height = 10;
 }

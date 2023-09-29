@@ -26,7 +26,7 @@ func TestGetAndDeleteAttestation(t *testing.T) {
 		// Get created attestations
 		for i := 0; i < length; i++ {
 			nonce := uint64(1 + i)
-			att := k.GetAttestation(ctx, evmChain.EvmChainPrefix, nonce, hashes[i])
+			att := k.GetAttestation(ctx, types.GravityContractNonce, evmChain.EvmChainPrefix, nonce, hashes[i])
 			require.NotNil(t, att)
 		}
 		recentAttestations := k.GetMostRecentAttestations(ctx, types.GravityContractNonce, evmChain.EvmChainPrefix, uint64(length))
@@ -37,7 +37,7 @@ func TestGetAndDeleteAttestation(t *testing.T) {
 		for i := 7; i < length; i++ {
 			nonce := uint64(1 + i)
 			att := k.GetAttestation(ctx, types.GravityContractNonce, evmChain.EvmChainPrefix, nonce, hashes[i])
-			k.DeleteAttestation(ctx, *att)
+			k.DeleteAttestation(ctx, types.GravityContractNonce, *att)
 
 			att = k.GetAttestation(ctx, types.GravityContractNonce, evmChain.EvmChainPrefix, nonce, hashes[i])
 			require.Equal(t, nilAtt, att)
@@ -143,13 +143,13 @@ func TestGetSetLastObservedEvmChainBlockHeight(t *testing.T) {
 			k.SetLastObservedEvmChainBlockHeight(ctx, types.GravityContractNonce, evmChain.EvmChainPrefix, ethereumHeight)
 		})
 		require.NotPanics(t, func() {
-			k.SetLastObservedEthereumBlockHeight(ctx, types.ERC721ContractNonce, evmChain.EvmChainPrefix, erc721EthereumHeight)
+			k.SetLastObservedEvmChainBlockHeight(ctx, types.ERC721ContractNonce, evmChain.EvmChainPrefix, erc721EthereumHeight)
 		})
-		ethHeight := k.GetLastObservedEvmChainBlockHeight(ctx, evmChain.EvmChainPrefix)
+		ethHeight := k.GetLastObservedEthereumBlockHeight(ctx, types.GravityContractNonce, evmChain.EvmChainPrefix)
 		require.Equal(t, uint64(ctx.BlockHeight()), ethHeight.CosmosBlockHeight)
 		require.Equal(t, ethereumHeight, ethHeight.EthereumBlockHeight)
 
-		erc721EthHeight := k.GetLastObservedEthereumBlockHeight(ctx, types.ERC721ContractNonce)
+		erc721EthHeight := k.GetLastObservedEthereumBlockHeight(ctx, types.ERC721ContractNonce, evmChain.EvmChainPrefix)
 		require.Equal(t, uint64(ctx.BlockHeight()), erc721EthHeight.CosmosBlockHeight)
 		require.Equal(t, erc721EthereumHeight, erc721EthHeight.EthereumBlockHeight)
 	}
@@ -231,7 +231,7 @@ func TestInvalidHeight(t *testing.T) {
 	sender := AccAddrs[0]
 	receiver := EthAddrs[0]
 	lastNonce := pk.GetLastObservedEventNonce(ctx, types.GravityContractNonce, evmChain.EvmChainPrefix)
-	lastEthHeight := pk.GetLastObservedEvmChainBlockHeight(ctx, types.ERC721ContractNonce, evmChain.EvmChainPrefix).EthereumBlockHeight
+	lastEthHeight := pk.GetLastObservedEthereumBlockHeight(ctx, types.ERC721ContractNonce, evmChain.EvmChainPrefix).EthereumBlockHeight
 	lastBatchNonce := 0
 	tokenContract := "0x2260FAC5E5542a773Aa44fBCfeDf7C193bc2C599"
 	goodHeight := lastEthHeight + 1

@@ -71,7 +71,7 @@ func TestBatches(t *testing.T) {
 
 		// when
 		ctx = ctx.WithBlockTime(now)
-		input.GravityKeeper.SetLastObservedEvmChainBlockHeight(ctx, evmChain.EvmChainPrefix, 1234567)
+		input.GravityKeeper.SetLastObservedEvmChainBlockHeight(ctx, types.GravityContractNonce, evmChain.EvmChainPrefix, 1234567)
 		// maxElements must be greater then 0, otherwise the batch would not be created
 		noBatch, err = input.GravityKeeper.BuildOutgoingTxBatch(ctx, evmChain.EvmChainPrefix, *myTokenContractAddr, 0)
 		require.Nil(t, noBatch)
@@ -194,7 +194,7 @@ func TestBatches(t *testing.T) {
 		secondBatch, err := input.GravityKeeper.BuildOutgoingTxBatch(ctx, evmChain.EvmChainPrefix, *myTokenContractAddr, 2)
 		require.NoError(t, err)
 
-		input.GravityKeeper.SetLastObservedEvmChainBlockHeight(ctx, evmChain.EvmChainPrefix, 1234567)
+		input.GravityKeeper.SetLastObservedEvmChainBlockHeight(ctx, types.GravityContractNonce, evmChain.EvmChainPrefix, 1234567)
 		// check that the more profitable batch has the right txs in it
 		// Should only have 5: and 6: above
 		expSecondBatch := types.OutgoingTxBatch{
@@ -230,9 +230,9 @@ func TestBatches(t *testing.T) {
 		}
 		// when
 		ctx = ctx.WithBlockTime(now)
-		input.GravityKeeper.SetLastObservedEthereumBlockHeight(ctx, 1234567, types.GravityContractNonce)
+		input.GravityKeeper.SetLastObservedEvmChainBlockHeight(ctx, types.GravityContractNonce, evmChain.EvmChainPrefix, 1234567)
 		// maxElements must be greater then 0, otherwise the batch would not be created
-		noBatch, err = input.GravityKeeper.BuildOutgoingTXBatch(ctx, *myTokenContractAddr, 0)
+		noBatch, err = input.GravityKeeper.BuildOutgoingTxBatch(ctx, evmChain.EvmChainPrefix, *myTokenContractAddr, 0)
 		require.Nil(t, noBatch)
 		require.Error(t, err)
 

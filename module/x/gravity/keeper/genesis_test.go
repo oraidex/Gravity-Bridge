@@ -15,9 +15,6 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/bech32"
 
-	"github.com/althea-net/bech32-ibc/x/bech32ibc"
-	bech32ibctypes "github.com/althea-net/bech32-ibc/x/bech32ibc/types"
-
 	"github.com/Gravity-Bridge/Gravity-Bridge/module/x/gravity/types"
 )
 
@@ -201,7 +198,7 @@ func TestBatchAndTxImportExport(t *testing.T) {
 	require.Equal(t, hrpRecords[0], rec)
 	forwards := input.GravityKeeper.PendingIbcAutoForwards(ctx, evmChain.EvmChainPrefix, 0)
 	require.Equal(t, 0, len(forwards))
-	erc721Forwards := input.GravityKeeper.PendingERC721IbcAutoForwards(ctx, 0)
+	erc721Forwards := input.GravityKeeper.PendingERC721IbcAutoForwards(ctx, evmChain.EvmChainPrefix, 0)
 	require.Equal(t, 0, len(erc721Forwards))
 
 	// Create pending forwards which must be preserved
@@ -225,7 +222,7 @@ func TestBatchAndTxImportExport(t *testing.T) {
 		}
 		input.GravityKeeper.setLastObservedEventNonce(ctx, types.GravityContractNonce, evmChain.EvmChainPrefix, fwd.EventNonce)
 		input.GravityKeeper.SetLastObservedEvmChainBlockHeight(ctx, types.GravityContractNonce, evmChain.EvmChainPrefix, 100)
-		err = input.GravityKeeper.addPendingIbcAutoForward(ctx, fwd, evmChain.EvmChainPrefix, stake)
+		err = input.GravityKeeper.addPendingIbcAutoForward(ctx, evmChain.EvmChainPrefix, fwd, stake)
 		require.NoError(t, err)
 		forwards[i] = &fwd
 
@@ -242,8 +239,8 @@ func TestBatchAndTxImportExport(t *testing.T) {
 			IbcChannel:      ics721SourceChannel,
 			EventNonce:      uint64(i + 1),
 		}
-		input.GravityKeeper.setLastObservedEventNonce(ctx, erc721Fwd.EventNonce, types.ERC721ContractNonce)
-		err = input.GravityKeeper.addPendingERC721PendingIbcAutoForward(ctx, erc721Fwd)
+		input.GravityKeeper.setLastObservedEventNonce(ctx, types.ERC721ContractNonce, evmChain.EvmChainPrefix, erc721Fwd.EventNonce)
+		err = input.GravityKeeper.addPendingERC721PendingIbcAutoForward(ctx, evmChain.EvmChainPrefix, erc721Fwd)
 		require.NoError(t, err)
 		erc721Forwards[i] = &erc721Fwd
 	}
@@ -254,19 +251,19 @@ func TestBatchAndTxImportExport(t *testing.T) {
 
 	// Clear the pending ibc auto forwards so the invariant won't fail
 	input.GravityKeeper.IteratePendingIbcAutoForwards(ctx, evmChain.EvmChainPrefix, func(_ []byte, fwd *types.PendingIbcAutoForward) bool {
-		require.NoError(t, input.GravityKeeper.deletePendingIbcAutoForward(ctx, evmChain.EvmChainPrefix, fwd.EventNonce))
+		require.NoError(t, input.GravityKeeper.deletePendingIbcAutoForward(ctx, types.ERC721ContractNonce, evmChain.EvmChainPrefix, fwd.EventNonce))
 		require.NoError(t, input.BankKeeper.BurnCoins(ctx, types.ModuleName, sdk.NewCoins(*fwd.Token)))
 		return false
 	})
 
-	input.GravityKeeper.IteratePendingERC721IbcAutoForwards(ctx, func(_ []byte, fwd *types.PendingERC721IbcAutoForward) bool {
-		require.NoError(t, input.GravityKeeper.deletePendingIbcAutoForward(ctx, fwd.EventNonce, types.ERC721ContractNonce))
+	input.GravityKeeper.IteratePendingERC721IbcAutoForwards(ctx, evmChain.EvmChainPrefix, func(_ []byte, fwd *types.PendingERC721IbcAutoForward) bool {
+		require.NoError(t, input.GravityKeeper.deletePendingIbcAutoForward(ctx, types.ERC721ContractNonce, evmChain.EvmChainPrefix, fwd.EventNonce))
 		require.NoError(t, input.NftKeeper.Burn(ctx, fwd.ClassId, fwd.TokenId))
 		return false
 	})
 
 	// last observed evm chain block height must still be there with height 100
-	lastObservedHeight := input.GravityKeeper.GetLastObservedEvmChainBlockHeight(ctx, evmChain.EvmChainPrefix)
+	lastObservedHeight := input.GravityKeeper.GetLastObservedEthereumBlockHeight(ctx, types.ERC721ContractNonce, evmChain.EvmChainPrefix)
 	require.Equal(t, uint64(100), lastObservedHeight.EthereumBlockHeight)
 }
 
@@ -305,7 +302,7 @@ func checkAllTransactionsExist(t *testing.T, keeper Keeper, ctx sdk.Context, evm
 		require.Equal(t, fwd, forwards[i])
 	}
 
-	got721Fwds := keeper.PendingERC721IbcAutoForwards(ctx, 0)
+	got721Fwds := keeper.PendingERC721IbcAutoForwards(ctx, evmChainPrefix, 0)
 	require.Equal(t, len(erc721Forwards), len(got721Fwds))
 	for i, fwd := range got721Fwds {
 		// The order should be preserved because of the type of iterator and the construction of `forwards`

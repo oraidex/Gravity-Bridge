@@ -219,7 +219,7 @@ func (a AttestationHandler) handleSendERC721ToCosmos(ctx sdk.Context, claim type
 			"address", receiverAddress,
 			"cause", addressErr.Error(),
 			"claim type", claim.GetType(),
-			"id", types.GetAttestationKey(claim.GetEventNonce(), hash, types.ERC721ContractNonce),
+			"id", types.GetAttestationKey(types.ERC721ContractNonce, claim.EvmChainPrefix, claim.GetEventNonce(), hash),
 			"nonce", fmt.Sprint(claim.GetEventNonce()),
 		)
 	}
@@ -233,7 +233,7 @@ func (a AttestationHandler) handleSendERC721ToCosmos(ctx sdk.Context, claim type
 		a.keeper.logger(ctx).Error("Invalid token contract",
 			"cause", errTokenAddress.Error(),
 			"claim type", claim.GetType(),
-			"id", types.GetAttestationKey(claim.GetEventNonce(), hash, types.ERC721ContractNonce),
+			"id", types.GetAttestationKey(types.ERC721ContractNonce, claim.EvmChainPrefix, claim.GetEventNonce(), hash),
 			"nonce", fmt.Sprint(claim.GetEventNonce()),
 		)
 		return sdkerrors.Wrap(errTokenAddress, "invalid token contract on claim")
@@ -244,7 +244,7 @@ func (a AttestationHandler) handleSendERC721ToCosmos(ctx sdk.Context, claim type
 		a.keeper.logger(ctx).Error("Invalid ethereum sender",
 			"cause", errEthereumSender.Error(),
 			"claim type", claim.GetType(),
-			"id", types.GetAttestationKey(claim.GetEventNonce(), hash, types.ERC721ContractNonce),
+			"id", types.GetAttestationKey(types.ERC721ContractNonce, claim.EvmChainPrefix, claim.GetEventNonce(), hash),
 			"nonce", fmt.Sprint(claim.GetEventNonce()),
 		)
 		return sdkerrors.Wrap(errTokenAddress, "invalid ethereum sender on claim")
@@ -252,12 +252,12 @@ func (a AttestationHandler) handleSendERC721ToCosmos(ctx sdk.Context, claim type
 
 	// Block blacklisted asset transfers
 	// (these funds are unrecoverable for the blacklisted sender, they will instead be sent to community pool)
-	if a.keeper.IsOnBlacklist(ctx, *ethereumSender) {
+	if a.keeper.IsOnBlacklist(ctx, claim.EvmChainPrefix, *ethereumSender) {
 		hash, _ := claim.ClaimHash()
 		a.keeper.logger(ctx).Error("Invalid SendToCosmos: receiver is blacklisted",
 			"address", receiverAddress,
 			"claim type", claim.GetType(),
-			"id", types.GetAttestationKey(claim.GetEventNonce(), hash, types.ERC721ContractNonce),
+			"id", types.GetAttestationKey(types.ERC721ContractNonce, claim.EvmChainPrefix, claim.GetEventNonce(), hash),
 			"nonce", fmt.Sprint(claim.GetEventNonce()),
 		)
 		invalidAddress = true
@@ -305,7 +305,7 @@ func (a AttestationHandler) handleSendERC721ToCosmos(ctx sdk.Context, claim type
 			a.keeper.logger(ctx).Error("Failed community pool send",
 				"cause", err.Error(),
 				"claim type", claim.GetType(),
-				"id", types.GetAttestationKey(claim.GetEventNonce(), hash, types.ERC721ContractNonce),
+				"id", types.GetAttestationKey(types.ERC721ContractNonce, claim.EvmChainPrefix, claim.GetEventNonce(), hash),
 				"nonce", fmt.Sprint(claim.GetEventNonce()),
 			)
 			return sdkerrors.Wrap(err, "failed to send to Community pool")
@@ -609,7 +609,7 @@ func (a AttestationHandler) mintEthereumOriginatedERC721Vouchers(
 		a.keeper.logger(ctx).Error("Failed minting ERC721",
 			"cause", err.Error(),
 			"claim type", claim.GetType(),
-			"id", types.GetAttestationKey(claim.GetEventNonce(), hash, types.ERC721ContractNonce),
+			"id", types.GetAttestationKey(types.ERC721ContractNonce, claim.EvmChainPrefix, claim.GetEventNonce(), hash),
 			"nonce", fmt.Sprint(claim.GetEventNonce()),
 		)
 		return sdkerrors.Wrapf(err, "mint vouchers erc721: %s s", nftToken.ClassId, nftToken.Id)
@@ -625,7 +625,7 @@ func (a AttestationHandler) sendERC721ToCosmosAccount(ctx sdk.Context, claim typ
 		a.keeper.logger(ctx).Error("Invalid bech32 CosmosReceiver",
 			"cause", err.Error(), "address", receiver,
 			"claimType", claim.GetType(),
-			"id", types.GetAttestationKey(claim.GetEventNonce(), hash, types.ERC721ContractNonce),
+			"id", types.GetAttestationKey(types.ERC721ContractNonce, claim.EvmChainPrefix, claim.GetEventNonce(), hash),
 			"nonce", fmt.Sprint(claim.GetEventNonce()),
 		)
 		return false, err
@@ -654,7 +654,7 @@ func (a AttestationHandler) sendERC721ToCosmosAccount(ctx sdk.Context, claim typ
 				"address", receiver,
 				"hrp prefix", hrpPrefix,
 				"claim type", claim.GetType(),
-				"id", types.GetAttestationKey(claim.GetEventNonce(), hash, types.GravityContractNonce),
+				"id", types.GetAttestationKey(types.GravityContractNonce, claim.EvmChainPrefix, claim.GetEventNonce(), hash),
 				"nonce", fmt.Sprint(claim.GetEventNonce()),
 			)
 
@@ -695,17 +695,6 @@ func (a AttestationHandler) sendERC721ToCosmosAccount(ctx sdk.Context, claim typ
 func (a AttestationHandler) sendCoinToCosmosAccount(
 	ctx sdk.Context, claim types.MsgSendToCosmosClaim, receiver sdk.AccAddress, sourceChannel, accountPrefix string, coin sdk.Coin,
 ) (ibcForwardQueued bool, err error) {
-	accountPrefix, err := types.GetPrefixFromBech32(claim.CosmosReceiver)
-	if err != nil {
-		hash, _ := claim.ClaimHash()
-		a.keeper.logger(ctx).Error("Invalid bech32 CosmosReceiver",
-			"cause", err.Error(), "address", receiver,
-			"claimType", claim.GetType(),
-			"id", types.GetAttestationKey(types.GravityContractNonce, claim.EvmChainPrefix, claim.GetEventNonce(), hash),
-			"nonce", fmt.Sprint(claim.GetEventNonce()),
-		)
-		return false, err
-	}
 	nativePrefix, err := a.keeper.bech32IbcKeeper.GetNativeHrp(ctx)
 	if err != nil {
 		// In a real environment bech32ibc panics on InitGenesis and on Send with their bech32ics20 module, which
@@ -806,7 +795,7 @@ func (a AttestationHandler) sendERC721ToLocalAddress(
 		a.keeper.logger(ctx).Error("ERC721 transfer failed",
 			"cause", err.Error(),
 			"claim type", claim.GetType(),
-			"id", types.GetAttestationKey(claim.GetEventNonce(), hash, types.ERC721ContractNonce),
+			"id", types.GetAttestationKey(types.ERC721ContractNonce, claim.EvmChainPrefix, claim.GetEventNonce(), hash),
 			"nonce", fmt.Sprint(claim.GetEventNonce()),
 		)
 	} else {
@@ -850,7 +839,7 @@ func (a AttestationHandler) addToIbcAutoForwardQueue(
 	}
 
 	// forward will be validated when adding to queue, error only returned if unable to send funds to local user
-	return a.keeper.addPendingIbcAutoForward(ctx, forward, claim.EvmChainPrefix, claim.TokenContract)
+	return a.keeper.addPendingIbcAutoForward(ctx, claim.EvmChainPrefix, forward, claim.TokenContract)
 }
 
 func (a AttestationHandler) addERC721ToIbcAutoForwardQueue(
@@ -877,5 +866,5 @@ func (a AttestationHandler) addERC721ToIbcAutoForwardQueue(
 		EventNonce:      claim.EventNonce,
 	}
 
-	return a.keeper.addPendingERC721PendingIbcAutoForward(ctx, forward)
+	return a.keeper.addPendingERC721PendingIbcAutoForward(ctx, claim.EvmChainPrefix, forward)
 }

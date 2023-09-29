@@ -383,7 +383,7 @@ func ValidateStore(ctx sdk.Context, evmChainPrefix string, k Keeper) error {
 		return err
 	}
 	// LastObservedEthereumBlockHeightKey
-	lastEthHeight := k.GetLastObservedEvmChainBlockHeight(ctx, types.GravityContractNonce, evmChainPrefix)
+	lastEthHeight := k.GetLastObservedEthereumBlockHeight(ctx, types.GravityContractNonce, evmChainPrefix)
 	if lastEthHeight.EthereumBlockHeight < lastObservedEthereumClaimHeight {
 		err = fmt.Errorf(
 			"Stored last observed ethereum block height is less than the actual last observed height (%d < %d)",

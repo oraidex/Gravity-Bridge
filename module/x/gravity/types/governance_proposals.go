@@ -5,7 +5,7 @@ import (
 	"strings"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	govtypesv1beta1 "github.com/cosmos/cosmos-sdk/x/gov/types/v1beta1"
+	govtypes "github.com/cosmos/cosmos-sdk/x/gov/types/v1beta1"
 )
 
 const (
@@ -28,7 +28,7 @@ func (p *UnhaltBridgeProposal) ProposalType() string {
 }
 
 func (p *UnhaltBridgeProposal) ValidateBasic() error {
-	err := govtypesv1beta1.ValidateAbstract(p)
+	err := govtypes.ValidateAbstract(p)
 	if err != nil {
 		return err
 	}
@@ -56,7 +56,7 @@ func (p *AirdropProposal) ProposalType() string {
 }
 
 func (p *AirdropProposal) ValidateBasic() error {
-	err := govtypesv1beta1.ValidateAbstract(p)
+	err := govtypes.ValidateAbstract(p)
 	if err != nil {
 		return err
 	}
@@ -101,7 +101,7 @@ func (p *IBCMetadataProposal) ProposalType() string {
 }
 
 func (p *IBCMetadataProposal) ValidateBasic() error {
-	err := govtypesv1beta1.ValidateAbstract(p)
+	err := govtypes.ValidateAbstract(p)
 	if err != nil {
 		return err
 	}

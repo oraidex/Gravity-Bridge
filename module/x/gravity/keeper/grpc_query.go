@@ -293,7 +293,7 @@ func (k Keeper) LastERC721EventNonceByAddr(
 		return nil, sdkerrors.Wrap(err, "invalid validator address")
 	}
 
-	lastEventNonce := k.GetLastEventNonceByValidator(ctx, validator.GetOperator(), types.ERC721ContractNonce)
+	lastEventNonce := k.GetLastEventNonceByValidator(ctx, types.ERC721ContractNonce, req.EvmChainPrefix, validator.GetOperator())
 
 	return &types.QueryLastERC721EventNonceByAddrResponse{EventNonce: lastEventNonce}, nil
 }
@@ -340,14 +340,14 @@ func (k Keeper) GetLastObservedEthBlock(
 
 	// Use the old locator pre-Mercury, when the keys changed to hashed strings
 	var ethHeight types.LastObservedEthereumBlockHeight
-	var locator func(ctx sdk.Context, nonceSource types.NonceSource) types.LastObservedEthereumBlockHeight
+	var locator func(ctx sdk.Context, nonceSource types.NonceSource, evmChainPrefix string) types.LastObservedEthereumBlockHeight
 	if req.UseV1Key {
 		locator = k.GetOldLastObservedEthereumBlockHeight
 	} else {
 		locator = k.GetLastObservedEthereumBlockHeight
 	}
 
-	ethHeight := locator(ctx, types.GravityContractNonce, req.EvmChainPrefix)
+	ethHeight = locator(ctx, types.GravityContractNonce, req.EvmChainPrefix)
 
 	return &types.QueryLastObservedEthBlockResponse{Block: ethHeight.EthereumBlockHeight}, nil
 }
@@ -355,10 +355,10 @@ func (k Keeper) GetLastObservedEthBlock(
 // GetLastObservedEthBlock queries the LastObservedEthereumBlockHeight
 func (k Keeper) GetLastObservedERC721EthBlock(
 	c context.Context,
-	_ *types.QueryLastObservedERC721EthBlockRequest,
+	req *types.QueryLastObservedERC721EthBlockRequest,
 ) (*types.QueryLastObservedERC721EthBlockResponse, error) {
 	ctx := sdk.UnwrapSDKContext(c)
-	ethHeight := k.GetLastObservedEthereumBlockHeight(ctx, types.ERC721ContractNonce)
+	ethHeight := k.GetLastObservedEthereumBlockHeight(ctx, types.ERC721ContractNonce, req.EvmChainPrefix)
 	return &types.QueryLastObservedERC721EthBlockResponse{Block: ethHeight.EthereumBlockHeight}, nil
 }
 
@@ -388,7 +388,7 @@ func (k Keeper) GetLastObservedEthNonce(
 	ctx := sdk.UnwrapSDKContext(c)
 
 	// Use the old locator pre-Mercury, when the keys changed to hashed strings
-	var locator func(ctx sdk.Context, nonceSource types.NonceSource) uint64
+	var locator func(ctx sdk.Context, nonceSource types.NonceSource, evmChainPrefix string) uint64
 	if req.UseV1Key {
 		locator = k.GetOldLastObservedEventNonce
 	} else {
@@ -404,7 +404,7 @@ func (k Keeper) GetLastObservedERC721EthNonce(
 ) (*types.QueryLastObservedERC721EthNonceResponse, error) {
 	ctx := sdk.UnwrapSDKContext(c)
 
-	nonce := k.GetLastObservedEventNonce(ctx, types.ERC721ContractNonce)
+	nonce := k.GetLastObservedEventNonce(ctx, types.ERC721ContractNonce, req.EvmChainPrefix)
 
 	return &types.QueryLastObservedERC721EthNonceResponse{Nonce: nonce}, nil
 }
@@ -509,7 +509,7 @@ func (k Keeper) GetERC721Attestations(c context.Context, req *types.QueryERC721A
 	reverse := strings.EqualFold(req.OrderBy, "desc")
 	filter := req.Height > 0 || req.Nonce > 0 || req.ClaimType != ""
 
-	k.IterateAttestations(ctx, types.ERC721ContractNonce, reverse, func(_ []byte, att types.Attestation) (abort bool) {
+	k.IterateAttestations(ctx, types.ERC721ContractNonce, req.EvmChainPrefix, reverse, func(_ []byte, att types.Attestation) (abort bool) {
 		claim, err := k.UnpackAttestationClaim(&att)
 		if err != nil {
 			iterErr = sdkerrors.Wrap(sdkerrors.ErrUnpackAny, "failed to unmarshal Ethereum claim")
@@ -752,6 +752,6 @@ func (k Keeper) GetBridgeBalanceSnapshotByEventNonce(
 }
 func (k Keeper) GetPendingERC721IbcAutoForwards(c context.Context, req *types.QueryPendingERC721IbcAutoForwardsRequest) (*types.QueryPendingERC721IbcAutoForwardsResponse, error) {
 	ctx := sdk.UnwrapSDKContext(c)
-	pendingForwards := k.PendingERC721IbcAutoForwards(ctx, req.Limit)
+	pendingForwards := k.PendingERC721IbcAutoForwards(ctx, req.EvmChainPrefix, req.Limit)
 	return &types.QueryPendingERC721IbcAutoForwardsResponse{PendingErc721IbcAutoForwards: pendingForwards}, nil
 }

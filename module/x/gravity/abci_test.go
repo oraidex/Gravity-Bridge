@@ -54,8 +54,7 @@ func TestValsetCreationUponUnbonding(t *testing.T) {
 	// begin unbonding
 	stakingMsgSvr := stakingkeeper.NewMsgServerImpl(input.StakingKeeper)
 	undelegateMsg := keeper.NewTestMsgUnDelegateValidator(keeper.ValAddrs[0], keeper.StakingAmount)
-	_, err := sh(input.Context, undelegateMsg)
-	require.NoError(t, err)
+	stakingMsgSvr.Undelegate(input.Context, undelegateMsg)
 
 	// Run the staking endblocker to ensure valset is set in state
 	staking.EndBlocker(input.Context, input.StakingKeeper)
@@ -171,8 +170,8 @@ func TestNonValidatorValsetConfirm(t *testing.T) {
 	// Set the account in state
 	input.AccountKeeper.SetAccount(input.Context, acc)
 
-	sh := staking.NewHandler(input.StakingKeeper)
-	_, err = sh(
+	stakingMsgSvr := stakingkeeper.NewMsgServerImpl(input.StakingKeeper)
+	_, err = stakingMsgSvr.CreateValidator(
 		input.Context,
 		keeper.NewTestMsgCreateValidator(valAddr, consPubKey, sdk.NewIntFromUint64(1)),
 	)
@@ -258,11 +257,9 @@ func TestValsetSlashing_UnbondingValidator_UnbondWindow_NotExpired(t *testing.T)
 	input.Context = ctx.WithBlockHeight(valUnbondingHeight)
 	stakingMsgSvr := stakingkeeper.NewMsgServerImpl(input.StakingKeeper)
 	undelegateMsg1 := keeper.NewTestMsgUnDelegateValidator(keeper.ValAddrs[0], keeper.StakingAmount)
-	_, err := sh(input.Context, undelegateMsg1)
-	require.NoError(t, err)
+	stakingMsgSvr.Undelegate(input.Context, undelegateMsg1)
 	undelegateMsg2 := keeper.NewTestMsgUnDelegateValidator(keeper.ValAddrs[1], keeper.StakingAmount)
-	_, err = sh(input.Context, undelegateMsg2)
-	require.NoError(t, err)
+	stakingMsgSvr.Undelegate(input.Context, undelegateMsg2)
 
 	for i, orch := range keeper.OrchAddrs {
 		if i == 0 {
@@ -328,12 +325,11 @@ func TestNonValidatorBatchConfirm(t *testing.T) {
 	// Set the account in state
 	input.AccountKeeper.SetAccount(input.Context, acc)
 
-	sh := staking.NewHandler(input.StakingKeeper)
-	_, err = sh(
+	stakingMsgSvr := stakingkeeper.NewMsgServerImpl(input.StakingKeeper)
+	_, err = stakingMsgSvr.CreateValidator(
 		input.Context,
 		keeper.NewTestMsgCreateValidator(valAddr, consPubKey, sdk.NewIntFromUint64(1)),
 	)
-	require.NoError(t, err)
 	// Run the staking endblocker to ensure valset is correct in state
 	staking.EndBlocker(input.Context, input.StakingKeeper)
 
@@ -563,7 +559,7 @@ func TestBatchTimeout(t *testing.T) {
 	require.NoError(t, err1)
 	require.Equal(t, b1.BatchTimeout, uint64(0))
 
-	pk.SetLastObservedEvmChainBlockHeight(ctx, evmChain.EvmChainPrefix, 500)
+	pk.SetLastObservedEvmChainBlockHeight(ctx, types.GravityContractNonce, evmChain.EvmChainPrefix, 500)
 
 	// increase number of max txs to create more profitable batch
 	b2, err2 := pk.BuildOutgoingTxBatch(ctx, evmChain.EvmChainPrefix, *tokenContract, 2)
@@ -617,7 +613,7 @@ func TestBatchTimeout(t *testing.T) {
 	gotThirdBatch := input.GravityKeeper.GetOutgoingTxBatch(ctx, evmChain.EvmChainPrefix, b3.TokenContract, b3.BatchNonce)
 	require.NotNil(t, gotThirdBatch)
 
-	pk.SetLastObservedEvmChainBlockHeight(ctx, evmChain.EvmChainPrefix, 5000)
+	pk.SetLastObservedEvmChainBlockHeight(ctx, types.GravityContractNonce, evmChain.EvmChainPrefix, 5000)
 	EndBlocker(ctx, pk)
 
 	// make sure the end blocker does delete these, as we've got a new Ethereum block height

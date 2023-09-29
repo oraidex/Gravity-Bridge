@@ -22,7 +22,8 @@ func EndBlocker(ctx sdk.Context, k keeper.Keeper) {
 
 	for _, evmChain := range evmChains {
 		// slashing(ctx, k, params, evmChain.EvmChainPrefix)
-		attestationTally(ctx, k, evmChain.EvmChainPrefix)
+		attestationTally(ctx, k, types.GravityContractNonce, evmChain.EvmChainPrefix)
+		attestationTally(ctx, k, types.ERC721ContractNonce, evmChain.EvmChainPrefix)
 		cleanupTimedOutBatches(ctx, k, evmChain.EvmChainPrefix)
 		cleanupTimedOutLogicCalls(ctx, k, evmChain.EvmChainPrefix)
 		createValsets(ctx, k, evmChain.EvmChainPrefix)
@@ -130,7 +131,7 @@ func slashing(ctx sdk.Context, k keeper.Keeper, params types.Params, evmChainPre
 // Iterate over all attestations currently being voted on in order of nonce and
 // "Observe" those who have passed the threshold. Break the loop once we see
 // an attestation that has not passed the threshold
-func attestationTally(ctx sdk.Context, k keeper.Keeper, evmChainPrefix string) {
+func attestationTally(ctx sdk.Context, k keeper.Keeper, nonceSource types.NonceSource, evmChainPrefix string) {
 	params := k.GetParams(ctx)
 
 	evmChainParam := params.GetEvmChain(evmChainPrefix)
@@ -144,7 +145,7 @@ func attestationTally(ctx sdk.Context, k keeper.Keeper, evmChainPrefix string) {
 		return
 	}
 
-	attmap, keys := k.GetAttestationMapping(ctx, evmChainPrefix)
+	attmap, keys := k.GetAttestationMapping(ctx, nonceSource, evmChainPrefix)
 
 	// This iterates over all keys (event nonces) in the attestation mapping. Each value contains
 	// a slice with one or more attestations at that event nonce. There can be multiple attestations
@@ -170,8 +171,8 @@ func attestationTally(ctx sdk.Context, k keeper.Keeper, evmChainPrefix string) {
 			// we skip the other attestations and move on to the next nonce again.
 			// If no attestation becomes observed, when we get to the next nonce, every attestation in
 			// it will be skipped. The same will happen for every nonce after that.
-			if nonce == uint64(k.GetLastObservedEventNonce(ctx, evmChainPrefix))+1 {
-				k.TryAttestation(ctx, &att)
+			if nonce == uint64(k.GetLastObservedEventNonce(ctx, nonceSource, evmChainPrefix))+1 {
+				k.TryAttestation(ctx, nonceSource, &att)
 			}
 		}
 	}
@@ -187,7 +188,7 @@ func attestationTally(ctx sdk.Context, k keeper.Keeper, evmChainPrefix string) {
 // project, if we do a slowdown on ethereum could cause a double spend. Instead timeouts will *only* occur after the timeout period
 // AND any deposit or withdraw has occurred to update the Ethereum block height.
 func cleanupTimedOutBatches(ctx sdk.Context, k keeper.Keeper, evmChainPrefix string) {
-	evmChainHeight := k.GetLastObservedEvmChainBlockHeight(ctx, evmChainPrefix).EthereumBlockHeight
+	evmChainHeight := k.GetLastObservedEthereumBlockHeight(ctx, types.GravityContractNonce, evmChainPrefix).EthereumBlockHeight
 	batches := k.GetOutgoingTxBatches(ctx, evmChainPrefix)
 	for _, batch := range batches {
 		if batch.BatchTimeout < evmChainHeight {
@@ -209,7 +210,7 @@ func cleanupTimedOutBatches(ctx sdk.Context, k keeper.Keeper, evmChainPrefix str
 // project, if we do a slowdown on ethereum could cause a double spend. Instead timeouts will *only* occur after the timeout period
 // AND any deposit or withdraw has occurred to update the Ethereum block height.
 func cleanupTimedOutLogicCalls(ctx sdk.Context, k keeper.Keeper, evmChainPrefix string) {
-	evmChainHeight := k.GetLastObservedEvmChainBlockHeight(ctx, evmChainPrefix).EthereumBlockHeight
+	evmChainHeight := k.GetLastObservedEthereumBlockHeight(ctx, types.GravityContractNonce, evmChainPrefix).EthereumBlockHeight
 	calls := k.GetOutgoingLogicCalls(ctx, evmChainPrefix)
 	for _, call := range calls {
 		if call.Timeout < evmChainHeight {
@@ -535,8 +536,10 @@ func logicCallSlashing(ctx sdk.Context, k keeper.Keeper, params types.Params, ev
 // pruning prunes all unneeded items from the store
 func pruning(ctx sdk.Context, k keeper.Keeper, params types.Params, evmChainPrefix string) {
 	pruneValsets(ctx, k, params, evmChainPrefix)
-	pruneAttestations(ctx, k, evmChainPrefix, EventsToKeep)
-	pruneBridgeBalanceSnapshots(ctx, k, evmChainPrefix, EventsToKeep)
+	pruneAttestations(ctx, k, types.GravityContractNonce, evmChainPrefix, EventsToKeep)
+	pruneAttestations(ctx, k, types.ERC721ContractNonce, evmChainPrefix, EventsToKeep)
+	pruneBridgeBalanceSnapshots(ctx, k, types.GravityContractNonce, evmChainPrefix, EventsToKeep)
+	pruneBridgeBalanceSnapshots(ctx, k, types.ERC721ContractNonce, evmChainPrefix, EventsToKeep)
 }
 
 // Iterate over all attestations currently being voted on in order of nonce
@@ -544,14 +547,14 @@ func pruning(ctx sdk.Context, k keeper.Keeper, params types.Params, evmChainPref
 // use. This could be combined with create attestation and save some computation
 // but (A) pruning keeps the iteration small in the first place and (B) there is
 // already enough nuance in the other handler that it's best not to complicate it further
-func pruneAttestations(ctx sdk.Context, k keeper.Keeper, evmChainPrefix string, attestationsToKeep uint64) {
-	attmap, keys := k.GetAttestationMapping(ctx, evmChainPrefix)
+func pruneAttestations(ctx sdk.Context, k keeper.Keeper, nonceSource types.NonceSource, evmChainPrefix string, attestationsToKeep uint64) {
+	attmap, keys := k.GetAttestationMapping(ctx, nonceSource, evmChainPrefix)
 
 	// we delete all attestations earlier than the current event nonce
 	// minus some buffer value. This buffer value is purely to allow
 	// frontends and other UI components to view recent oracle history
 
-	lastNonce := uint64(k.GetLastObservedEventNonce(ctx, evmChainPrefix))
+	lastNonce := uint64(k.GetLastObservedEventNonce(ctx, nonceSource, evmChainPrefix))
 	var cutoff uint64
 	if lastNonce <= attestationsToKeep {
 		return
@@ -569,7 +572,7 @@ func pruneAttestations(ctx sdk.Context, k keeper.Keeper, evmChainPrefix string, 
 		for _, att := range attmap[nonce] {
 			// delete all before the cutoff
 			if nonce <= cutoff {
-				k.DeleteAttestation(ctx, att)
+				k.DeleteAttestation(ctx, nonceSource, att)
 			}
 		}
 	}
@@ -577,8 +580,8 @@ func pruneAttestations(ctx sdk.Context, k keeper.Keeper, evmChainPrefix string, 
 
 // pruneBridgeBalanceSnapshots will iterate over all BridgeBalanceSnapshots currently in the
 // store and prune those that are older than the current nonce, retaining a minimum of `eventsToKeep`
-func pruneBridgeBalanceSnapshots(ctx sdk.Context, k keeper.Keeper, evmChainPrefix string, snapshotsToKeep uint64) {
-	lastNonce := uint64(k.GetLastObservedEventNonce(ctx, evmChainPrefix))
+func pruneBridgeBalanceSnapshots(ctx sdk.Context, k keeper.Keeper, nonceSource types.NonceSource, evmChainPrefix string, snapshotsToKeep uint64) {
+	lastNonce := uint64(k.GetLastObservedEventNonce(ctx, nonceSource, evmChainPrefix))
 	var cutoff uint64
 	if lastNonce <= snapshotsToKeep {
 		return

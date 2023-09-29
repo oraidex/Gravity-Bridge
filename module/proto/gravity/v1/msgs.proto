@@ -230,6 +230,7 @@ message MsgSendERC721ToCosmosClaim {
   string ethereum_sender = 6;
   string cosmos_receiver = 7;
   string orchestrator = 8;
+  string evm_chain_prefix = 9;
 }
 
 message MsgSendERC721ToCosmosClaimResponse {}

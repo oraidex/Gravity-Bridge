@@ -167,7 +167,7 @@ func TestMsgSendToCosmosClaim(t *testing.T) {
 		// and attestation persisted
 		hash, err := ethClaim.ClaimHash()
 		require.NoError(t, err)
-		a := input.GravityKeeper.GetAttestation(ctx, evmChain.EvmChainPrefix, uint64(1), hash)
+		a := input.GravityKeeper.GetAttestation(ctx, types.GravityContractNonce, evmChain.EvmChainPrefix, uint64(1), hash)
 		require.NotNil(t, a)
 
 		// Test to reject duplicate deposit
@@ -301,7 +301,7 @@ func TestMsgSendERC721ToCosmosClaim(t *testing.T) {
 		// and attestation persisted
 		hash, err := ethClaim.ClaimHash()
 		require.NoError(t, err)
-		a := input.GravityKeeper.GetAttestation(ctx, uint64(1), hash, types.ERC721ContractNonce)
+		a := input.GravityKeeper.GetAttestation(ctx, types.ERC721ContractNonce, ethClaim.EvmChainPrefix, uint64(1), hash)
 		require.NotNil(t, a)
 
 		// Test to reject duplicate deposit
@@ -429,7 +429,7 @@ func TestEthereumBlacklist(t *testing.T) {
 		// and attestation persisted
 		hash, err := ethClaim.ClaimHash()
 		require.NoError(t, err)
-		a := input.GravityKeeper.GetAttestation(ctx, evmChain.EvmChainPrefix, uint64(1), hash)
+		a := input.GravityKeeper.GetAttestation(ctx, types.GravityContractNonce, evmChain.EvmChainPrefix, uint64(1), hash)
 		require.NotNil(t, a)
 
 		// Test to reject duplicate deposit
@@ -633,7 +633,7 @@ func TestMsgSendToCosmosClaimSpreadVotes(t *testing.T) {
 		// and attestation persisted
 		hash, err := ethClaim.ClaimHash()
 		require.NoError(t, err)
-		a1 := input.GravityKeeper.GetAttestation(ctx, evmChain.EvmChainPrefix, myNonce, hash)
+		a1 := input.GravityKeeper.GetAttestation(ctx, types.GravityContractNonce, evmChain.EvmChainPrefix, myNonce, hash)
 		require.NotNil(t, a1)
 		// and vouchers not yet added to the account
 		balance1 := input.BankKeeper.GetAllBalances(ctx, myCosmosAddr)
@@ -650,7 +650,7 @@ func TestMsgSendToCosmosClaimSpreadVotes(t *testing.T) {
 	// and attestation persisted
 	hash, err := ethClaim.ClaimHash()
 	require.NoError(t, err)
-	a2 := input.GravityKeeper.GetAttestation(ctx, evmChain.EvmChainPrefix, myNonce, hash)
+	a2 := input.GravityKeeper.GetAttestation(ctx, types.GravityContractNonce, evmChain.EvmChainPrefix, myNonce, hash)
 	require.NotNil(t, a2)
 	// and vouchers now added to the account
 	balance2 := input.BankKeeper.GetAllBalances(ctx, myCosmosAddr)
@@ -666,7 +666,7 @@ func TestMsgSendToCosmosClaimSpreadVotes(t *testing.T) {
 	// and attestation persisted
 	hash, err = ethClaim.ClaimHash()
 	require.NoError(t, err)
-	a3 := input.GravityKeeper.GetAttestation(ctx, evmChain.EvmChainPrefix, myNonce, hash)
+	a3 := input.GravityKeeper.GetAttestation(ctx, types.GravityContractNonce, evmChain.EvmChainPrefix, myNonce, hash)
 	require.NotNil(t, a3)
 	// and no additional added to the account
 	balance3 := input.BankKeeper.GetAllBalances(ctx, myCosmosAddr)

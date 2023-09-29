@@ -9,7 +9,7 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 	disttypes "github.com/cosmos/cosmos-sdk/x/distribution/types"
-	govtypesv1beta1 "github.com/cosmos/cosmos-sdk/x/gov/types/v1beta1"
+	govtypes "github.com/cosmos/cosmos-sdk/x/gov/types/v1beta1"
 )
 
 // this file contains code related to custom governance proposals
@@ -27,42 +27,32 @@ func RegisterProposalTypes() {
 	metadata := "gravity/IBCMetadata"
 	if !govtypes.IsValidProposalType(strings.TrimPrefix(metadata, prefix)) {
 		govtypes.RegisterProposalType(types.ProposalTypeIBCMetadata)
-		// nolint: exhaustruct
-		govtypes.RegisterProposalTypeCodec(&types.IBCMetadataProposal{}, metadata)
 	}
 	unhalt := "gravity/UnhaltBridge"
 	if !govtypes.IsValidProposalType(strings.TrimPrefix(unhalt, prefix)) {
 		govtypes.RegisterProposalType(types.ProposalTypeUnhaltBridge)
-		// nolint: exhaustruct
-		govtypes.RegisterProposalTypeCodec(&types.UnhaltBridgeProposal{}, unhalt)
 	}
 	airdrop := "gravity/Airdrop"
 	if !govtypes.IsValidProposalType(strings.TrimPrefix(airdrop, prefix)) {
 		govtypes.RegisterProposalType(types.ProposalTypeAirdrop)
-		// nolint: exhaustruct
-		govtypes.RegisterProposalTypeCodec(&types.AirdropProposal{}, airdrop)
 	}
 	addEvmChain := "gravity/AddEvmChain"
 	if !govtypes.IsValidProposalType(strings.TrimPrefix(addEvmChain, prefix)) {
 		govtypes.RegisterProposalType(types.ProposalTypeAddEvmChain)
-		govtypes.RegisterProposalTypeCodec(&types.AddEvmChainProposal{}, addEvmChain)
-	}
 
+	}
 	removeEvmChain := "gravity/RemoveEvmChain"
 	if !govtypes.IsValidProposalType(strings.TrimPrefix(removeEvmChain, prefix)) {
 		govtypes.RegisterProposalType(types.ProposalTypeRemoveEvmChain)
-		govtypes.RegisterProposalTypeCodec(&types.RemoveEvmChainProposal{}, removeEvmChain)
 	}
-
 	monitoredERC20Tokens := "gravity/MonitoredERC20Tokens"
 	if !govtypes.IsValidProposalType(strings.TrimPrefix(monitoredERC20Tokens, prefix)) {
 		govtypes.RegisterProposalType(types.ProposalTypeMonitoredERC20Tokens)
-		govtypes.RegisterProposalTypeCodec(&types.MonitoredERC20TokensProposal{}, monitoredERC20Tokens)
 	}
 }
 
-func NewGravityProposalHandler(k Keeper) govtypesv1beta1.Handler {
-	return func(ctx sdk.Context, content govtypesv1beta1.Content) error {
+func NewGravityProposalHandler(k Keeper) govtypes.Handler {
+	return func(ctx sdk.Context, content govtypes.Content) error {
 		switch c := content.(type) {
 		case *types.UnhaltBridgeProposal:
 			return k.HandleUnhaltBridgeProposal(ctx, c)
@@ -127,11 +117,13 @@ func (k Keeper) HandleAddEvmChainProposal(ctx sdk.Context, p *types.AddEvmChainP
 
 	chainPrefix := p.EvmChainPrefix
 	k.SetLatestValsetNonce(ctx, chainPrefix, evmChain.GravityNonces.LatestValsetNonce)
-	k.setLastObservedEventNonce(ctx, chainPrefix, evmChain.GravityNonces.LastObservedNonce)
+	k.setLastObservedEventNonce(ctx, types.GravityContractNonce, chainPrefix, evmChain.GravityNonces.LastObservedNonce)
+	k.setLastObservedEventNonce(ctx, types.ERC721ContractNonce, chainPrefix, evmChain.GravityNonces.LastErc721ObservedNonce)
 	k.SetLastSlashedValsetNonce(ctx, chainPrefix, evmChain.GravityNonces.LastSlashedValsetNonce)
 	k.SetLastSlashedBatchBlock(ctx, chainPrefix, evmChain.GravityNonces.LastSlashedBatchBlock)
 	k.SetLastSlashedLogicCallBlock(ctx, chainPrefix, evmChain.GravityNonces.LastSlashedLogicCallBlock)
-	k.SetLastObservedEvmChainBlockHeight(ctx, chainPrefix, evmChain.GravityNonces.LastObservedEvmBlockHeight)
+	k.SetLastObservedEvmChainBlockHeight(ctx, types.GravityContractNonce, chainPrefix, evmChain.GravityNonces.LastObservedEvmBlockHeight)
+	k.SetLastObservedEvmChainBlockHeight(ctx, types.ERC721ContractNonce, chainPrefix, evmChain.GravityNonces.LastObservedErc721EvmBlockHeight)
 	k.setID(ctx, evmChain.GravityNonces.LastTxPoolId, types.AppendChainPrefix(types.KeyLastTXPoolID, chainPrefix))
 	k.setID(ctx, evmChain.GravityNonces.LastBatchId, types.AppendChainPrefix(types.KeyLastOutgoingBatchID, chainPrefix))
 
@@ -229,7 +221,7 @@ func pruneAttestationsAfterNonce(ctx sdk.Context, evmChainPrefix string, k Keepe
 					}
 				}
 
-				k.DeleteAttestation(ctx, att, types.GravityContractNonce)
+				k.DeleteAttestation(ctx, types.GravityContractNonce, att)
 			}
 		}
 	}

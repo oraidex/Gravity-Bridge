@@ -275,12 +275,12 @@ func TestRemoveEvmChainProposal(t *testing.T) {
 	evmChain := gk.GetEvmChainData(ctx, "dummy")
 	require.NotNil(t, evmChain)
 
-	gk.setLastObservedEventNonce(ctx, "dummy", 1)
+	gk.setLastObservedEventNonce(ctx, types.GravityContractNonce, "dummy", 1)
 
 	length := 10
 	msgs, anys, _ := createAttestations(t, ctx, gk, length, addProposal.EvmChainPrefix)
 
-	recentAttestations := gk.GetMostRecentAttestations(ctx, addProposal.EvmChainPrefix, uint64(length))
+	recentAttestations := gk.GetMostRecentAttestations(ctx, types.GravityContractNonce, addProposal.EvmChainPrefix, uint64(length))
 	require.True(t, len(recentAttestations) == length,
 		"recentAttestations should have len %v but instead has %v", length, len(recentAttestations))
 	for n, attest := range recentAttestations {
@@ -301,7 +301,7 @@ func TestRemoveEvmChainProposal(t *testing.T) {
 	require.Nil(t, evmChain)
 
 	// no attestation after removal
-	recentAttestations = gk.GetMostRecentAttestations(ctx, "Dummy", uint64(length))
+	recentAttestations = gk.GetMostRecentAttestations(ctx, types.GravityContractNonce, "Dummy", uint64(length))
 	require.Equal(t, len(recentAttestations), 0)
 
 	// also evm chain params
@@ -312,6 +312,6 @@ func TestRemoveEvmChainProposal(t *testing.T) {
 	err = gk.HandleAddEvmChainProposal(ctx, &addProposal)
 	require.NoError(t, err)
 
-	recentAttestations = gk.GetMostRecentAttestations(ctx, "Dummy", uint64(length))
+	recentAttestations = gk.GetMostRecentAttestations(ctx, types.GravityContractNonce, "Dummy", uint64(length))
 	require.Equal(t, len(recentAttestations), 0)
 }

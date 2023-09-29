@@ -336,7 +336,7 @@ func (k msgServer) checkOrchestratorValidatorInSet(ctx sdk.Context, orchestrator
 // translated from the message to the evm chain claim interface
 func (k msgServer) claimHandlerCommon(ctx sdk.Context, nonceSource types.NonceSource, msgAny *codectypes.Any, msg types.EthereumClaim) error {
 	// Add the claim to the store
-	_, err := k.Attest(ctx, msg, msgAny, nonceSource)
+	_, err := k.Attest(ctx, nonceSource, msg, msgAny)
 	if err != nil {
 		return sdkerrors.Wrap(err, "create attestation")
 	}
@@ -413,7 +413,7 @@ func (k msgServer) SendToCosmosClaim(c context.Context, msg *types.MsgSendToCosm
 	if err != nil {
 		return nil, sdkerrors.Wrap(err, "Could not check Any value")
 	}
-	err = k.claimHandlerCommon(ctx, any, msg, types.GravityContractNonce)
+	err = k.claimHandlerCommon(ctx, types.GravityContractNonce, any, msg)
 	if err != nil {
 		return nil, err
 	}
@@ -432,7 +432,7 @@ func (k msgServer) SendERC721ToCosmosClaim(c context.Context, msg *types.MsgSend
 	if err != nil {
 		return nil, sdkerrors.Wrap(err, "Could not check Any value")
 	}
-	err = k.claimHandlerCommon(ctx, any, msg, types.ERC721ContractNonce)
+	err = k.claimHandlerCommon(ctx, types.ERC721ContractNonce, any, msg)
 	if err != nil {
 		return nil, err
 	}
@@ -448,11 +448,11 @@ func (k msgServer) SendERC721ToCosmosClaim(c context.Context, msg *types.MsgSend
 func (k msgServer) ExecuteIbcAutoForwards(c context.Context, msg *types.MsgExecuteIbcAutoForwards) (*types.MsgExecuteIbcAutoForwardsResponse, error) {
 	ctx := sdk.UnwrapSDKContext(c)
 
-	if err := k.ProcessPendingIbcAutoForwards(ctx, types.GravityContractNonce, msg.EvmChainPrefix, .GetForwardsToClear()); err != nil {
+	if err := k.ProcessPendingIbcAutoForwards(ctx, types.GravityContractNonce, msg.EvmChainPrefix, msg.GetForwardsToClear()); err != nil {
 		return nil, err
 	}
 
-	if err := k.ProcessPendingIbcAutoForwards(ctx, types.ERC721ContractNonce, msg.EvmChainPrefix, .GetForwardsToClear()); err != nil {
+	if err := k.ProcessPendingIbcAutoForwards(ctx, types.ERC721ContractNonce, msg.EvmChainPrefix, msg.GetForwardsToClear()); err != nil {
 		return nil, err
 	}
 
@@ -482,7 +482,7 @@ func (k msgServer) BatchSendToEthClaim(c context.Context, msg *types.MsgBatchSen
 		panic(sdkerrors.Wrap(err, "Could not check Any value"))
 	}
 
-	err = k.claimHandlerCommon(ctx, msgAny, msg, types.GravityContractNonce)
+	err = k.claimHandlerCommon(ctx, types.GravityContractNonce, msgAny, msg)
 	if err != nil {
 		return nil, err
 	}
@@ -522,7 +522,7 @@ func (k msgServer) ERC20DeployedClaim(c context.Context, msg *types.MsgERC20Depl
 	if err != nil {
 		return nil, sdkerrors.Wrap(err, "Could not check Any value")
 	}
-	err = k.claimHandlerCommon(ctx, any, msg, types.GravityContractNonce)
+	err = k.claimHandlerCommon(ctx, types.GravityContractNonce, any, msg)
 	if err != nil {
 		return nil, err
 	}
@@ -542,7 +542,7 @@ func (k msgServer) LogicCallExecutedClaim(c context.Context, msg *types.MsgLogic
 	if err != nil {
 		return nil, sdkerrors.Wrap(err, "Could not check Any value")
 	}
-	err = k.claimHandlerCommon(ctx, any, msg, types.GravityContractNonce)
+	err = k.claimHandlerCommon(ctx, types.GravityContractNonce, any, msg)
 	if err != nil {
 		return nil, err
 	}
@@ -562,7 +562,7 @@ func (k msgServer) ValsetUpdateClaim(c context.Context, msg *types.MsgValsetUpda
 	if err != nil {
 		return nil, sdkerrors.Wrap(err, "Could not check Any value")
 	}
-	err = k.claimHandlerCommon(ctx, any, msg, types.GravityContractNonce)
+	err = k.claimHandlerCommon(ctx, types.GravityContractNonce, any, msg)
 	if err != nil {
 		return nil, err
 	}

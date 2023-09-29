@@ -97,7 +97,7 @@ func addDenomToERC20Relation(tv *testingVars) {
 		// check if attestations persisted
 		hash, err := ethClaim.ClaimHash()
 		require.NoError(tv.t, err)
-		a := tv.input.GravityKeeper.GetAttestation(tv.ctx, tv.evm.EvmChainPrefix, myNonce, hash)
+		a := tv.input.GravityKeeper.GetAttestation(tv.ctx, types.GravityContractNonce, tv.evm.EvmChainPrefix, myNonce, hash)
 		require.NotNil(tv.t, a)
 	}
 
@@ -199,7 +199,7 @@ func acceptDepositEvent(tv *testingVars) {
 		// check that attestation persisted
 		hash, err := ethClaim.ClaimHash()
 		require.NoError(tv.t, err)
-		a := tv.input.GravityKeeper.GetAttestation(tv.ctx, tv.evm.EvmChainPrefix, myNonce, hash)
+		a := tv.input.GravityKeeper.GetAttestation(tv.ctx, types.GravityContractNonce, tv.evm.EvmChainPrefix, myNonce, hash)
 		require.NotNil(tv.t, a)
 	}
 
@@ -262,7 +262,7 @@ func addIbcDenomToERC20Relation(tv *testingVars) {
 		// check if attestations persisted
 		hash, err := ethClaim.ClaimHash()
 		require.NoError(tv.t, err)
-		a := tv.input.GravityKeeper.GetAttestation(tv.ctx, tv.evm.EvmChainPrefix, myNonce, hash)
+		a := tv.input.GravityKeeper.GetAttestation(tv.ctx, types.GravityContractNonce, tv.evm.EvmChainPrefix, myNonce, hash)
 		require.NotNil(tv.t, a)
 	}
 

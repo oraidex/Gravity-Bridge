@@ -163,6 +163,20 @@ func initBridgeDataFromGenesis(ctx sdk.Context, k Keeper, data types.EvmChainDat
 			panic("Invalid Cosmos originated denom for valset reward")
 		}
 	}
+
+	for _, forward := range data.PendingIbcAutoForwards {
+		err := k.addPendingIbcAutoForward(ctx, evmChainPrefix, forward, forward.Token.Denom)
+		if err != nil {
+			panic(fmt.Errorf("unable to restore pending ibc auto forward (%v) to store: %v", forward, err))
+		}
+	}
+
+	for _, forward := range data.PendingErc721IbcAutoForwards {
+		err := k.addPendingERC721PendingIbcAutoForward(ctx, evmChainPrefix, forward)
+		if err != nil {
+			panic(fmt.Errorf("unable to restore pending ibc auto forward (%v) to store: %v", forward, err))
+		}
+	}
 }
 
 // InitGenesis starts a chain from a genesis state
@@ -173,11 +187,14 @@ func InitGenesis(ctx sdk.Context, k Keeper, data types.GenesisState) {
 		// restore various nonces, this MUST match GravityNonces in genesis
 		chainPrefix := evmChain.EvmChain.EvmChainPrefix
 		k.SetLatestValsetNonce(ctx, chainPrefix, evmChain.GravityNonces.LatestValsetNonce)
-		k.setLastObservedEventNonce(ctx, chainPrefix, evmChain.GravityNonces.LastObservedNonce)
+		k.setLastObservedEventNonce(ctx, types.GravityContractNonce, chainPrefix, evmChain.GravityNonces.LastObservedNonce)
+		k.setLastObservedEventNonce(ctx, types.ERC721ContractNonce, chainPrefix, evmChain.GravityNonces.LastErc721ObservedNonce)
 		k.SetLastSlashedValsetNonce(ctx, chainPrefix, evmChain.GravityNonces.LastSlashedValsetNonce)
 		k.SetLastSlashedBatchBlock(ctx, chainPrefix, evmChain.GravityNonces.LastSlashedBatchBlock)
 		k.SetLastSlashedLogicCallBlock(ctx, chainPrefix, evmChain.GravityNonces.LastSlashedLogicCallBlock)
-		k.SetLastObservedEvmChainBlockHeight(ctx, chainPrefix, evmChain.GravityNonces.LastObservedEvmBlockHeight)
+		k.SetLastObservedEvmChainBlockHeight(ctx, types.GravityContractNonce, chainPrefix, evmChain.GravityNonces.LastObservedEvmBlockHeight)
+		k.SetLastObservedEvmChainBlockHeight(ctx, types.ERC721ContractNonce, chainPrefix, evmChain.GravityNonces.LastObservedErc721EvmBlockHeight)
+
 		k.setID(ctx, evmChain.GravityNonces.LastTxPoolId, types.AppendChainPrefix(types.KeyLastTXPoolID, chainPrefix))
 		k.setID(ctx, evmChain.GravityNonces.LastBatchId, types.AppendChainPrefix(types.KeyLastOutgoingBatchID, chainPrefix))
 		k.SetEvmChainData(ctx, evmChain.EvmChain)
@@ -185,12 +202,6 @@ func InitGenesis(ctx sdk.Context, k Keeper, data types.GenesisState) {
 		initBridgeDataFromGenesis(ctx, k, evmChain)
 	}
 
-	for _, forward := range data.PendingErc721IbcAutoForwards {
-		err := k.addPendingERC721PendingIbcAutoForward(ctx, forward)
-		if err != nil {
-			panic(fmt.Errorf("unable to restore pending ibc auto forward (%v) to store: %v", forward, err))
-		}
-	}
 }
 
 func hasDuplicates(d []types.MsgSetOrchestratorAddress) bool {
@@ -297,14 +308,16 @@ func ExportGenesis(ctx sdk.Context, k Keeper) types.GenesisState {
 				EvmChainName:       evmChain.EvmChainName,
 			},
 			GravityNonces: types.GravityNonces{
-				LatestValsetNonce:          k.GetLatestValsetNonce(ctx, evmChain.EvmChainPrefix),
-				LastObservedNonce:          k.GetLastObservedEventNonce(ctx, evmChain.EvmChainPrefix),
-				LastSlashedValsetNonce:     k.GetLastSlashedValsetNonce(ctx, evmChain.EvmChainPrefix),
-				LastSlashedBatchBlock:      k.GetLastSlashedBatchBlock(ctx, evmChain.EvmChainPrefix),
-				LastSlashedLogicCallBlock:  k.GetLastSlashedLogicCallBlock(ctx, evmChain.EvmChainPrefix),
-				LastObservedEvmBlockHeight: k.GetLastObservedEvmChainBlockHeight(ctx, evmChain.EvmChainPrefix).EthereumBlockHeight,
-				LastTxPoolId:               k.getID(ctx, types.AppendChainPrefix(types.KeyLastTXPoolID, evmChain.EvmChainPrefix)),
-				LastBatchId:                k.getID(ctx, types.AppendChainPrefix(types.KeyLastOutgoingBatchID, evmChain.EvmChainPrefix)),
+				LatestValsetNonce:                k.GetLatestValsetNonce(ctx, evmChain.EvmChainPrefix),
+				LastObservedNonce:                k.GetLastObservedEventNonce(ctx, types.GravityContractNonce, evmChain.EvmChainPrefix),
+				LastErc721ObservedNonce:          k.GetLastObservedEventNonce(ctx, types.ERC721ContractNonce, evmChain.EvmChainPrefix),
+				LastSlashedValsetNonce:           k.GetLastSlashedValsetNonce(ctx, evmChain.EvmChainPrefix),
+				LastSlashedBatchBlock:            k.GetLastSlashedBatchBlock(ctx, evmChain.EvmChainPrefix),
+				LastSlashedLogicCallBlock:        k.GetLastSlashedLogicCallBlock(ctx, evmChain.EvmChainPrefix),
+				LastObservedEvmBlockHeight:       k.GetLastObservedEthereumBlockHeight(ctx, types.GravityContractNonce, evmChain.EvmChainPrefix).EthereumBlockHeight,
+				LastObservedErc721EvmBlockHeight: k.GetLastObservedEthereumBlockHeight(ctx, types.ERC721ContractNonce, evmChain.EvmChainPrefix).EthereumBlockHeight,
+				LastTxPoolId:                     k.getID(ctx, types.AppendChainPrefix(types.KeyLastTXPoolID, evmChain.EvmChainPrefix)),
+				LastBatchId:                      k.getID(ctx, types.AppendChainPrefix(types.KeyLastOutgoingBatchID, evmChain.EvmChainPrefix)),
 			},
 			Valsets:                      valsets,
 			ValsetConfirms:               vsconfs,

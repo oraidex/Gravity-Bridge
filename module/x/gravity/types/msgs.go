@@ -458,6 +458,15 @@ func (msg *MsgSendToCosmosClaim) ClaimHash() ([]byte, error) {
 	return tmhash.Sum([]byte(path)), nil
 }
 
+func (msg *MsgSendERC721ToCosmosClaim) SetOrchestrator(orchestrator sdk.AccAddress) {
+	msg.Orchestrator = orchestrator.String()
+}
+
+// SetEvmChainPrefix implements EthereumClaim.
+func (msg *MsgSendERC721ToCosmosClaim) SetEvmChainPrefix(evmChainPrefix string) {
+	msg.EvmChainPrefix = evmChainPrefix
+}
+
 // GetType returns the type of the claim
 func (msg *MsgSendERC721ToCosmosClaim) GetType() ClaimType {
 	return CLAIM_TYPE_SEND_ERC721_TO_COSMOS

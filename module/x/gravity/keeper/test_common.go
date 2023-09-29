@@ -277,7 +277,7 @@ type TestInput struct {
 	Context              sdk.Context
 	Marshaler            codec.Codec
 	LegacyAmino          *codec.LegacyAmino
-	GravityStoreKey      *sdk.KVStoreKey
+	GravityStoreKey      *sdkstore.KVStoreKey
 	ParamKeeper          paramskeeper.Keeper
 	NftKeeper            nftkeeper.Keeper
 	IbcNftTransferKeeper ibcnfttransferkeeper.Keeper
@@ -674,7 +674,7 @@ func CreateTestEnv(t *testing.T) TestInput {
 	)
 
 	k := NewKeeper(gravityKey, getSubspace(paramsKeeper, types.DefaultParamspace), marshaler, &bankKeeper,
-		&stakingKeeper, &slashingKeeper, &distKeeper, &accountKeeper, &ibcTransferKeeper, &bech32IbcKeeper,
+		&stakingKeeper, &slashingKeeper, &distKeeper, &accountKeeper, &ibcTransferKeeper, &bech32IbcKeeper, ibcKeeper.ChannelKeeper,
 		&nftKeeper, &ibcnftTransferKeeper)
 
 	stakingKeeper = *stakingKeeper.SetHooks(
@@ -688,7 +688,8 @@ func CreateTestEnv(t *testing.T) TestInput {
 	// set gravityIDs for batches and tx items, simulating genesis setup
 	for _, evmChain := range EvmChains {
 		k.SetLatestValsetNonce(ctx, evmChain.EvmChainPrefix, 0)
-		k.setLastObservedEventNonce(ctx, evmChain.EvmChainPrefix, 0)
+		k.setLastObservedEventNonce(ctx, types.GravityContractNonce, evmChain.EvmChainPrefix, 0)
+		k.setLastObservedEventNonce(ctx, types.ERC721ContractNonce, evmChain.EvmChainPrefix, 0)
 		k.SetLastSlashedValsetNonce(ctx, evmChain.EvmChainPrefix, 0)
 		k.SetLastSlashedBatchBlock(ctx, evmChain.EvmChainPrefix, 0)
 		k.SetLastSlashedLogicCallBlock(ctx, evmChain.EvmChainPrefix, 0)

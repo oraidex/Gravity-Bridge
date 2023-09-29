@@ -256,7 +256,7 @@ func TestMigrateStoreKeys(t *testing.T) {
 		{
 			"LastEventNonceByValidatorKey",
 			v2.GetLastEventNonceByValidatorKey(validatorAddr),
-			types.GetLastEventNonceByValidatorKey(v3.EthereumChainPrefix, validatorAddr),
+			types.GetLastEventNonceByValidatorKey(types.GravityContractNonce, v3.EthereumChainPrefix, validatorAddr),
 			v2.UInt64Bytes(nonce),
 		},
 		{
@@ -310,7 +310,7 @@ func TestMigrateStoreKeys(t *testing.T) {
 		{
 			"OracleAttestationKey",
 			v2.GetAttestationKey(nonce, hash),
-			types.GetAttestationKey(v3.EthereumChainPrefix, nonce, hash),
+			types.GetAttestationKey(types.GravityContractNonce, v3.EthereumChainPrefix, nonce, hash),
 			marshaler.MustMarshal(dummyAttestation),
 		},
 		{
@@ -339,8 +339,8 @@ func TestMigrateStoreKeys(t *testing.T) {
 		},
 		{
 			"PendingIbcAutoForwards",
-			types.GetPendingIbcAutoForwardKey("", dummyPendingIbcAutoForward.EventNonce),
-			types.GetPendingIbcAutoForwardKey(v3.EthereumChainPrefix, dummyPendingIbcAutoForward.EventNonce),
+			types.GetPendingIbcAutoForwardKey(types.GravityContractNonce, "", dummyPendingIbcAutoForward.EventNonce),
+			types.GetPendingIbcAutoForwardKey(types.GravityContractNonce, v3.EthereumChainPrefix, dummyPendingIbcAutoForward.EventNonce),
 			marshaler.MustMarshal(&dummyPendingIbcAutoForward),
 		},
 	}
@@ -450,7 +450,7 @@ func TestMigrateAttestation(t *testing.T) {
 	require.NoError(t, err)
 
 	oldKeyEntry = store.Get(attestationOldKey)
-	newKeyEntry = store.Get(types.GetAttestationKey(v3.EthereumChainPrefix, nonce, newClaimHash))
+	newKeyEntry = store.Get(types.GetAttestationKey(types.GravityContractNonce, v3.EthereumChainPrefix, nonce, newClaimHash))
 	// Check migration results:
 	require.Empty(t, oldKeyEntry)
 	require.NotEqual(t, oldKeyEntry, newKeyEntry)

@@ -73,7 +73,7 @@ func TestOnRecvPacket(t *testing.T) {
 			name: "ibc conversion - auto forward to evm chain",
 			getPacket: func() channeltypes.Packet {
 				// Send bsc from Oraichain to OraiBridge in SendPacket method, the denom is extracted by calling DenomPathFromHash()
-				transfer := transfertypes.NewFungibleTokenPacketData(myTokenDenom, "100", oraiAddr, gravityAddr.String())
+				transfer := transfertypes.NewFungibleTokenPacketData(myTokenDenom, "100", oraiAddr, gravityAddr.String(), "")
 				// set destination in memo
 				transfer.Memo = evmChain.EvmChainPrefix + ethDestAddr
 

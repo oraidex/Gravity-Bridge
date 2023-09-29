@@ -235,7 +235,7 @@ func (k Keeper) AssertBridgeBalanceSanity(ctx sdk.Context, claim types.EthereumC
 	actualDiff.Sort()
 	actualTokens := actualDiff.ToCoins(claim.GetEvmChainPrefix())
 
-	unexpectedDiff, _ := actualTokens.SafeSub(expectedSupplyChange)
+	unexpectedDiff, _ := actualTokens.SafeSub(expectedSupplyChange...)
 
 	if !unexpectedDiff.IsZero() {
 		return fmt.Errorf(

@@ -17,9 +17,9 @@ import (
 // TODO-JT: carefully look at atomicity of this function
 func (k Keeper) Attest(
 	ctx sdk.Context,
+	nonceSource types.NonceSource,
 	claim types.EthereumClaim,
 	anyClaim *codectypes.Any,
-	nonceSource types.NonceSource,
 ) (*types.Attestation, error) {
 	val, found := k.GetOrchestratorValidator(ctx, claim.GetClaimer())
 	if !found {
@@ -35,7 +35,7 @@ func (k Keeper) Attest(
 	// and prevents validators from submitting two claims with the same nonce.
 	// This prevents there being two attestations with the same nonce that get 2/3s of the votes
 	// in the endBlocker.
-	lastEventNonce := k.GetLastEventNonceByValidator(ctx, claim.GetEvmChainPrefix(), valAddr)
+	lastEventNonce := k.GetLastEventNonceByValidator(ctx, nonceSource, claim.GetEvmChainPrefix(), valAddr)
 	if claim.GetEventNonce() != lastEventNonce+1 {
 		return nil, fmt.Errorf(types.ErrNonContiguousEventNonce.Error(), lastEventNonce+1, claim.GetEventNonce())
 	}
@@ -45,7 +45,7 @@ func (k Keeper) Attest(
 	if err != nil {
 		return nil, sdkerrors.Wrap(err, "unable to compute claim hash")
 	}
-	att := k.GetAttestation(ctx, claim.GetEvmChainPrefix(), claim.GetEventNonce(), hash)
+	att := k.GetAttestation(ctx, nonceSource, claim.GetEvmChainPrefix(), claim.GetEventNonce(), hash)
 
 	// If it does not exist, create a new one.
 	if att == nil {
@@ -67,8 +67,8 @@ func (k Keeper) Attest(
 		// Add the validator's vote to this attestation
 		att.Votes = append(att.Votes, valAddr.String())
 
-		k.SetAttestation(ctx, claim.GetEvmChainPrefix(), claim.GetEventNonce(), hash, att)
-		k.SetLastEventNonceByValidator(ctx, claim.GetEvmChainPrefix(), valAddr, claim.GetEventNonce())
+		k.SetAttestation(ctx, nonceSource, claim.GetEvmChainPrefix(), claim.GetEventNonce(), hash, att)
+		k.SetLastEventNonceByValidator(ctx, nonceSource, claim.GetEvmChainPrefix(), valAddr, claim.GetEventNonce())
 
 		return att, nil
 	} else {
@@ -79,7 +79,7 @@ func (k Keeper) Attest(
 // TryAttestation checks if an attestation has enough votes to be applied to the consensus state
 // and has not already been marked Observed, then calls processAttestation to actually apply it to the state,
 // and then marks it Observed and emits an event.
-func (k Keeper) TryAttestation(ctx sdk.Context, att *types.Attestation) {
+func (k Keeper) TryAttestation(ctx sdk.Context, nonceSource types.NonceSource, att *types.Attestation) {
 
 	claim, err := k.UnpackAttestationClaim(att)
 	if err != nil {
@@ -108,18 +108,18 @@ func (k Keeper) TryAttestation(ctx sdk.Context, att *types.Attestation) {
 			// If the power of all the validators that have voted on the attestation is higher or equal to the threshold,
 			// process the attestation, set Observed to true, and break
 			if attestationPower.GTE(requiredPower) {
-				lastEventNonce := k.GetLastObservedEventNonce(ctx, claim.GetEvmChainPrefix())
+				lastEventNonce := k.GetLastObservedEventNonce(ctx, nonceSource, claim.GetEvmChainPrefix())
 				// this check is performed at the next level up so this should never panic
 				// outside of programmer error.
 				if claim.GetEventNonce() != lastEventNonce+1 {
 					panic("attempting to apply events to state out of order")
 				}
 
-				k.setLastObservedEventNonce(ctx, claim.GetEvmChainPrefix(), claim.GetEventNonce())
-				k.SetLastObservedEvmChainBlockHeight(ctx, claim.GetEvmChainPrefix(), claim.GetEthBlockHeight())
+				k.setLastObservedEventNonce(ctx, nonceSource, claim.GetEvmChainPrefix(), claim.GetEventNonce())
+				k.SetLastObservedEvmChainBlockHeight(ctx, nonceSource, claim.GetEvmChainPrefix(), claim.GetEthBlockHeight())
 
 				att.Observed = true
-				k.SetAttestation(ctx, claim.GetEvmChainPrefix(), claim.GetEventNonce(), hash, att)
+				k.SetAttestation(ctx, nonceSource, claim.GetEvmChainPrefix(), claim.GetEventNonce(), hash, att)
 
 				expectedSupplyChange, err := k.ExpectedSupplyChange(ctx, claim)
 				if err != nil || expectedSupplyChange == nil {
@@ -127,8 +127,8 @@ func (k Keeper) TryAttestation(ctx sdk.Context, att *types.Attestation) {
 					k.logger(ctx).Error(errMsg)
 					panic(errMsg)
 				}
-				k.processAttestation(ctx, att, claim)
-				k.emitObservedEvent(ctx, att, claim)
+				k.processAttestation(ctx, nonceSource, att, claim)
+				k.emitObservedEvent(ctx, nonceSource, att, claim)
 
 				// Add a new bridge balance to the store, check the supply of all monitored erc20 tokens too
 				k.updateBridgeBalanceSnapshots(ctx, claim, *expectedSupplyChange)
@@ -143,7 +143,7 @@ func (k Keeper) TryAttestation(ctx sdk.Context, att *types.Attestation) {
 }
 
 // processAttestation actually applies the attestation to the consensus state
-func (k Keeper) processAttestation(ctx sdk.Context, att *types.Attestation, claim types.EthereumClaim, nonceSource types.NonceSource) {
+func (k Keeper) processAttestation(ctx sdk.Context, nonceSource types.NonceSource, att *types.Attestation, claim types.EthereumClaim) {
 	hash, err := claim.ClaimHash()
 	if err != nil {
 		panic("unable to compute claim hash")
@@ -156,7 +156,7 @@ func (k Keeper) processAttestation(ctx sdk.Context, att *types.Attestation, clai
 		k.logger(ctx).Error("attestation failed",
 			"cause", err.Error(),
 			"claim type", claim.GetType(),
-			"id", types.GetAttestationKey(claim.GetEvmChainPrefix(), claim.GetEventNonce(), hash),
+			"id", types.GetAttestationKey(nonceSource, claim.GetEvmChainPrefix(), claim.GetEventNonce(), hash),
 			"nonce", fmt.Sprint(claim.GetEventNonce()),
 		)
 	} else {
@@ -166,7 +166,7 @@ func (k Keeper) processAttestation(ctx sdk.Context, att *types.Attestation, clai
 
 // emitObservedEvent emits an event with information about an attestation that has been applied to
 // consensus state.
-func (k Keeper) emitObservedEvent(ctx sdk.Context, att *types.Attestation, claim types.EthereumClaim, nonceSource types.NonceSource) {
+func (k Keeper) emitObservedEvent(ctx sdk.Context, nonceSource types.NonceSource, att *types.Attestation, claim types.EthereumClaim) {
 	hash, err := claim.ClaimHash()
 	if err != nil {
 		panic(sdkerrors.Wrap(err, "unable to compute claim hash"))
@@ -177,7 +177,7 @@ func (k Keeper) emitObservedEvent(ctx sdk.Context, att *types.Attestation, claim
 			AttestationType: string(claim.GetType()),
 			BridgeContract:  k.GetBridgeContractAddress(ctx, claim.GetEvmChainPrefix()).GetAddress().Hex(),
 			BridgeChainId:   strconv.Itoa(int(k.GetBridgeChainID(ctx, claim.GetEvmChainPrefix()))),
-			AttestationId:   string(types.GetAttestationKey(claim.GetEvmChainPrefix(), claim.GetEventNonce(), hash)),
+			AttestationId:   string(types.GetAttestationKey(nonceSource, claim.GetEvmChainPrefix(), claim.GetEventNonce(), hash)),
 			Nonce:           fmt.Sprint(claim.GetEventNonce()),
 		},
 	)
@@ -344,8 +344,7 @@ func (k Keeper) GetMostRecentAttestations(ctx sdk.Context, nonceSource types.Non
 }
 
 // GetLastObservedEventNonce returns the latest observed event nonce
-func (k Keeper) GetLastObservedEventNonce(ctx sdk.Context, nonceSource types.NonceSource, evmChainPrefix string) uint64 {
-	store := ctx.KVStore(k.storeKey)
+func (k Keeper) GetLastObservedEventNonceKey(nonceSource types.NonceSource, evmChainPrefix string) []byte {
 
 	var key []byte
 	switch nonceSource {
@@ -356,6 +355,14 @@ func (k Keeper) GetLastObservedEventNonce(ctx sdk.Context, nonceSource types.Non
 	default:
 		panic("invalid nonce source")
 	}
+	return key
+}
+
+// GetLastObservedEventNonce returns the latest observed event nonce
+func (k Keeper) GetLastObservedEventNonce(ctx sdk.Context, nonceSource types.NonceSource, evmChainPrefix string) uint64 {
+	store := ctx.KVStore(k.storeKey)
+
+	key := k.GetLastObservedEventNonceKey(nonceSource, evmChainPrefix)
 	bytes := store.Get(key)
 
 	if len(bytes) == 0 {
@@ -368,7 +375,7 @@ func (k Keeper) GetLastObservedEventNonce(ctx sdk.Context, nonceSource types.Non
 	return types.UInt64FromBytesUnsafe(bytes)
 }
 
-// GetLastObservedEvmChainBlockHeight height gets the block height to of the last observed attestation from
+// GetLastObservedEthereumBlockHeight height gets the block height to of the last observed attestation from
 // the store
 func (k Keeper) GetLastObservedEthereumBlockHeight(ctx sdk.Context, nonceSource types.NonceSource, evmChainPrefix string) types.LastObservedEthereumBlockHeight {
 	store := ctx.KVStore(k.storeKey)
@@ -396,7 +403,7 @@ func (k Keeper) GetLastObservedEthereumBlockHeight(ctx sdk.Context, nonceSource 
 // SetLastObservedEvmChainBlockHeight sets the block height in the store.
 func (k Keeper) SetLastObservedEvmChainBlockHeight(ctx sdk.Context, nonceSource types.NonceSource, evmChainPrefix string, evmChainHeight uint64) {
 	store := ctx.KVStore(k.storeKey)
-	previous := k.GetLastObservedEvmChainBlockHeight(ctx, nonceSource, evmChainPrefix)
+	previous := k.GetLastObservedEthereumBlockHeight(ctx, nonceSource, evmChainPrefix)
 	if previous.EthereumBlockHeight > evmChainHeight {
 		panic("Attempt to roll back Ethereum block height!")
 	}
@@ -441,29 +448,30 @@ func (k Keeper) SetLastObservedValset(ctx sdk.Context, evmChainPrefix string, va
 // setLastObservedEventNonce sets the latest observed event nonce
 func (k Keeper) setLastObservedEventNonce(ctx sdk.Context, nonceSource types.NonceSource, evmChainPrefix string, nonce uint64) {
 	store := ctx.KVStore(k.storeKey)
-	last := k.GetLastObservedEventNonce(ctx, nonceSource, evmChainPrefix)
+	nonceKey := k.GetLastObservedEventNonceKey(nonceSource, evmChainPrefix)
+
 	// event nonce must increase, unless it's zero at which point allow zero to be set
 	// as many times as needed (genesis test setup etc)
-	zeroCase := last == 0 && nonce == 0
-	if last >= nonce && !zeroCase {
-		panic("Event nonce going backwards or replay!")
+	zeroCase := len(nonceKey) == 0 && nonce == 0
+
+	if !zeroCase {
+		if len(nonceKey) > 8 {
+			panic("Last observed event nonce is not a uint64!")
+		}
+
+		if types.UInt64FromBytesUnsafe(nonceKey) >= nonce {
+			panic("Event nonce going backwards or replay!")
+		}
 	}
-	store.Set(last, types.UInt64Bytes(nonce))
+
+	store.Set(nonceKey, types.UInt64Bytes(nonce))
 }
 
 // GetLastEventNonceByValidator returns the latest event nonce for a given validator
-func (k Keeper) GetLastEventNonceByValidatorKey(nonceSource types.NonceSource, evmChainPrefix string, validator sdk.ValAddress) uint64 {
+func (k Keeper) GetLastEventNonceByValidatorKey(nonceSource types.NonceSource, evmChainPrefix string, validator sdk.ValAddress) []byte {
 
-	var nonceKey []byte
-	switch nonceSource {
-	case types.GravityContractNonce:
-		nonceKey = types.AppendChainPrefix(types.LastObservedEventNonceKey, evmChainPrefix)
-	case types.ERC721ContractNonce:
-		nonceKey = types.AppendChainPrefix(types.LastERC721EventNonceByValidatorKey, evmChainPrefix)
-	default:
-		panic("invalid nonce source")
-	}
-	return nonceKey
+	nonceKey := k.GetLastObservedEventNonceKey(nonceSource, evmChainPrefix)
+	return types.AppendBytes(nonceKey, validator.Bytes())
 }
 
 // GetLastEventNonceByValidator returns the latest event nonce for a given validator

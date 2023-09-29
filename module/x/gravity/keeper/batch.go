@@ -100,7 +100,7 @@ func (k Keeper) getBatchTimeoutHeight(ctx sdk.Context, evmChainPrefix string) ui
 	currentCosmosHeight := ctx.BlockHeight()
 	// we store the last observed Cosmos and evm chain heights, we do not concern ourselves if these values are zero because
 	// no batch can be produced if the last evm chain block height is not first populated by a deposit event.
-	heights := k.GetLastObservedEvmChainBlockHeight(ctx, types.GravityContractNonce, evmChainPrefix)
+	heights := k.GetLastObservedEthereumBlockHeight(ctx, types.GravityContractNonce, evmChainPrefix)
 	if heights.CosmosBlockHeight == 0 || heights.EthereumBlockHeight == 0 {
 		return 0
 	}
