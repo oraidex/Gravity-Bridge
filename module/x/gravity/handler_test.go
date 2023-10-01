@@ -273,6 +273,7 @@ func TestMsgSendERC721ToCosmosClaim(t *testing.T) {
 		myBlockTime = time.Date(2020, 9, 14, 15, 20, 10, 0, time.UTC)
 	)
 	input, ctx := keeper.SetupFiveValChain(t)
+	evmChain := input.GravityKeeper.GetEvmChainData(ctx, keeper.EthChainPrefix)
 	defer func() { input.Context.Logger().Info("Asserting invariants at test end"); input.AssertInvariants() }()
 
 	h := NewHandler(input.GravityKeeper)
@@ -291,6 +292,7 @@ func TestMsgSendERC721ToCosmosClaim(t *testing.T) {
 			EthereumSender: anyETHAddr,
 			CosmosReceiver: myCosmosAddr.String(),
 			Orchestrator:   v.String(),
+			EvmChainPrefix: evmChain.EvmChainPrefix,
 		}
 		// each msg goes into it's own block
 		ctx = ctx.WithBlockTime(myBlockTime)
@@ -330,6 +332,7 @@ func TestMsgSendERC721ToCosmosClaim(t *testing.T) {
 			EthereumSender: anyETHAddr,
 			CosmosReceiver: myCosmosAddr.String(),
 			Orchestrator:   v.String(),
+			EvmChainPrefix: evmChain.EvmChainPrefix,
 		}
 		// when
 		ctx = ctx.WithBlockTime(myBlockTime)
@@ -353,6 +356,7 @@ func TestMsgSendERC721ToCosmosClaim(t *testing.T) {
 			EthereumSender: anyETHAddr,
 			CosmosReceiver: myCosmosAddr.String(),
 			Orchestrator:   v.String(),
+			EvmChainPrefix: evmChain.EvmChainPrefix,
 		}
 
 		// when

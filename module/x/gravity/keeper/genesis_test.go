@@ -221,7 +221,6 @@ func TestBatchAndTxImportExport(t *testing.T) {
 			EventNonce:      uint64(i + 1),
 		}
 		input.GravityKeeper.setLastObservedEventNonce(ctx, types.GravityContractNonce, evmChain.EvmChainPrefix, fwd.EventNonce)
-		input.GravityKeeper.SetLastObservedEvmChainBlockHeight(ctx, types.GravityContractNonce, evmChain.EvmChainPrefix, 100)
 		err = input.GravityKeeper.addPendingIbcAutoForward(ctx, evmChain.EvmChainPrefix, fwd, stake)
 		require.NoError(t, err)
 		forwards[i] = &fwd
@@ -243,6 +242,9 @@ func TestBatchAndTxImportExport(t *testing.T) {
 		err = input.GravityKeeper.addPendingERC721PendingIbcAutoForward(ctx, evmChain.EvmChainPrefix, erc721Fwd)
 		require.NoError(t, err)
 		erc721Forwards[i] = &erc721Fwd
+
+		input.GravityKeeper.SetLastObservedEvmChainBlockHeight(ctx, types.GravityContractNonce, evmChain.EvmChainPrefix, 100)
+		input.GravityKeeper.SetLastObservedEvmChainBlockHeight(ctx, types.ERC721ContractNonce, evmChain.EvmChainPrefix, 100)
 	}
 
 	checkAllTransactionsExist(t, input.GravityKeeper, ctx, evmChain.EvmChainPrefix, txs, forwards, erc721Forwards)
@@ -251,7 +253,7 @@ func TestBatchAndTxImportExport(t *testing.T) {
 
 	// Clear the pending ibc auto forwards so the invariant won't fail
 	input.GravityKeeper.IteratePendingIbcAutoForwards(ctx, evmChain.EvmChainPrefix, func(_ []byte, fwd *types.PendingIbcAutoForward) bool {
-		require.NoError(t, input.GravityKeeper.deletePendingIbcAutoForward(ctx, types.ERC721ContractNonce, evmChain.EvmChainPrefix, fwd.EventNonce))
+		require.NoError(t, input.GravityKeeper.deletePendingIbcAutoForward(ctx, types.GravityContractNonce, evmChain.EvmChainPrefix, fwd.EventNonce))
 		require.NoError(t, input.BankKeeper.BurnCoins(ctx, types.ModuleName, sdk.NewCoins(*fwd.Token)))
 		return false
 	})
@@ -263,7 +265,7 @@ func TestBatchAndTxImportExport(t *testing.T) {
 	})
 
 	// last observed evm chain block height must still be there with height 100
-	lastObservedHeight := input.GravityKeeper.GetLastObservedEthereumBlockHeight(ctx, types.ERC721ContractNonce, evmChain.EvmChainPrefix)
+	lastObservedHeight := input.GravityKeeper.GetLastObservedEthereumBlockHeight(ctx, types.GravityContractNonce, evmChain.EvmChainPrefix)
 	require.Equal(t, uint64(100), lastObservedHeight.EthereumBlockHeight)
 }
 
@@ -321,17 +323,19 @@ func exportImport(t *testing.T, input *TestInput) {
 	input = &newEnv
 
 	for _, evmChain := range newEnv.GravityKeeper.GetEvmChains(newEnv.Context) {
-
 		unbatched := input.GravityKeeper.GetUnbatchedTransactions(input.Context, evmChain.EvmChainPrefix)
 		require.Empty(t, unbatched)
 		batches := input.GravityKeeper.GetOutgoingTxBatches(input.Context, evmChain.EvmChainPrefix)
 		require.Empty(t, batches)
 		forwards := input.GravityKeeper.PendingIbcAutoForwards(input.Context, evmChain.EvmChainPrefix, 0)
 		require.Empty(t, forwards)
-		bech32ibc.InitGenesis(input.Context, *input.GravityKeeper.bech32IbcKeeper, *bech32ibcGenesis)
-		input.BankKeeper.InitGenesis(input.Context, bankGenesis)
-		input.NftKeeper.InitGenesis(input.Context, nftGenesis)
+		erc721Forwards := input.GravityKeeper.PendingERC721IbcAutoForwards(input.Context, evmChain.EvmChainPrefix, 0)
+		require.Empty(t, erc721Forwards)
 	}
+
+	bech32ibc.InitGenesis(input.Context, *input.GravityKeeper.bech32IbcKeeper, *bech32ibcGenesis)
+	input.BankKeeper.InitGenesis(input.Context, bankGenesis)
+	input.NftKeeper.InitGenesis(input.Context, nftGenesis)
 
 	InitGenesis(input.Context, input.GravityKeeper, genesisState)
 }

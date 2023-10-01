@@ -447,23 +447,17 @@ func (k Keeper) SetLastObservedValset(ctx sdk.Context, evmChainPrefix string, va
 
 // setLastObservedEventNonce sets the latest observed event nonce
 func (k Keeper) setLastObservedEventNonce(ctx sdk.Context, nonceSource types.NonceSource, evmChainPrefix string, nonce uint64) {
-	store := ctx.KVStore(k.storeKey)
-	nonceKey := k.GetLastObservedEventNonceKey(nonceSource, evmChainPrefix)
 
+	store := ctx.KVStore(k.storeKey)
+	last := k.GetLastObservedEventNonce(ctx, nonceSource, evmChainPrefix)
 	// event nonce must increase, unless it's zero at which point allow zero to be set
 	// as many times as needed (genesis test setup etc)
-	zeroCase := len(nonceKey) == 0 && nonce == 0
-
-	if !zeroCase {
-		if len(nonceKey) > 8 {
-			panic("Last observed event nonce is not a uint64!")
-		}
-
-		if types.UInt64FromBytesUnsafe(nonceKey) >= nonce {
-			panic("Event nonce going backwards or replay!")
-		}
+	zeroCase := last == 0 && nonce == 0
+	if last >= nonce && !zeroCase {
+		panic("Event nonce going backwards or replay!")
 	}
 
+	nonceKey := k.GetLastObservedEventNonceKey(nonceSource, evmChainPrefix)
 	store.Set(nonceKey, types.UInt64Bytes(nonce))
 }
 
