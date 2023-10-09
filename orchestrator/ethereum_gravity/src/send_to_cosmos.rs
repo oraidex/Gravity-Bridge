@@ -84,13 +84,8 @@ pub async fn send_to_cosmos(
         options.push(SendTxOption::Nonce(nonce + 1u8.into()));
     }
 
-<<<<<<< HEAD
     info!("sending to on cosmos {}", cosmos_destination);
     let encoded_destination_address = Token::String(cosmos_destination);
-=======
-    info!("sending to cosmos {}", cosmos_destination);
-    let encoded_destination_address = Token::String(cosmos_destination.to_string());
->>>>>>> 81057dc97ff3a6f3702fca99300ddbb3a7011770
 
     crate::utils::send_transaction(
         web3,
