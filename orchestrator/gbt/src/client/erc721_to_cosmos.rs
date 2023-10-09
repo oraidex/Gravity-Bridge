@@ -31,11 +31,12 @@ pub async fn erc721_to_cosmos(args: Erc721ToCosmosOpts, prefix: String) {
         ethereum_public_key,
         cosmos_dest
     );
+
     // we send erc721 token to the gravityerc721 contract to register a deposit
     let res = send_erc721_to_cosmos(
         erc721_address,
         gravityerc721_address,
-        token_id,
+        token_id.parse().unwrap(),
         cosmos_dest,
         ethereum_key,
         Some(TIMEOUT),

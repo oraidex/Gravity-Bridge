@@ -346,20 +346,15 @@ pub async fn main() {
             return;
         } else if test_type == "VALSET_STRESS" {
             info!("Starting Valset update stress test");
-<<<<<<< HEAD
-            validator_set_stress_test(&web30, grpc_client, &gravity_contact, keys, gravity_address)
-                .await;
-=======
             validator_set_stress_test(
                 &web30,
                 grpc_client,
-                &contact,
+                &gravity_contact,
                 keys,
                 gravity_address,
                 gravityerc721_address,
             )
             .await;
->>>>>>> 81057dc97ff3a6f3702fca99300ddbb3a7011770
             return;
         } else if test_type == "VALSET_REWARDS" {
             info!("Starting Valset rewards test");

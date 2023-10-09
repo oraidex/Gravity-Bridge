@@ -11,13 +11,9 @@ use args::{GovQuerySubcommand, GovSubcommand, GovSubmitSubcommand, Opts};
 use clap::Parser;
 use client::cosmos_to_eth::cosmos_to_eth_cmd;
 use client::deploy_erc20_representation::deploy_erc20_representation;
-<<<<<<< HEAD
-use client::eth_to_cosmos::eth_to_cosmos;
-use client::spot_relay::spot_relay;
-=======
 use client::erc20_to_cosmos::erc20_to_cosmos;
 use client::erc721_to_cosmos::erc721_to_cosmos;
->>>>>>> 81057dc97ff3a6f3702fca99300ddbb3a7011770
+use client::spot_relay::spot_relay;
 use config::{get_home_dir, load_config};
 use env_logger::Env;
 use gov::proposals::{
