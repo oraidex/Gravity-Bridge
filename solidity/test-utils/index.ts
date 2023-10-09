@@ -1,38 +1,45 @@
-import { Gravity } from "../typechain/Gravity";
-import { TestERC20A } from "../typechain/TestERC20A";
 import { ethers } from "hardhat";
+import { Overrides } from "@ethersproject/contracts";
 import { makeCheckpoint, getSignerAddresses, ZeroAddress } from "./pure";
 import { Signer } from "ethers";
-
-type DeployContractsOptions = {
-  corruptSig?: boolean;
-};
+import {
+  ERC20__factory,
+  Gravity__factory,
+  TestERC20Custom__factory,
+} from "../typechain";
 
 export async function deployContracts(
   gravityId: string = "foo",
   validators: Signer[],
   powers: number[],
-  opts?: DeployContractsOptions
+  opts?: Overrides
 ) {
   // enable automining for these tests
   await ethers.provider.send("evm_setAutomine", [true]);
-
-  const TestERC20 = await ethers.getContractFactory("TestERC20A");
-  const testERC20 = (await TestERC20.deploy()) as TestERC20A;
-
-  const Gravity = await ethers.getContractFactory("Gravity");
+  const [owner] = await ethers.getSigners();
+  const testERC20 = await new TestERC20Custom__factory(owner).deploy(
+    [await owner.getAddress()],
+    opts
+  );
 
   const valAddresses = await getSignerAddresses(validators);
 
-  const checkpoint = makeCheckpoint(valAddresses, powers, 0, 0, ZeroAddress, gravityId);
-
-  const gravity = (await Gravity.deploy(
+  const gravity = await new Gravity__factory(owner).deploy(
     gravityId,
-    await getSignerAddresses(validators),
+    valAddresses,
     powers,
-  )) as Gravity;
+    await owner.getAddress(),
+    opts
+  );
 
-  await gravity.deployed();
+  const checkpoint = makeCheckpoint(
+    valAddresses,
+    powers,
+    0,
+    0,
+    ZeroAddress,
+    gravityId
+  );
 
   return { gravity, testERC20, checkpoint };
 }
