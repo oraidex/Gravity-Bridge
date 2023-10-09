@@ -220,6 +220,7 @@ pub async fn send_logic_call_confirm(
 }
 
 pub async fn send_erc721_claims(
+    evm_chain_prefix: &str,
     contact: &Contact,
     our_cosmos_key: impl PrivateKey,
     erc721_deposits: Vec<SendERC721ToCosmosEvent>,
@@ -228,7 +229,7 @@ pub async fn send_erc721_claims(
     let our_cosmos_address = our_cosmos_key.to_address(&contact.get_prefix()).unwrap();
 
     let mut erc721_deposit_nonces_msgs: Vec<(u64, Msg)> =
-        create_claim_msgs(erc721_deposits, our_cosmos_address);
+        create_claim_msgs(erc721_deposits, our_cosmos_address, evm_chain_prefix);
 
     erc721_deposit_nonces_msgs.sort_unstable_by(|a, b| a.0.cmp(&b.0));
 
@@ -252,7 +253,7 @@ pub async fn send_ethereum_claims(
     evm_chain_prefix: &str,
     contact: &Contact,
     our_cosmos_key: impl PrivateKey,
-    erc20_deposits: Vec<SendToCosmosEvent>,
+    deposits: Vec<SendToCosmosEvent>,
     withdraws: Vec<TransactionBatchExecutedEvent>,
     erc20_deploys: Vec<Erc20DeployedEvent>,
     logic_calls: Vec<LogicCallExecutedEvent>,
@@ -273,7 +274,6 @@ pub async fn send_ethereum_claims(
 
     // Create claim Msgs, keeping their event_nonces for insertion into unordered_msgs
 
-<<<<<<< HEAD
     let deposit_nonces_msgs: Vec<(u64, Msg)> =
         create_claim_msgs(deposits, our_cosmos_address, evm_chain_prefix);
     let withdraw_nonces_msgs: Vec<(u64, Msg)> =
@@ -284,17 +284,9 @@ pub async fn send_ethereum_claims(
         create_claim_msgs(logic_calls, our_cosmos_address, evm_chain_prefix);
     let valset_nonces_msgs: Vec<(u64, Msg)> =
         create_claim_msgs(valsets, our_cosmos_address, evm_chain_prefix);
-=======
-    let erc20_deposit_nonces_msgs: Vec<(u64, Msg)> =
-        create_claim_msgs(erc20_deposits, our_cosmos_address);
-    let withdraw_nonces_msgs: Vec<(u64, Msg)> = create_claim_msgs(withdraws, our_cosmos_address);
-    let deploy_nonces_msgs: Vec<(u64, Msg)> = create_claim_msgs(erc20_deploys, our_cosmos_address);
-    let logic_nonces_msgs: Vec<(u64, Msg)> = create_claim_msgs(logic_calls, our_cosmos_address);
-    let valset_nonces_msgs: Vec<(u64, Msg)> = create_claim_msgs(valsets, our_cosmos_address);
->>>>>>> 81057dc97ff3a6f3702fca99300ddbb3a7011770
 
     // Collect all of the claims into an iterator, then add them to unordered_msgs
-    erc20_deposit_nonces_msgs
+    deposit_nonces_msgs
         .into_iter()
         .chain(withdraw_nonces_msgs.into_iter())
         .chain(deploy_nonces_msgs.into_iter())
