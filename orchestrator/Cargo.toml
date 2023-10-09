@@ -34,7 +34,7 @@ cosmos-sdk-proto = { package = "cosmos-sdk-proto-althea", version = "0.16.0", fe
     "bech32ibc",
 ] }
 web30 = { git = "https://github.com/oraichain/web30.git", rev = "0a98bb0" }
-deep_space = { git = "https://github.com/oraichain/deep_space.git", rev = "311d302" }
+deep_space = { git = "https://github.com/oraichain/deep_space.git", rev = "f43b8f9" }
 prometheus_exporter = { git = "https://github.com/jkilpatr/prometheus_exporter", rev = "c6a720a" }
 
 gravity_utils = { path = "./gravity_utils" }

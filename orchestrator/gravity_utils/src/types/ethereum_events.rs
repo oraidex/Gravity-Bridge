@@ -736,7 +736,6 @@ impl EthereumEvent for SendToCosmosEvent {
     }
 }
 
-<<<<<<< HEAD
 impl ContractEvent for SendToCosmosEvent {
     fn from_event(event_data: &EventData) -> Result<Self, Web3Error> {
         let EventData {
@@ -772,7 +771,6 @@ impl ContractEvent for SendToCosmosEvent {
         }
     }
 }
-=======
 /// A parsed struct representing the Ethereum event fired when someone makes an erc721 deposit
 /// on the GravityERC721 contract
 #[derive(Serialize, Deserialize, Debug, Clone, Eq, PartialEq, Hash)]
@@ -815,24 +813,24 @@ struct SendERC721ToCosmosEventData {
 }
 
 impl SendERC721ToCosmosEvent {
-    fn decode_data_bytes(data: &[u8]) -> Result<SendERC721ToCosmosEventData, GravityError> {
+    fn decode_data_bytes(data: &[u8]) -> Result<SendERC721ToCosmosEventData, Web3Error> {
         if data.len() < 4 * 32 {
-            return Err(GravityError::InvalidEventLogError(
+            return Err(Web3Error::InvalidEventLog(
                 "too short for SendERC721ToCosmosEventData".to_string(),
             ));
         }
 
-        let token_id = Uint256::from_bytes_be(&data[32..64]);
-        let event_nonce = Uint256::from_bytes_be(&data[64..96]);
+        let token_id = Uint256::from_be_bytes(&data[32..64]);
+        let event_nonce = Uint256::from_be_bytes(&data[64..96]);
 
         // discard words three and four which contain the data type and length
         let destination_str_len_start = 4 * 32;
         let destination_str_len_end = 5 * 32;
         let destination_str_len =
-            Uint256::from_bytes_be(&data[destination_str_len_start..destination_str_len_end]);
+            Uint256::from_be_bytes(&data[destination_str_len_start..destination_str_len_end]);
 
         if destination_str_len > u32::MAX.into() {
-            return Err(GravityError::InvalidEventLogError(
+            return Err(Web3Error::InvalidEventLog(
                 "denom length overflow, probably incorrect parsing".to_string(),
             ));
         }
@@ -842,7 +840,7 @@ impl SendERC721ToCosmosEvent {
         let destination_str_end = destination_str_start + destination_str_len;
 
         if data.len() < destination_str_end {
-            return Err(GravityError::InvalidEventLogError(
+            return Err(Web3Error::InvalidEventLog(
                 "Incorrect length for dynamic data".to_string(),
             ));
         }
@@ -858,10 +856,10 @@ impl SendERC721ToCosmosEvent {
         let token_uri_str_len_start = (5 + destination_str_in_bytes) * 32;
         let token_uri_str_len_end = (6 + destination_str_in_bytes) * 32;
         let token_uri_str_len =
-            Uint256::from_bytes_be(&data[token_uri_str_len_start..token_uri_str_len_end]);
+            Uint256::from_be_bytes(&data[token_uri_str_len_start..token_uri_str_len_end]);
 
         if token_uri_str_len > u32::MAX.into() {
-            return Err(GravityError::InvalidEventLogError(
+            return Err(Web3Error::InvalidEventLog(
                 "denom length overflow, probably incorrect parsing".to_string(),
             ));
         }
@@ -873,7 +871,7 @@ impl SendERC721ToCosmosEvent {
             let token_uri_str_end = token_uri_str_start + token_uri_str_len;
 
             if data.len() < token_uri_str_end {
-                return Err(GravityError::InvalidEventLogError(
+                return Err(Web3Error::InvalidEventLog(
                     "Incorrect length for dynamic data".to_string(),
                 ));
             }
@@ -883,7 +881,7 @@ impl SendERC721ToCosmosEvent {
             let uri = String::from_utf8(uri.to_vec());
 
             if uri.is_err() {
-                return Err(GravityError::InvalidEventLogError(
+                return Err(Web3Error::InvalidEventLog(
                     "Token URI parsing error, probably incorrect parsing".to_string(),
                 ));
             }
@@ -936,21 +934,21 @@ impl EthereumEvent for SendERC721ToCosmosEvent {
         self.event_nonce
     }
 
-    fn from_log(input: &Log) -> Result<SendERC721ToCosmosEvent, GravityError> {
+    fn from_log(input: &Log) -> Result<SendERC721ToCosmosEvent, Web3Error> {
         let topics = (input.topics.get(1), input.topics.get(2));
         if let (Some(erc721_data), Some(sender_data)) = topics {
             let erc721 = EthAddress::from_slice(&erc721_data[12..32])?;
             let sender = EthAddress::from_slice(&sender_data[12..32])?;
             let block_height = if let Some(bn) = input.block_number.clone() {
                 if bn > u64::MAX.into() {
-                    return Err(GravityError::InvalidEventLogError(
+                    return Err(Web3Error::InvalidEventLog(
                         "Block height overflow! probably incorrect parsing".to_string(),
                     ));
                 } else {
                     bn
                 }
             } else {
-                return Err(GravityError::InvalidEventLogError(
+                return Err(Web3Error::InvalidEventLog(
                     "Log does not have block number, we only search logs already in blocks?"
                         .to_string(),
                 ));
@@ -958,7 +956,7 @@ impl EthereumEvent for SendERC721ToCosmosEvent {
 
             let data = SendERC721ToCosmosEvent::decode_data_bytes(&input.data)?;
             if data.event_nonce > u64::MAX.into() || block_height > u64::MAX.into() {
-                Err(GravityError::InvalidEventLogError(
+                Err(Web3Error::InvalidEventLog(
                     "Event nonce overflow, probably incorrect parsing".to_string(),
                 ))
             } else {
@@ -986,13 +984,11 @@ impl EthereumEvent for SendERC721ToCosmosEvent {
                 })
             }
         } else {
-            Err(GravityError::InvalidEventLogError(
-                "Too few topics".to_string(),
-            ))
+            Err(Web3Error::InvalidEventLog("Too few topics".to_string()))
         }
     }
 
-    fn from_logs(input: &[Log]) -> Result<Vec<SendERC721ToCosmosEvent>, GravityError> {
+    fn from_logs(input: &[Log]) -> Result<Vec<SendERC721ToCosmosEvent>, Web3Error> {
         let mut res = Vec::new();
         for item in input {
             res.push(SendERC721ToCosmosEvent::from_log(item)?);
@@ -1021,7 +1017,7 @@ impl EthereumEvent for SendERC721ToCosmosEvent {
         None
     }
 
-    fn to_claim_msg(self, orchestrator: Address) -> Msg {
+    fn to_claim_msg(self, orchestrator: Address, evm_chain_prefix: String) -> Msg {
         let claim = MsgSendErc721ToCosmosClaim {
             event_nonce: self.event_nonce,
             eth_block_height: self.get_block_height(),
@@ -1031,11 +1027,11 @@ impl EthereumEvent for SendERC721ToCosmosEvent {
             cosmos_receiver: self.destination,
             ethereum_sender: self.sender.to_string(),
             orchestrator: orchestrator.to_string(),
+            evm_chain_prefix,
         };
         Msg::new(MSG_SEND_ERC721_TO_COSMOS_CLAIM_TYPE_URL, claim)
     }
 }
->>>>>>> 81057dc97ff3a6f3702fca99300ddbb3a7011770
 
 /// A parsed struct representing the Ethereum event fired when someone uses the Gravity
 /// contract to deploy a new ERC20 contract representing a Cosmos asset

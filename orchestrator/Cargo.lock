@@ -585,9 +585,6 @@ name = "bytes"
 version = "1.4.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "89b2fd2a0dcf38d7971e2194b6b6eebab45ae01067456a7fd93d5547a61b70be"
-dependencies = [
- "serde",
-]
 
 [[package]]
 name = "bytestring"
@@ -760,17 +757,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "cosmos-sdk-proto-althea"
-version = "0.16.0"
-source = "git+https://github.com/oraichain/cosmos-rust?rev=19f3de7#19f3de72558a83394673bbdd309001c9cbc4f15a"
-dependencies = [
- "prost 0.11.9",
- "prost-types 0.11.9",
- "tendermint-proto 0.28.0",
- "tonic 0.8.3",
-]
-
-[[package]]
 name = "cosmos_gravity"
 version = "0.1.0"
 dependencies = [
@@ -920,21 +906,21 @@ dependencies = [
 
 [[package]]
 name = "deep_space"
-version = "2.21.2"
-source = "git+https://github.com/oraichain/deep_space.git?rev=311d302#311d3025c456c4490ba5b5f01d41c1c3bcbe5633"
+version = "2.23.0"
+source = "git+https://github.com/oraichain/deep_space.git?rev=f43b8f9#f43b8f93522efdef09b5c2321ffc98d958bd0c84"
 dependencies = [
  "base64 0.21.2",
  "bech32",
  "bytes",
  "clarity",
- "cosmos-sdk-proto-althea 0.16.0 (git+https://github.com/oraichain/cosmos-rust?rev=19f3de7)",
+ "cosmos-sdk-proto-althea",
  "hmac",
  "log",
  "num-traits",
  "num256",
  "pbkdf2 0.12.2",
- "prost 0.11.9",
- "prost-types 0.11.9",
+ "prost 0.12.1",
+ "prost-types 0.12.1",
  "rand",
  "ripemd",
  "rust_decimal",
@@ -945,7 +931,7 @@ dependencies = [
  "sha2 0.10.7",
  "sha3",
  "tokio",
- "tonic 0.8.3",
+ "tonic 0.10.2",
  "unicode-normalization",
 ]
 
@@ -1498,7 +1484,7 @@ checksum = "d2fabcfbdc87f4758337ca535fb41a6d701b65693ce38287d856d1674551ec9b"
 name = "gravity_proto"
 version = "0.1.0"
 dependencies = [
- "cosmos-sdk-proto-althea 0.16.0 (registry+https://github.com/rust-lang/crates.io-index)",
+ "cosmos-sdk-proto-althea",
  "deep_space",
  "prost 0.12.1",
  "prost-types 0.12.1",
@@ -1849,7 +1835,7 @@ dependencies = [
  "subtle-encoding",
  "tendermint",
  "tendermint-light-client-verifier",
- "tendermint-proto 0.23.9",
+ "tendermint-proto",
  "time",
  "tracing",
  "uint",
@@ -1865,7 +1851,7 @@ dependencies = [
  "bytes",
  "prost 0.11.9",
  "serde",
- "tendermint-proto 0.23.9",
+ "tendermint-proto",
  "tonic 0.8.3",
 ]
 
@@ -1910,7 +1896,7 @@ dependencies = [
  "tendermint",
  "tendermint-light-client",
  "tendermint-light-client-verifier",
- "tendermint-proto 0.23.9",
+ "tendermint-proto",
  "tendermint-rpc",
  "thiserror",
  "tiny-bip39",
@@ -3172,6 +3158,18 @@ dependencies = [
 ]
 
 [[package]]
+name = "rustls"
+version = "0.21.7"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "cd8d6c9f025a446bc4d18ad9632e69aec8f287aa84499ee335599fabd20c3fd8"
+dependencies = [
+ "log",
+ "ring",
+ "rustls-webpki",
+ "sct 0.7.0",
+]
+
+[[package]]
 name = "rustls-native-certs"
 version = "0.5.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -3202,6 +3200,16 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "2d3987094b1d07b653b7dfdc3f70ce9a1da9c51ac18c1b06b662e4f9a0e9f4b2"
 dependencies = [
  "base64 0.21.2",
+]
+
+[[package]]
+name = "rustls-webpki"
+version = "0.101.6"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "3c7d5dece342910d9ba34d259310cae3e0154b873b35408b787b59bce53d34fe"
+dependencies = [
+ "ring",
+ "untrusted",
 ]
 
 [[package]]
@@ -3722,7 +3730,7 @@ dependencies = [
  "signature",
  "subtle",
  "subtle-encoding",
- "tendermint-proto 0.23.9",
+ "tendermint-proto",
  "time",
  "zeroize",
 ]
@@ -3795,24 +3803,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "tendermint-proto"
-version = "0.28.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "890f1fb6dee48900c85f0cdf711ebf130e505ac09ad918cee5c34ed477973b05"
-dependencies = [
- "bytes",
- "flex-error",
- "num-derive",
- "num-traits",
- "prost 0.11.9",
- "prost-types 0.11.9",
- "serde",
- "serde_bytes",
- "subtle-encoding",
- "time",
-]
-
-[[package]]
 name = "tendermint-rpc"
 version = "0.23.9"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -3836,7 +3826,7 @@ dependencies = [
  "subtle-encoding",
  "tendermint",
  "tendermint-config",
- "tendermint-proto 0.23.9",
+ "tendermint-proto",
  "thiserror",
  "time",
  "tokio",
@@ -4067,6 +4057,16 @@ dependencies = [
 ]
 
 [[package]]
+name = "tokio-rustls"
+version = "0.24.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "c28327cf380ac148141087fbfb9de9d7bd4e84ab5d2c28fbc911d753de8a7081"
+dependencies = [
+ "rustls 0.21.7",
+ "tokio",
+]
+
+[[package]]
 name = "tokio-stream"
 version = "0.1.14"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -4163,6 +4163,7 @@ dependencies = [
  "axum",
  "base64 0.21.2",
  "bytes",
+ "flate2",
  "h2",
  "http",
  "http-body",
@@ -4171,7 +4172,11 @@ dependencies = [
  "percent-encoding",
  "pin-project",
  "prost 0.12.1",
+ "rustls 0.21.7",
+ "rustls-native-certs 0.6.3",
+ "rustls-pemfile",
  "tokio",
+ "tokio-rustls 0.24.1",
  "tokio-stream",
  "tower",
  "tower-layer",
