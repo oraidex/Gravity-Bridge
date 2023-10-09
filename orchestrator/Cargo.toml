@@ -1,5 +1,15 @@
 [workspace]
-members = ["orchestrator", "cosmos_gravity", "ethereum_gravity", "gravity_utils", "test_runner", "relayer", "gbt", "metrics_exporter"]
+members = [
+    "orchestrator",
+    "cosmos_gravity",
+    "ethereum_gravity",
+    "gravity_utils",
+    "test_runner",
+    "relayer",
+    "gbt",
+    "metrics_exporter",
+]
+exclude = ["proto_build"]
 default-members = ["gbt"]
 resolver = "2"
 
@@ -19,10 +29,10 @@ prost = "0.11"
 prost-types = "0.11"
 tonic = "0.8"
 tokio = "1.21"
-cosmos-sdk-proto = {git = "https://github.com/oraichain/cosmos-rust", rev = "19f3de7", package = "cosmos-sdk-proto-althea"}
-web30 = {git = "https://github.com/oraichain/web30.git", rev = "0a98bb0"}
-deep_space = {git ="https://github.com/oraichain/deep_space.git", rev = "311d302"}
-prometheus_exporter = {git="https://github.com/jkilpatr/prometheus_exporter", rev="c6a720a"}
+cosmos-sdk-proto = { git = "https://github.com/oraichain/cosmos-rust", rev = "19f3de7", package = "cosmos-sdk-proto-althea" }
+web30 = { git = "https://github.com/oraichain/web30.git", rev = "0a98bb0" }
+deep_space = { git = "https://github.com/oraichain/deep_space.git", rev = "311d302" }
+prometheus_exporter = { git = "https://github.com/jkilpatr/prometheus_exporter", rev = "c6a720a" }
 
 gravity_utils = { path = "./gravity_utils" }
 cosmos_gravity = { path = "./cosmos_gravity" }
