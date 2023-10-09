@@ -2,12 +2,8 @@
 //! that can only be run by a validator. This single binary the 'Orchestrator' runs not only these two rules but also the untrusted role of a relayer, that does not need any permissions and has it's
 //! own crate and binary so that anyone may run it.
 
-<<<<<<< HEAD
-use crate::{ethereum_event_watcher::attest_to_events, oracle_resync::get_last_checked_block};
-=======
 use crate::oracle_resync::ContractType;
 use crate::{ethereum_event_watcher::check_for_events, oracle_resync::get_last_checked_block};
->>>>>>> 81057dc97ff3a6f3702fca99300ddbb3a7011770
 use clarity::PrivateKey as EthPrivateKey;
 use clarity::Uint256;
 use cosmos_gravity::query::get_gravity_params;
@@ -26,12 +22,8 @@ use deep_space::{
     coin::Coin,
     private_key::{CosmosPrivateKey, PrivateKey},
 };
-<<<<<<< HEAD
 use deep_space::{Address, Contact};
-use futures::future::{join, join3};
-=======
 use futures::future::{join, join3, join4};
->>>>>>> 81057dc97ff3a6f3702fca99300ddbb3a7011770
 use gravity_proto::cosmos_sdk_proto::cosmos::base::abci::v1beta1::TxResponse;
 use gravity_proto::gravity::query_client::QueryClient as GravityQueryClient;
 use gravity_utils::types::{
@@ -85,7 +77,6 @@ pub async fn orchestrator_main_loop(
     // start gravity.sol oracle event watcher
     let a = eth_oracle_main_loop(
         cosmos_key,
-        ethereum_key,
         web3.clone(),
         contact.clone(),
         grpc_client.clone(),
@@ -122,6 +113,7 @@ pub async fn orchestrator_main_loop(
         web3.clone(),
         contact.clone(),
         grpc_client.clone(),
+        &evm_chain_prefix,
         gravityerc721_contract_address,
         ContractType::GravityERC721,
         fee.clone(),
@@ -176,7 +168,6 @@ pub async fn test_eth_connection(web3: Web3) {
 /// and ferried over to Cosmos where they will be used to issue tokens or process batches.
 pub async fn eth_oracle_main_loop(
     cosmos_key: CosmosPrivateKey,
-    ethereum_key: EthPrivateKey,
     web3: Web3,
     contact: Contact,
     grpc_client: GravityQueryClient<Channel>,
@@ -186,7 +177,6 @@ pub async fn eth_oracle_main_loop(
     fee: Coin,
 ) {
     let our_cosmos_address = cosmos_key.to_address(&contact.get_prefix()).unwrap();
-    let our_eth_address = ethereum_key.to_address();
     let mut long_timeout_web30 = web3.clone();
     long_timeout_web30.timeout = Duration::from_secs(120);
     let mut last_checked_block: Uint256 = get_last_checked_block(
@@ -260,22 +250,13 @@ pub async fn eth_oracle_main_loop(
         // if the governance vote reset last event nonce sent by validator to some lower value, we can detect this
         // by comparing last_event_nonce retrieved from the chain with last_checked_event saved by the orchestrator
         // in order to reset last_checked_block and last_checked_event and continue from that point
-<<<<<<< HEAD
-        let last_event_nonce: Uint256 = get_last_event_nonce_with_retry(
-            &mut grpc_client,
-            our_cosmos_address,
-            contact.get_prefix().clone(),
-            evm_chain_prefix.to_string(),
-        )
-        .await
-        .into();
-=======
         let last_event_nonce: Uint256;
         if contract_type == ContractType::Gravity {
             last_event_nonce = get_last_event_nonce_with_retry(
                 &mut grpc_client,
                 our_cosmos_address,
                 contact.get_prefix().clone(),
+                evm_chain_prefix.to_string(),
             )
             .await
             .into();
@@ -284,11 +265,11 @@ pub async fn eth_oracle_main_loop(
                 &mut grpc_client,
                 our_cosmos_address,
                 contact.get_prefix().clone(),
+                evm_chain_prefix.to_string(),
             )
             .await
             .into();
         }
->>>>>>> 81057dc97ff3a6f3702fca99300ddbb3a7011770
 
         if last_event_nonce < last_checked_event {
             // validator went back in history
@@ -306,39 +287,38 @@ pub async fn eth_oracle_main_loop(
             .await;
         }
 
-        // Check the balances on both sides of the bridge, only submitting further events if the
-        // bridge is functioning as expected
-        let balances = check_cross_bridge_balances(
-            &grpc_client,
+        // Relays events from Ethereum -> Cosmos
+        match check_for_events(
             &web3,
-            our_eth_address,
+            &contact,
+            &mut grpc_client,
+            evm_chain_prefix,
             gravity_contract_address,
-<<<<<<< HEAD
-=======
             contract_type,
             cosmos_key,
             fee.clone(),
-            last_checked_block.clone(),
->>>>>>> 81057dc97ff3a6f3702fca99300ddbb3a7011770
+            last_checked_block,
         )
-        .await;
-
-        if balances.is_ok() {
-            // Relays events from Ethereum -> Cosmos, returns the latest nonces needed in future iterations
-            let updated_nonces = attest_to_events(
-                &web3,
-                evm_chain_prefix,
-                &contact,
-                &grpc_client,
-                gravity_contract_address,
-                cosmos_key,
-                fee.clone(),
-                last_checked_block,
-                last_checked_event,
-            )
-            .await;
-            last_checked_block = updated_nonces.block_number;
-            last_checked_event = updated_nonces.event_nonce;
+        .await
+        {
+            Ok(nonces) => {
+                // If the governance happened while check_for_events() was executing and there were no new event nonces,
+                // nonces.event_nonce would return lower value than last_checked_event. We want to keep last_checked_event
+                // value so it could be used in the next iteration to check if we should return to the
+                // earlier block and continue from that point. CheckedNonces is accurate unless a governance vote happens.
+                last_checked_block = nonces.block_number;
+                if nonces.event_nonce > last_checked_event {
+                    last_checked_event = nonces.event_nonce;
+                }
+                metrics_latest(
+                    last_checked_event.to_string().parse().unwrap(),
+                    "last_checked_event",
+                );
+            }
+            Err(e) => {
+                error!("Failed to get events for block range, Check your Eth node and Cosmos gRPC {:?}", e);
+                metrics_errors_counter(0, "Failed to get events for block range");
+            }
         }
 
         // a bit of logic that tires to keep things running every LOOP_SPEED seconds exactly
