@@ -10,7 +10,6 @@ pub mod gravity {
     include!("ethereum_claim.rs");
 }
 
-<<<<<<< HEAD
 pub mod gravity_test {
     pub mod gaia {
         pub mod globalfee {
@@ -25,8 +24,6 @@ pub mod gravity_test {
         }
     }
 }
-=======
 pub mod nft {
     include!("prost/cosmos.nft.v1beta1.rs");
 }
->>>>>>> 81057dc97ff3a6f3702fca99300ddbb3a7011770

@@ -751,12 +751,23 @@ checksum = "e496a50fda8aacccc86d7529e2c1e0892dbd0f898a6b5645b5561b89c3210efa"
 [[package]]
 name = "cosmos-sdk-proto-althea"
 version = "0.16.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "46ab2605efe920646aac126cebdab37648f7fd344c17f90ce71aab58ac62783d"
+dependencies = [
+ "prost 0.12.1",
+ "prost-types 0.12.1",
+ "tonic 0.10.2",
+]
+
+[[package]]
+name = "cosmos-sdk-proto-althea"
+version = "0.16.0"
 source = "git+https://github.com/oraichain/cosmos-rust?rev=19f3de7#19f3de72558a83394673bbdd309001c9cbc4f15a"
 dependencies = [
- "prost",
- "prost-types",
+ "prost 0.11.9",
+ "prost-types 0.11.9",
  "tendermint-proto 0.28.0",
- "tonic",
+ "tonic 0.8.3",
 ]
 
 [[package]]
@@ -774,15 +785,15 @@ dependencies = [
  "log",
  "num",
  "num256",
- "prost",
- "prost-types",
+ "prost 0.12.1",
+ "prost-types 0.12.1",
  "rand",
  "serde",
  "serde_derive",
  "serde_json",
  "sha3",
  "tokio",
- "tonic",
+ "tonic 0.10.2",
  "web30",
 ]
 
@@ -916,14 +927,14 @@ dependencies = [
  "bech32",
  "bytes",
  "clarity",
- "cosmos-sdk-proto-althea",
+ "cosmos-sdk-proto-althea 0.16.0 (git+https://github.com/oraichain/cosmos-rust?rev=19f3de7)",
  "hmac",
  "log",
  "num-traits",
  "num256",
  "pbkdf2 0.12.2",
- "prost",
- "prost-types",
+ "prost 0.11.9",
+ "prost-types 0.11.9",
  "rand",
  "ripemd",
  "rust_decimal",
@@ -934,7 +945,7 @@ dependencies = [
  "sha2 0.10.7",
  "sha3",
  "tokio",
- "tonic",
+ "tonic 0.8.3",
  "unicode-normalization",
 ]
 
@@ -1435,7 +1446,7 @@ dependencies = [
  "metrics_exporter",
  "openssl-probe",
  "orchestrator",
- "prost",
+ "prost 0.12.1",
  "rand",
  "relayer",
  "serde",
@@ -1443,7 +1454,7 @@ dependencies = [
  "serde_json",
  "tokio",
  "toml",
- "tonic",
+ "tonic 0.10.2",
  "url",
  "web30",
 ]
@@ -1487,11 +1498,11 @@ checksum = "d2fabcfbdc87f4758337ca535fb41a6d701b65693ce38287d856d1674551ec9b"
 name = "gravity_proto"
 version = "0.1.0"
 dependencies = [
- "cosmos-sdk-proto-althea",
+ "cosmos-sdk-proto-althea 0.16.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "deep_space",
- "prost",
- "prost-types",
- "tonic",
+ "prost 0.12.1",
+ "prost-types 0.12.1",
+ "tonic 0.10.2",
 ]
 
 [[package]]
@@ -1516,7 +1527,7 @@ dependencies = [
  "serde_json",
  "sha3",
  "tokio",
- "tonic",
+ "tonic 0.10.2",
  "url",
  "web30",
 ]
@@ -1829,7 +1840,7 @@ dependencies = [
  "ics23",
  "num-traits",
  "primitive-types 0.11.1",
- "prost",
+ "prost 0.11.9",
  "safe-regex",
  "serde",
  "serde_derive",
@@ -1852,10 +1863,10 @@ checksum = "cf27ba26c12fa0e270a32f8e54a9d9768e19d0f2e6f36b83a1f274f7fa1c2755"
 dependencies = [
  "base64 0.13.1",
  "bytes",
- "prost",
+ "prost 0.11.9",
  "serde",
  "tendermint-proto 0.23.9",
- "tonic",
+ "tonic 0.8.3",
 ]
 
 [[package]]
@@ -1885,7 +1896,7 @@ dependencies = [
  "moka",
  "num-bigint",
  "num-rational",
- "prost",
+ "prost 0.11.9",
  "regex",
  "retry",
  "ripemd",
@@ -1906,7 +1917,7 @@ dependencies = [
  "tiny-keccak",
  "tokio",
  "toml",
- "tonic",
+ "tonic 0.8.3",
  "tracing",
  "uuid 1.4.1",
 ]
@@ -1920,7 +1931,7 @@ dependencies = [
  "anyhow",
  "bytes",
  "hex",
- "prost",
+ "prost 0.11.9",
  "ripemd",
  "sha2 0.10.7",
  "sha3",
@@ -2448,7 +2459,7 @@ dependencies = [
  "serde_derive",
  "serde_json",
  "tokio",
- "tonic",
+ "tonic 0.10.2",
  "web30",
 ]
 
@@ -2729,7 +2740,17 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "0b82eaa1d779e9a4bc1c3217db8ffbeabaae1dca241bf70183242128d48681cd"
 dependencies = [
  "bytes",
- "prost-derive",
+ "prost-derive 0.11.9",
+]
+
+[[package]]
+name = "prost"
+version = "0.12.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "f4fdd22f3b9c31b53c060df4a0613a1c7f062d4115a2b984dd15b1858f7e340d"
+dependencies = [
+ "bytes",
+ "prost-derive 0.12.1",
 ]
 
 [[package]]
@@ -2746,12 +2767,34 @@ dependencies = [
 ]
 
 [[package]]
+name = "prost-derive"
+version = "0.12.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "265baba7fabd416cf5078179f7d2cbeca4ce7a9041111900675ea7c4cb8a4c32"
+dependencies = [
+ "anyhow",
+ "itertools",
+ "proc-macro2",
+ "quote",
+ "syn 2.0.27",
+]
+
+[[package]]
 name = "prost-types"
 version = "0.11.9"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "213622a1460818959ac1181aaeb2dc9c7f63df720db7d788b3e24eacd1983e13"
 dependencies = [
- "prost",
+ "prost 0.11.9",
+]
+
+[[package]]
+name = "prost-types"
+version = "0.12.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "e081b29f63d83a4bc75cfc9f3fe424f9156cf92d8a4f0c9407cce9a1b67327cf"
+dependencies = [
+ "prost 0.12.1",
 ]
 
 [[package]]
@@ -2942,7 +2985,7 @@ dependencies = [
  "serde_json",
  "sha3",
  "tokio",
- "tonic",
+ "tonic 0.10.2",
  "web30",
 ]
 
@@ -3668,8 +3711,8 @@ dependencies = [
  "k256",
  "num-traits",
  "once_cell",
- "prost",
- "prost-types",
+ "prost 0.11.9",
+ "prost-types 0.11.9",
  "ripemd160",
  "serde",
  "serde_bytes",
@@ -3743,8 +3786,8 @@ dependencies = [
  "flex-error",
  "num-derive",
  "num-traits",
- "prost",
- "prost-types",
+ "prost 0.11.9",
+ "prost-types 0.11.9",
  "serde",
  "serde_bytes",
  "subtle-encoding",
@@ -3761,8 +3804,8 @@ dependencies = [
  "flex-error",
  "num-derive",
  "num-traits",
- "prost",
- "prost-types",
+ "prost 0.11.9",
+ "prost-types 0.11.9",
  "serde",
  "serde_bytes",
  "subtle-encoding",
@@ -3835,15 +3878,15 @@ dependencies = [
  "num",
  "num256",
  "orchestrator",
- "prost",
- "prost-types",
+ "prost 0.12.1",
+ "prost-types 0.12.1",
  "rand",
  "relayer",
  "serde",
  "serde_derive",
  "serde_json",
  "tokio",
- "tonic",
+ "tonic 0.10.2",
  "url",
  "web30",
 ]
@@ -4094,8 +4137,8 @@ dependencies = [
  "hyper-timeout",
  "percent-encoding",
  "pin-project",
- "prost",
- "prost-derive",
+ "prost 0.11.9",
+ "prost-derive 0.11.9",
  "rustls-native-certs 0.6.3",
  "rustls-pemfile",
  "tokio",
@@ -4107,6 +4150,33 @@ dependencies = [
  "tower-service",
  "tracing",
  "tracing-futures",
+]
+
+[[package]]
+name = "tonic"
+version = "0.10.2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "d560933a0de61cf715926b9cac824d4c883c2c43142f787595e48280c40a1d0e"
+dependencies = [
+ "async-stream",
+ "async-trait",
+ "axum",
+ "base64 0.21.2",
+ "bytes",
+ "h2",
+ "http",
+ "http-body",
+ "hyper",
+ "hyper-timeout",
+ "percent-encoding",
+ "pin-project",
+ "prost 0.12.1",
+ "tokio",
+ "tokio-stream",
+ "tower",
+ "tower-layer",
+ "tower-service",
+ "tracing",
 ]
 
 [[package]]

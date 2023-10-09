@@ -1080,8 +1080,8 @@ pub struct EventSendToEthFeeCollected {
 /// Generated client implementations.
 pub mod msg_client {
     #![allow(unused_variables, dead_code, missing_docs, clippy::let_unit_value)]
-    use tonic::codegen::*;
     use tonic::codegen::http::Uri;
+    use tonic::codegen::*;
     /// Msg defines the state transitions possible within gravity
     #[derive(Debug, Clone)]
     pub struct MsgClient<T> {
@@ -1113,10 +1113,7 @@ pub mod msg_client {
             let inner = tonic::client::Grpc::with_origin(inner, origin);
             Self { inner }
         }
-        pub fn with_interceptor<F>(
-            inner: T,
-            interceptor: F,
-        ) -> MsgClient<InterceptedService<T, F>>
+        pub fn with_interceptor<F>(inner: T, interceptor: F) -> MsgClient<InterceptedService<T, F>>
         where
             F: tonic::service::Interceptor,
             T::ResponseBody: Default,
@@ -1126,9 +1123,8 @@ pub mod msg_client {
                     <T as tonic::client::GrpcService<tonic::body::BoxBody>>::ResponseBody,
                 >,
             >,
-            <T as tonic::codegen::Service<
-                http::Request<tonic::body::BoxBody>,
-            >>::Error: Into<StdError> + Send + Sync,
+            <T as tonic::codegen::Service<http::Request<tonic::body::BoxBody>>>::Error:
+                Into<StdError> + Send + Sync,
         {
             MsgClient::new(InterceptedService::new(inner, interceptor))
         }
@@ -1147,315 +1143,310 @@ pub mod msg_client {
             self.inner = self.inner.accept_compressed(encoding);
             self
         }
+        /// Limits the maximum size of a decoded message.
+        ///
+        /// Default: `4MB`
+        #[must_use]
+        pub fn max_decoding_message_size(mut self, limit: usize) -> Self {
+            self.inner = self.inner.max_decoding_message_size(limit);
+            self
+        }
+        /// Limits the maximum size of an encoded message.
+        ///
+        /// Default: `usize::MAX`
+        #[must_use]
+        pub fn max_encoding_message_size(mut self, limit: usize) -> Self {
+            self.inner = self.inner.max_encoding_message_size(limit);
+            self
+        }
         pub async fn valset_confirm(
             &mut self,
             request: impl tonic::IntoRequest<super::MsgValsetConfirm>,
-        ) -> Result<tonic::Response<super::MsgValsetConfirmResponse>, tonic::Status> {
-            self.inner
-                .ready()
-                .await
-                .map_err(|e| {
-                    tonic::Status::new(
-                        tonic::Code::Unknown,
-                        format!("Service was not ready: {}", e.into()),
-                    )
-                })?;
+        ) -> std::result::Result<tonic::Response<super::MsgValsetConfirmResponse>, tonic::Status>
+        {
+            self.inner.ready().await.map_err(|e| {
+                tonic::Status::new(
+                    tonic::Code::Unknown,
+                    format!("Service was not ready: {}", e.into()),
+                )
+            })?;
             let codec = tonic::codec::ProstCodec::default();
-            let path = http::uri::PathAndQuery::from_static(
-                "/gravity.v1.Msg/ValsetConfirm",
-            );
-            self.inner.unary(request.into_request(), path, codec).await
+            let path = http::uri::PathAndQuery::from_static("/gravity.v1.Msg/ValsetConfirm");
+            let mut req = request.into_request();
+            req.extensions_mut()
+                .insert(GrpcMethod::new("gravity.v1.Msg", "ValsetConfirm"));
+            self.inner.unary(req, path, codec).await
         }
         pub async fn send_to_eth(
             &mut self,
             request: impl tonic::IntoRequest<super::MsgSendToEth>,
-        ) -> Result<tonic::Response<super::MsgSendToEthResponse>, tonic::Status> {
-            self.inner
-                .ready()
-                .await
-                .map_err(|e| {
-                    tonic::Status::new(
-                        tonic::Code::Unknown,
-                        format!("Service was not ready: {}", e.into()),
-                    )
-                })?;
+        ) -> std::result::Result<tonic::Response<super::MsgSendToEthResponse>, tonic::Status>
+        {
+            self.inner.ready().await.map_err(|e| {
+                tonic::Status::new(
+                    tonic::Code::Unknown,
+                    format!("Service was not ready: {}", e.into()),
+                )
+            })?;
             let codec = tonic::codec::ProstCodec::default();
             let path = http::uri::PathAndQuery::from_static("/gravity.v1.Msg/SendToEth");
-            self.inner.unary(request.into_request(), path, codec).await
+            let mut req = request.into_request();
+            req.extensions_mut()
+                .insert(GrpcMethod::new("gravity.v1.Msg", "SendToEth"));
+            self.inner.unary(req, path, codec).await
         }
         pub async fn request_batch(
             &mut self,
             request: impl tonic::IntoRequest<super::MsgRequestBatch>,
-        ) -> Result<tonic::Response<super::MsgRequestBatchResponse>, tonic::Status> {
-            self.inner
-                .ready()
-                .await
-                .map_err(|e| {
-                    tonic::Status::new(
-                        tonic::Code::Unknown,
-                        format!("Service was not ready: {}", e.into()),
-                    )
-                })?;
+        ) -> std::result::Result<tonic::Response<super::MsgRequestBatchResponse>, tonic::Status>
+        {
+            self.inner.ready().await.map_err(|e| {
+                tonic::Status::new(
+                    tonic::Code::Unknown,
+                    format!("Service was not ready: {}", e.into()),
+                )
+            })?;
             let codec = tonic::codec::ProstCodec::default();
-            let path = http::uri::PathAndQuery::from_static(
-                "/gravity.v1.Msg/RequestBatch",
-            );
-            self.inner.unary(request.into_request(), path, codec).await
+            let path = http::uri::PathAndQuery::from_static("/gravity.v1.Msg/RequestBatch");
+            let mut req = request.into_request();
+            req.extensions_mut()
+                .insert(GrpcMethod::new("gravity.v1.Msg", "RequestBatch"));
+            self.inner.unary(req, path, codec).await
         }
         pub async fn confirm_batch(
             &mut self,
             request: impl tonic::IntoRequest<super::MsgConfirmBatch>,
-        ) -> Result<tonic::Response<super::MsgConfirmBatchResponse>, tonic::Status> {
-            self.inner
-                .ready()
-                .await
-                .map_err(|e| {
-                    tonic::Status::new(
-                        tonic::Code::Unknown,
-                        format!("Service was not ready: {}", e.into()),
-                    )
-                })?;
+        ) -> std::result::Result<tonic::Response<super::MsgConfirmBatchResponse>, tonic::Status>
+        {
+            self.inner.ready().await.map_err(|e| {
+                tonic::Status::new(
+                    tonic::Code::Unknown,
+                    format!("Service was not ready: {}", e.into()),
+                )
+            })?;
             let codec = tonic::codec::ProstCodec::default();
-            let path = http::uri::PathAndQuery::from_static(
-                "/gravity.v1.Msg/ConfirmBatch",
-            );
-            self.inner.unary(request.into_request(), path, codec).await
+            let path = http::uri::PathAndQuery::from_static("/gravity.v1.Msg/ConfirmBatch");
+            let mut req = request.into_request();
+            req.extensions_mut()
+                .insert(GrpcMethod::new("gravity.v1.Msg", "ConfirmBatch"));
+            self.inner.unary(req, path, codec).await
         }
         pub async fn confirm_logic_call(
             &mut self,
             request: impl tonic::IntoRequest<super::MsgConfirmLogicCall>,
-        ) -> Result<tonic::Response<super::MsgConfirmLogicCallResponse>, tonic::Status> {
-            self.inner
-                .ready()
-                .await
-                .map_err(|e| {
-                    tonic::Status::new(
-                        tonic::Code::Unknown,
-                        format!("Service was not ready: {}", e.into()),
-                    )
-                })?;
+        ) -> std::result::Result<tonic::Response<super::MsgConfirmLogicCallResponse>, tonic::Status>
+        {
+            self.inner.ready().await.map_err(|e| {
+                tonic::Status::new(
+                    tonic::Code::Unknown,
+                    format!("Service was not ready: {}", e.into()),
+                )
+            })?;
             let codec = tonic::codec::ProstCodec::default();
-            let path = http::uri::PathAndQuery::from_static(
-                "/gravity.v1.Msg/ConfirmLogicCall",
-            );
-            self.inner.unary(request.into_request(), path, codec).await
+            let path = http::uri::PathAndQuery::from_static("/gravity.v1.Msg/ConfirmLogicCall");
+            let mut req = request.into_request();
+            req.extensions_mut()
+                .insert(GrpcMethod::new("gravity.v1.Msg", "ConfirmLogicCall"));
+            self.inner.unary(req, path, codec).await
         }
         pub async fn send_to_cosmos_claim(
             &mut self,
             request: impl tonic::IntoRequest<super::MsgSendToCosmosClaim>,
-        ) -> Result<
-            tonic::Response<super::MsgSendToCosmosClaimResponse>,
-            tonic::Status,
-        > {
-            self.inner
-                .ready()
-                .await
-                .map_err(|e| {
-                    tonic::Status::new(
-                        tonic::Code::Unknown,
-                        format!("Service was not ready: {}", e.into()),
-                    )
-                })?;
+        ) -> std::result::Result<tonic::Response<super::MsgSendToCosmosClaimResponse>, tonic::Status>
+        {
+            self.inner.ready().await.map_err(|e| {
+                tonic::Status::new(
+                    tonic::Code::Unknown,
+                    format!("Service was not ready: {}", e.into()),
+                )
+            })?;
             let codec = tonic::codec::ProstCodec::default();
-            let path = http::uri::PathAndQuery::from_static(
-                "/gravity.v1.Msg/SendToCosmosClaim",
-            );
-            self.inner.unary(request.into_request(), path, codec).await
+            let path = http::uri::PathAndQuery::from_static("/gravity.v1.Msg/SendToCosmosClaim");
+            let mut req = request.into_request();
+            req.extensions_mut()
+                .insert(GrpcMethod::new("gravity.v1.Msg", "SendToCosmosClaim"));
+            self.inner.unary(req, path, codec).await
         }
         pub async fn send_erc721_to_cosmos_claim(
             &mut self,
             request: impl tonic::IntoRequest<super::MsgSendErc721ToCosmosClaim>,
-        ) -> Result<
+        ) -> std::result::Result<
             tonic::Response<super::MsgSendErc721ToCosmosClaimResponse>,
             tonic::Status,
         > {
-            self.inner
-                .ready()
-                .await
-                .map_err(|e| {
-                    tonic::Status::new(
-                        tonic::Code::Unknown,
-                        format!("Service was not ready: {}", e.into()),
-                    )
-                })?;
+            self.inner.ready().await.map_err(|e| {
+                tonic::Status::new(
+                    tonic::Code::Unknown,
+                    format!("Service was not ready: {}", e.into()),
+                )
+            })?;
             let codec = tonic::codec::ProstCodec::default();
-            let path = http::uri::PathAndQuery::from_static(
-                "/gravity.v1.Msg/SendERC721ToCosmosClaim",
-            );
-            self.inner.unary(request.into_request(), path, codec).await
+            let path =
+                http::uri::PathAndQuery::from_static("/gravity.v1.Msg/SendERC721ToCosmosClaim");
+            let mut req = request.into_request();
+            req.extensions_mut()
+                .insert(GrpcMethod::new("gravity.v1.Msg", "SendERC721ToCosmosClaim"));
+            self.inner.unary(req, path, codec).await
         }
         pub async fn execute_ibc_auto_forwards(
             &mut self,
             request: impl tonic::IntoRequest<super::MsgExecuteIbcAutoForwards>,
-        ) -> Result<
+        ) -> std::result::Result<
             tonic::Response<super::MsgExecuteIbcAutoForwardsResponse>,
             tonic::Status,
         > {
-            self.inner
-                .ready()
-                .await
-                .map_err(|e| {
-                    tonic::Status::new(
-                        tonic::Code::Unknown,
-                        format!("Service was not ready: {}", e.into()),
-                    )
-                })?;
+            self.inner.ready().await.map_err(|e| {
+                tonic::Status::new(
+                    tonic::Code::Unknown,
+                    format!("Service was not ready: {}", e.into()),
+                )
+            })?;
             let codec = tonic::codec::ProstCodec::default();
-            let path = http::uri::PathAndQuery::from_static(
-                "/gravity.v1.Msg/ExecuteIbcAutoForwards",
-            );
-            self.inner.unary(request.into_request(), path, codec).await
+            let path =
+                http::uri::PathAndQuery::from_static("/gravity.v1.Msg/ExecuteIbcAutoForwards");
+            let mut req = request.into_request();
+            req.extensions_mut()
+                .insert(GrpcMethod::new("gravity.v1.Msg", "ExecuteIbcAutoForwards"));
+            self.inner.unary(req, path, codec).await
         }
         pub async fn batch_send_to_eth_claim(
             &mut self,
             request: impl tonic::IntoRequest<super::MsgBatchSendToEthClaim>,
-        ) -> Result<
+        ) -> std::result::Result<
             tonic::Response<super::MsgBatchSendToEthClaimResponse>,
             tonic::Status,
         > {
-            self.inner
-                .ready()
-                .await
-                .map_err(|e| {
-                    tonic::Status::new(
-                        tonic::Code::Unknown,
-                        format!("Service was not ready: {}", e.into()),
-                    )
-                })?;
+            self.inner.ready().await.map_err(|e| {
+                tonic::Status::new(
+                    tonic::Code::Unknown,
+                    format!("Service was not ready: {}", e.into()),
+                )
+            })?;
             let codec = tonic::codec::ProstCodec::default();
-            let path = http::uri::PathAndQuery::from_static(
-                "/gravity.v1.Msg/BatchSendToEthClaim",
-            );
-            self.inner.unary(request.into_request(), path, codec).await
+            let path = http::uri::PathAndQuery::from_static("/gravity.v1.Msg/BatchSendToEthClaim");
+            let mut req = request.into_request();
+            req.extensions_mut()
+                .insert(GrpcMethod::new("gravity.v1.Msg", "BatchSendToEthClaim"));
+            self.inner.unary(req, path, codec).await
         }
         pub async fn valset_update_claim(
             &mut self,
             request: impl tonic::IntoRequest<super::MsgValsetUpdatedClaim>,
-        ) -> Result<
-            tonic::Response<super::MsgValsetUpdatedClaimResponse>,
-            tonic::Status,
-        > {
-            self.inner
-                .ready()
-                .await
-                .map_err(|e| {
-                    tonic::Status::new(
-                        tonic::Code::Unknown,
-                        format!("Service was not ready: {}", e.into()),
-                    )
-                })?;
+        ) -> std::result::Result<tonic::Response<super::MsgValsetUpdatedClaimResponse>, tonic::Status>
+        {
+            self.inner.ready().await.map_err(|e| {
+                tonic::Status::new(
+                    tonic::Code::Unknown,
+                    format!("Service was not ready: {}", e.into()),
+                )
+            })?;
             let codec = tonic::codec::ProstCodec::default();
-            let path = http::uri::PathAndQuery::from_static(
-                "/gravity.v1.Msg/ValsetUpdateClaim",
-            );
-            self.inner.unary(request.into_request(), path, codec).await
+            let path = http::uri::PathAndQuery::from_static("/gravity.v1.Msg/ValsetUpdateClaim");
+            let mut req = request.into_request();
+            req.extensions_mut()
+                .insert(GrpcMethod::new("gravity.v1.Msg", "ValsetUpdateClaim"));
+            self.inner.unary(req, path, codec).await
         }
         pub async fn erc20_deployed_claim(
             &mut self,
             request: impl tonic::IntoRequest<super::MsgErc20DeployedClaim>,
-        ) -> Result<
-            tonic::Response<super::MsgErc20DeployedClaimResponse>,
-            tonic::Status,
-        > {
-            self.inner
-                .ready()
-                .await
-                .map_err(|e| {
-                    tonic::Status::new(
-                        tonic::Code::Unknown,
-                        format!("Service was not ready: {}", e.into()),
-                    )
-                })?;
+        ) -> std::result::Result<tonic::Response<super::MsgErc20DeployedClaimResponse>, tonic::Status>
+        {
+            self.inner.ready().await.map_err(|e| {
+                tonic::Status::new(
+                    tonic::Code::Unknown,
+                    format!("Service was not ready: {}", e.into()),
+                )
+            })?;
             let codec = tonic::codec::ProstCodec::default();
-            let path = http::uri::PathAndQuery::from_static(
-                "/gravity.v1.Msg/ERC20DeployedClaim",
-            );
-            self.inner.unary(request.into_request(), path, codec).await
+            let path = http::uri::PathAndQuery::from_static("/gravity.v1.Msg/ERC20DeployedClaim");
+            let mut req = request.into_request();
+            req.extensions_mut()
+                .insert(GrpcMethod::new("gravity.v1.Msg", "ERC20DeployedClaim"));
+            self.inner.unary(req, path, codec).await
         }
         pub async fn logic_call_executed_claim(
             &mut self,
             request: impl tonic::IntoRequest<super::MsgLogicCallExecutedClaim>,
-        ) -> Result<
+        ) -> std::result::Result<
             tonic::Response<super::MsgLogicCallExecutedClaimResponse>,
             tonic::Status,
         > {
-            self.inner
-                .ready()
-                .await
-                .map_err(|e| {
-                    tonic::Status::new(
-                        tonic::Code::Unknown,
-                        format!("Service was not ready: {}", e.into()),
-                    )
-                })?;
+            self.inner.ready().await.map_err(|e| {
+                tonic::Status::new(
+                    tonic::Code::Unknown,
+                    format!("Service was not ready: {}", e.into()),
+                )
+            })?;
             let codec = tonic::codec::ProstCodec::default();
-            let path = http::uri::PathAndQuery::from_static(
-                "/gravity.v1.Msg/LogicCallExecutedClaim",
-            );
-            self.inner.unary(request.into_request(), path, codec).await
+            let path =
+                http::uri::PathAndQuery::from_static("/gravity.v1.Msg/LogicCallExecutedClaim");
+            let mut req = request.into_request();
+            req.extensions_mut()
+                .insert(GrpcMethod::new("gravity.v1.Msg", "LogicCallExecutedClaim"));
+            self.inner.unary(req, path, codec).await
         }
         pub async fn set_orchestrator_address(
             &mut self,
             request: impl tonic::IntoRequest<super::MsgSetOrchestratorAddress>,
-        ) -> Result<
+        ) -> std::result::Result<
             tonic::Response<super::MsgSetOrchestratorAddressResponse>,
             tonic::Status,
         > {
-            self.inner
-                .ready()
-                .await
-                .map_err(|e| {
-                    tonic::Status::new(
-                        tonic::Code::Unknown,
-                        format!("Service was not ready: {}", e.into()),
-                    )
-                })?;
+            self.inner.ready().await.map_err(|e| {
+                tonic::Status::new(
+                    tonic::Code::Unknown,
+                    format!("Service was not ready: {}", e.into()),
+                )
+            })?;
             let codec = tonic::codec::ProstCodec::default();
-            let path = http::uri::PathAndQuery::from_static(
-                "/gravity.v1.Msg/SetOrchestratorAddress",
-            );
-            self.inner.unary(request.into_request(), path, codec).await
+            let path =
+                http::uri::PathAndQuery::from_static("/gravity.v1.Msg/SetOrchestratorAddress");
+            let mut req = request.into_request();
+            req.extensions_mut()
+                .insert(GrpcMethod::new("gravity.v1.Msg", "SetOrchestratorAddress"));
+            self.inner.unary(req, path, codec).await
         }
         pub async fn cancel_send_to_eth(
             &mut self,
             request: impl tonic::IntoRequest<super::MsgCancelSendToEth>,
-        ) -> Result<tonic::Response<super::MsgCancelSendToEthResponse>, tonic::Status> {
-            self.inner
-                .ready()
-                .await
-                .map_err(|e| {
-                    tonic::Status::new(
-                        tonic::Code::Unknown,
-                        format!("Service was not ready: {}", e.into()),
-                    )
-                })?;
+        ) -> std::result::Result<tonic::Response<super::MsgCancelSendToEthResponse>, tonic::Status>
+        {
+            self.inner.ready().await.map_err(|e| {
+                tonic::Status::new(
+                    tonic::Code::Unknown,
+                    format!("Service was not ready: {}", e.into()),
+                )
+            })?;
             let codec = tonic::codec::ProstCodec::default();
-            let path = http::uri::PathAndQuery::from_static(
-                "/gravity.v1.Msg/CancelSendToEth",
-            );
-            self.inner.unary(request.into_request(), path, codec).await
+            let path = http::uri::PathAndQuery::from_static("/gravity.v1.Msg/CancelSendToEth");
+            let mut req = request.into_request();
+            req.extensions_mut()
+                .insert(GrpcMethod::new("gravity.v1.Msg", "CancelSendToEth"));
+            self.inner.unary(req, path, codec).await
         }
         pub async fn submit_bad_signature_evidence(
             &mut self,
             request: impl tonic::IntoRequest<super::MsgSubmitBadSignatureEvidence>,
-        ) -> Result<
+        ) -> std::result::Result<
             tonic::Response<super::MsgSubmitBadSignatureEvidenceResponse>,
             tonic::Status,
         > {
-            self.inner
-                .ready()
-                .await
-                .map_err(|e| {
-                    tonic::Status::new(
-                        tonic::Code::Unknown,
-                        format!("Service was not ready: {}", e.into()),
-                    )
-                })?;
+            self.inner.ready().await.map_err(|e| {
+                tonic::Status::new(
+                    tonic::Code::Unknown,
+                    format!("Service was not ready: {}", e.into()),
+                )
+            })?;
             let codec = tonic::codec::ProstCodec::default();
-            let path = http::uri::PathAndQuery::from_static(
-                "/gravity.v1.Msg/SubmitBadSignatureEvidence",
-            );
-            self.inner.unary(request.into_request(), path, codec).await
+            let path =
+                http::uri::PathAndQuery::from_static("/gravity.v1.Msg/SubmitBadSignatureEvidence");
+            let mut req = request.into_request();
+            req.extensions_mut().insert(GrpcMethod::new(
+                "gravity.v1.Msg",
+                "SubmitBadSignatureEvidence",
+            ));
+            self.inner.unary(req, path, codec).await
         }
     }
 }
@@ -1602,9 +1593,7 @@ pub struct EvmChainData {
     #[prost(message, repeated, tag = "13")]
     pub pending_ibc_auto_forwards: ::prost::alloc::vec::Vec<PendingIbcAutoForward>,
     #[prost(message, repeated, tag = "14")]
-    pub pending_erc721_ibc_auto_forwards: ::prost::alloc::vec::Vec<
-        PendingErc721IbcAutoForward,
-    >,
+    pub pending_erc721_ibc_auto_forwards: ::prost::alloc::vec::Vec<PendingErc721IbcAutoForward>,
 }
 /// EvmChain struct contains EVM chain specific data
 #[allow(clippy::derive_partial_eq_without_eq)]
@@ -2208,15 +2197,13 @@ pub struct QueryPendingErc721IbcAutoForwardsRequest {
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct QueryPendingErc721IbcAutoForwardsResponse {
     #[prost(message, repeated, tag = "1")]
-    pub pending_erc721_ibc_auto_forwards: ::prost::alloc::vec::Vec<
-        PendingErc721IbcAutoForward,
-    >,
+    pub pending_erc721_ibc_auto_forwards: ::prost::alloc::vec::Vec<PendingErc721IbcAutoForward>,
 }
 /// Generated client implementations.
 pub mod query_client {
     #![allow(unused_variables, dead_code, missing_docs, clippy::let_unit_value)]
-    use tonic::codegen::*;
     use tonic::codegen::http::Uri;
+    use tonic::codegen::*;
     /// Query defines the gRPC querier service
     #[derive(Debug, Clone)]
     pub struct QueryClient<T> {
@@ -2261,9 +2248,8 @@ pub mod query_client {
                     <T as tonic::client::GrpcService<tonic::body::BoxBody>>::ResponseBody,
                 >,
             >,
-            <T as tonic::codegen::Service<
-                http::Request<tonic::body::BoxBody>,
-            >>::Error: Into<StdError> + Send + Sync,
+            <T as tonic::codegen::Service<http::Request<tonic::body::BoxBody>>>::Error:
+                Into<StdError> + Send + Sync,
         {
             QueryClient::new(InterceptedService::new(inner, interceptor))
         }
@@ -2282,759 +2268,759 @@ pub mod query_client {
             self.inner = self.inner.accept_compressed(encoding);
             self
         }
+        /// Limits the maximum size of a decoded message.
+        ///
+        /// Default: `4MB`
+        #[must_use]
+        pub fn max_decoding_message_size(mut self, limit: usize) -> Self {
+            self.inner = self.inner.max_decoding_message_size(limit);
+            self
+        }
+        /// Limits the maximum size of an encoded message.
+        ///
+        /// Default: `usize::MAX`
+        #[must_use]
+        pub fn max_encoding_message_size(mut self, limit: usize) -> Self {
+            self.inner = self.inner.max_encoding_message_size(limit);
+            self
+        }
         /// Deployments queries deployments
         pub async fn params(
             &mut self,
             request: impl tonic::IntoRequest<super::QueryParamsRequest>,
-        ) -> Result<tonic::Response<super::QueryParamsResponse>, tonic::Status> {
-            self.inner
-                .ready()
-                .await
-                .map_err(|e| {
-                    tonic::Status::new(
-                        tonic::Code::Unknown,
-                        format!("Service was not ready: {}", e.into()),
-                    )
-                })?;
+        ) -> std::result::Result<tonic::Response<super::QueryParamsResponse>, tonic::Status>
+        {
+            self.inner.ready().await.map_err(|e| {
+                tonic::Status::new(
+                    tonic::Code::Unknown,
+                    format!("Service was not ready: {}", e.into()),
+                )
+            })?;
             let codec = tonic::codec::ProstCodec::default();
             let path = http::uri::PathAndQuery::from_static("/gravity.v1.Query/Params");
-            self.inner.unary(request.into_request(), path, codec).await
+            let mut req = request.into_request();
+            req.extensions_mut()
+                .insert(GrpcMethod::new("gravity.v1.Query", "Params"));
+            self.inner.unary(req, path, codec).await
         }
         pub async fn current_valset(
             &mut self,
             request: impl tonic::IntoRequest<super::QueryCurrentValsetRequest>,
-        ) -> Result<tonic::Response<super::QueryCurrentValsetResponse>, tonic::Status> {
-            self.inner
-                .ready()
-                .await
-                .map_err(|e| {
-                    tonic::Status::new(
-                        tonic::Code::Unknown,
-                        format!("Service was not ready: {}", e.into()),
-                    )
-                })?;
+        ) -> std::result::Result<tonic::Response<super::QueryCurrentValsetResponse>, tonic::Status>
+        {
+            self.inner.ready().await.map_err(|e| {
+                tonic::Status::new(
+                    tonic::Code::Unknown,
+                    format!("Service was not ready: {}", e.into()),
+                )
+            })?;
             let codec = tonic::codec::ProstCodec::default();
-            let path = http::uri::PathAndQuery::from_static(
-                "/gravity.v1.Query/CurrentValset",
-            );
-            self.inner.unary(request.into_request(), path, codec).await
+            let path = http::uri::PathAndQuery::from_static("/gravity.v1.Query/CurrentValset");
+            let mut req = request.into_request();
+            req.extensions_mut()
+                .insert(GrpcMethod::new("gravity.v1.Query", "CurrentValset"));
+            self.inner.unary(req, path, codec).await
         }
         pub async fn valset_request(
             &mut self,
             request: impl tonic::IntoRequest<super::QueryValsetRequestRequest>,
-        ) -> Result<tonic::Response<super::QueryValsetRequestResponse>, tonic::Status> {
-            self.inner
-                .ready()
-                .await
-                .map_err(|e| {
-                    tonic::Status::new(
-                        tonic::Code::Unknown,
-                        format!("Service was not ready: {}", e.into()),
-                    )
-                })?;
+        ) -> std::result::Result<tonic::Response<super::QueryValsetRequestResponse>, tonic::Status>
+        {
+            self.inner.ready().await.map_err(|e| {
+                tonic::Status::new(
+                    tonic::Code::Unknown,
+                    format!("Service was not ready: {}", e.into()),
+                )
+            })?;
             let codec = tonic::codec::ProstCodec::default();
-            let path = http::uri::PathAndQuery::from_static(
-                "/gravity.v1.Query/ValsetRequest",
-            );
-            self.inner.unary(request.into_request(), path, codec).await
+            let path = http::uri::PathAndQuery::from_static("/gravity.v1.Query/ValsetRequest");
+            let mut req = request.into_request();
+            req.extensions_mut()
+                .insert(GrpcMethod::new("gravity.v1.Query", "ValsetRequest"));
+            self.inner.unary(req, path, codec).await
         }
         pub async fn valset_confirm(
             &mut self,
             request: impl tonic::IntoRequest<super::QueryValsetConfirmRequest>,
-        ) -> Result<tonic::Response<super::QueryValsetConfirmResponse>, tonic::Status> {
-            self.inner
-                .ready()
-                .await
-                .map_err(|e| {
-                    tonic::Status::new(
-                        tonic::Code::Unknown,
-                        format!("Service was not ready: {}", e.into()),
-                    )
-                })?;
+        ) -> std::result::Result<tonic::Response<super::QueryValsetConfirmResponse>, tonic::Status>
+        {
+            self.inner.ready().await.map_err(|e| {
+                tonic::Status::new(
+                    tonic::Code::Unknown,
+                    format!("Service was not ready: {}", e.into()),
+                )
+            })?;
             let codec = tonic::codec::ProstCodec::default();
-            let path = http::uri::PathAndQuery::from_static(
-                "/gravity.v1.Query/ValsetConfirm",
-            );
-            self.inner.unary(request.into_request(), path, codec).await
+            let path = http::uri::PathAndQuery::from_static("/gravity.v1.Query/ValsetConfirm");
+            let mut req = request.into_request();
+            req.extensions_mut()
+                .insert(GrpcMethod::new("gravity.v1.Query", "ValsetConfirm"));
+            self.inner.unary(req, path, codec).await
         }
         pub async fn valset_confirms_by_nonce(
             &mut self,
             request: impl tonic::IntoRequest<super::QueryValsetConfirmsByNonceRequest>,
-        ) -> Result<
+        ) -> std::result::Result<
             tonic::Response<super::QueryValsetConfirmsByNonceResponse>,
             tonic::Status,
         > {
-            self.inner
-                .ready()
-                .await
-                .map_err(|e| {
-                    tonic::Status::new(
-                        tonic::Code::Unknown,
-                        format!("Service was not ready: {}", e.into()),
-                    )
-                })?;
+            self.inner.ready().await.map_err(|e| {
+                tonic::Status::new(
+                    tonic::Code::Unknown,
+                    format!("Service was not ready: {}", e.into()),
+                )
+            })?;
             let codec = tonic::codec::ProstCodec::default();
-            let path = http::uri::PathAndQuery::from_static(
-                "/gravity.v1.Query/ValsetConfirmsByNonce",
-            );
-            self.inner.unary(request.into_request(), path, codec).await
+            let path =
+                http::uri::PathAndQuery::from_static("/gravity.v1.Query/ValsetConfirmsByNonce");
+            let mut req = request.into_request();
+            req.extensions_mut()
+                .insert(GrpcMethod::new("gravity.v1.Query", "ValsetConfirmsByNonce"));
+            self.inner.unary(req, path, codec).await
         }
         pub async fn last_valset_requests(
             &mut self,
             request: impl tonic::IntoRequest<super::QueryLastValsetRequestsRequest>,
-        ) -> Result<
+        ) -> std::result::Result<
             tonic::Response<super::QueryLastValsetRequestsResponse>,
             tonic::Status,
         > {
-            self.inner
-                .ready()
-                .await
-                .map_err(|e| {
-                    tonic::Status::new(
-                        tonic::Code::Unknown,
-                        format!("Service was not ready: {}", e.into()),
-                    )
-                })?;
+            self.inner.ready().await.map_err(|e| {
+                tonic::Status::new(
+                    tonic::Code::Unknown,
+                    format!("Service was not ready: {}", e.into()),
+                )
+            })?;
             let codec = tonic::codec::ProstCodec::default();
-            let path = http::uri::PathAndQuery::from_static(
-                "/gravity.v1.Query/LastValsetRequests",
-            );
-            self.inner.unary(request.into_request(), path, codec).await
+            let path = http::uri::PathAndQuery::from_static("/gravity.v1.Query/LastValsetRequests");
+            let mut req = request.into_request();
+            req.extensions_mut()
+                .insert(GrpcMethod::new("gravity.v1.Query", "LastValsetRequests"));
+            self.inner.unary(req, path, codec).await
         }
         pub async fn last_pending_valset_request_by_addr(
             &mut self,
-            request: impl tonic::IntoRequest<
-                super::QueryLastPendingValsetRequestByAddrRequest,
-            >,
-        ) -> Result<
+            request: impl tonic::IntoRequest<super::QueryLastPendingValsetRequestByAddrRequest>,
+        ) -> std::result::Result<
             tonic::Response<super::QueryLastPendingValsetRequestByAddrResponse>,
             tonic::Status,
         > {
-            self.inner
-                .ready()
-                .await
-                .map_err(|e| {
-                    tonic::Status::new(
-                        tonic::Code::Unknown,
-                        format!("Service was not ready: {}", e.into()),
-                    )
-                })?;
+            self.inner.ready().await.map_err(|e| {
+                tonic::Status::new(
+                    tonic::Code::Unknown,
+                    format!("Service was not ready: {}", e.into()),
+                )
+            })?;
             let codec = tonic::codec::ProstCodec::default();
             let path = http::uri::PathAndQuery::from_static(
                 "/gravity.v1.Query/LastPendingValsetRequestByAddr",
             );
-            self.inner.unary(request.into_request(), path, codec).await
+            let mut req = request.into_request();
+            req.extensions_mut().insert(GrpcMethod::new(
+                "gravity.v1.Query",
+                "LastPendingValsetRequestByAddr",
+            ));
+            self.inner.unary(req, path, codec).await
         }
         pub async fn last_pending_batch_request_by_addr(
             &mut self,
-            request: impl tonic::IntoRequest<
-                super::QueryLastPendingBatchRequestByAddrRequest,
-            >,
-        ) -> Result<
+            request: impl tonic::IntoRequest<super::QueryLastPendingBatchRequestByAddrRequest>,
+        ) -> std::result::Result<
             tonic::Response<super::QueryLastPendingBatchRequestByAddrResponse>,
             tonic::Status,
         > {
-            self.inner
-                .ready()
-                .await
-                .map_err(|e| {
-                    tonic::Status::new(
-                        tonic::Code::Unknown,
-                        format!("Service was not ready: {}", e.into()),
-                    )
-                })?;
+            self.inner.ready().await.map_err(|e| {
+                tonic::Status::new(
+                    tonic::Code::Unknown,
+                    format!("Service was not ready: {}", e.into()),
+                )
+            })?;
             let codec = tonic::codec::ProstCodec::default();
             let path = http::uri::PathAndQuery::from_static(
                 "/gravity.v1.Query/LastPendingBatchRequestByAddr",
             );
-            self.inner.unary(request.into_request(), path, codec).await
+            let mut req = request.into_request();
+            req.extensions_mut().insert(GrpcMethod::new(
+                "gravity.v1.Query",
+                "LastPendingBatchRequestByAddr",
+            ));
+            self.inner.unary(req, path, codec).await
         }
         pub async fn last_pending_logic_call_by_addr(
             &mut self,
-            request: impl tonic::IntoRequest<
-                super::QueryLastPendingLogicCallByAddrRequest,
-            >,
-        ) -> Result<
+            request: impl tonic::IntoRequest<super::QueryLastPendingLogicCallByAddrRequest>,
+        ) -> std::result::Result<
             tonic::Response<super::QueryLastPendingLogicCallByAddrResponse>,
             tonic::Status,
         > {
-            self.inner
-                .ready()
-                .await
-                .map_err(|e| {
-                    tonic::Status::new(
-                        tonic::Code::Unknown,
-                        format!("Service was not ready: {}", e.into()),
-                    )
-                })?;
+            self.inner.ready().await.map_err(|e| {
+                tonic::Status::new(
+                    tonic::Code::Unknown,
+                    format!("Service was not ready: {}", e.into()),
+                )
+            })?;
             let codec = tonic::codec::ProstCodec::default();
             let path = http::uri::PathAndQuery::from_static(
                 "/gravity.v1.Query/LastPendingLogicCallByAddr",
             );
-            self.inner.unary(request.into_request(), path, codec).await
+            let mut req = request.into_request();
+            req.extensions_mut().insert(GrpcMethod::new(
+                "gravity.v1.Query",
+                "LastPendingLogicCallByAddr",
+            ));
+            self.inner.unary(req, path, codec).await
         }
         pub async fn last_event_nonce_by_addr(
             &mut self,
             request: impl tonic::IntoRequest<super::QueryLastEventNonceByAddrRequest>,
-        ) -> Result<
+        ) -> std::result::Result<
             tonic::Response<super::QueryLastEventNonceByAddrResponse>,
             tonic::Status,
         > {
-            self.inner
-                .ready()
-                .await
-                .map_err(|e| {
-                    tonic::Status::new(
-                        tonic::Code::Unknown,
-                        format!("Service was not ready: {}", e.into()),
-                    )
-                })?;
+            self.inner.ready().await.map_err(|e| {
+                tonic::Status::new(
+                    tonic::Code::Unknown,
+                    format!("Service was not ready: {}", e.into()),
+                )
+            })?;
             let codec = tonic::codec::ProstCodec::default();
-            let path = http::uri::PathAndQuery::from_static(
-                "/gravity.v1.Query/LastEventNonceByAddr",
-            );
-            self.inner.unary(request.into_request(), path, codec).await
+            let path =
+                http::uri::PathAndQuery::from_static("/gravity.v1.Query/LastEventNonceByAddr");
+            let mut req = request.into_request();
+            req.extensions_mut()
+                .insert(GrpcMethod::new("gravity.v1.Query", "LastEventNonceByAddr"));
+            self.inner.unary(req, path, codec).await
         }
         pub async fn last_erc721_event_nonce_by_addr(
             &mut self,
-            request: impl tonic::IntoRequest<
-                super::QueryLastErc721EventNonceByAddrRequest,
-            >,
-        ) -> Result<
+            request: impl tonic::IntoRequest<super::QueryLastErc721EventNonceByAddrRequest>,
+        ) -> std::result::Result<
             tonic::Response<super::QueryLastErc721EventNonceByAddrResponse>,
             tonic::Status,
         > {
-            self.inner
-                .ready()
-                .await
-                .map_err(|e| {
-                    tonic::Status::new(
-                        tonic::Code::Unknown,
-                        format!("Service was not ready: {}", e.into()),
-                    )
-                })?;
+            self.inner.ready().await.map_err(|e| {
+                tonic::Status::new(
+                    tonic::Code::Unknown,
+                    format!("Service was not ready: {}", e.into()),
+                )
+            })?;
             let codec = tonic::codec::ProstCodec::default();
             let path = http::uri::PathAndQuery::from_static(
                 "/gravity.v1.Query/LastERC721EventNonceByAddr",
             );
-            self.inner.unary(request.into_request(), path, codec).await
+            let mut req = request.into_request();
+            req.extensions_mut().insert(GrpcMethod::new(
+                "gravity.v1.Query",
+                "LastERC721EventNonceByAddr",
+            ));
+            self.inner.unary(req, path, codec).await
         }
         pub async fn batch_fees(
             &mut self,
             request: impl tonic::IntoRequest<super::QueryBatchFeeRequest>,
-        ) -> Result<tonic::Response<super::QueryBatchFeeResponse>, tonic::Status> {
-            self.inner
-                .ready()
-                .await
-                .map_err(|e| {
-                    tonic::Status::new(
-                        tonic::Code::Unknown,
-                        format!("Service was not ready: {}", e.into()),
-                    )
-                })?;
+        ) -> std::result::Result<tonic::Response<super::QueryBatchFeeResponse>, tonic::Status>
+        {
+            self.inner.ready().await.map_err(|e| {
+                tonic::Status::new(
+                    tonic::Code::Unknown,
+                    format!("Service was not ready: {}", e.into()),
+                )
+            })?;
             let codec = tonic::codec::ProstCodec::default();
-            let path = http::uri::PathAndQuery::from_static(
-                "/gravity.v1.Query/BatchFees",
-            );
-            self.inner.unary(request.into_request(), path, codec).await
+            let path = http::uri::PathAndQuery::from_static("/gravity.v1.Query/BatchFees");
+            let mut req = request.into_request();
+            req.extensions_mut()
+                .insert(GrpcMethod::new("gravity.v1.Query", "BatchFees"));
+            self.inner.unary(req, path, codec).await
         }
         pub async fn outgoing_tx_batches(
             &mut self,
             request: impl tonic::IntoRequest<super::QueryOutgoingTxBatchesRequest>,
-        ) -> Result<
+        ) -> std::result::Result<
             tonic::Response<super::QueryOutgoingTxBatchesResponse>,
             tonic::Status,
         > {
-            self.inner
-                .ready()
-                .await
-                .map_err(|e| {
-                    tonic::Status::new(
-                        tonic::Code::Unknown,
-                        format!("Service was not ready: {}", e.into()),
-                    )
-                })?;
+            self.inner.ready().await.map_err(|e| {
+                tonic::Status::new(
+                    tonic::Code::Unknown,
+                    format!("Service was not ready: {}", e.into()),
+                )
+            })?;
             let codec = tonic::codec::ProstCodec::default();
-            let path = http::uri::PathAndQuery::from_static(
-                "/gravity.v1.Query/OutgoingTxBatches",
-            );
-            self.inner.unary(request.into_request(), path, codec).await
+            let path = http::uri::PathAndQuery::from_static("/gravity.v1.Query/OutgoingTxBatches");
+            let mut req = request.into_request();
+            req.extensions_mut()
+                .insert(GrpcMethod::new("gravity.v1.Query", "OutgoingTxBatches"));
+            self.inner.unary(req, path, codec).await
         }
         pub async fn outgoing_logic_calls(
             &mut self,
             request: impl tonic::IntoRequest<super::QueryOutgoingLogicCallsRequest>,
-        ) -> Result<
+        ) -> std::result::Result<
             tonic::Response<super::QueryOutgoingLogicCallsResponse>,
             tonic::Status,
         > {
-            self.inner
-                .ready()
-                .await
-                .map_err(|e| {
-                    tonic::Status::new(
-                        tonic::Code::Unknown,
-                        format!("Service was not ready: {}", e.into()),
-                    )
-                })?;
+            self.inner.ready().await.map_err(|e| {
+                tonic::Status::new(
+                    tonic::Code::Unknown,
+                    format!("Service was not ready: {}", e.into()),
+                )
+            })?;
             let codec = tonic::codec::ProstCodec::default();
-            let path = http::uri::PathAndQuery::from_static(
-                "/gravity.v1.Query/OutgoingLogicCalls",
-            );
-            self.inner.unary(request.into_request(), path, codec).await
+            let path = http::uri::PathAndQuery::from_static("/gravity.v1.Query/OutgoingLogicCalls");
+            let mut req = request.into_request();
+            req.extensions_mut()
+                .insert(GrpcMethod::new("gravity.v1.Query", "OutgoingLogicCalls"));
+            self.inner.unary(req, path, codec).await
         }
         pub async fn batch_request_by_nonce(
             &mut self,
             request: impl tonic::IntoRequest<super::QueryBatchRequestByNonceRequest>,
-        ) -> Result<
+        ) -> std::result::Result<
             tonic::Response<super::QueryBatchRequestByNonceResponse>,
             tonic::Status,
         > {
-            self.inner
-                .ready()
-                .await
-                .map_err(|e| {
-                    tonic::Status::new(
-                        tonic::Code::Unknown,
-                        format!("Service was not ready: {}", e.into()),
-                    )
-                })?;
+            self.inner.ready().await.map_err(|e| {
+                tonic::Status::new(
+                    tonic::Code::Unknown,
+                    format!("Service was not ready: {}", e.into()),
+                )
+            })?;
             let codec = tonic::codec::ProstCodec::default();
-            let path = http::uri::PathAndQuery::from_static(
-                "/gravity.v1.Query/BatchRequestByNonce",
-            );
-            self.inner.unary(request.into_request(), path, codec).await
+            let path =
+                http::uri::PathAndQuery::from_static("/gravity.v1.Query/BatchRequestByNonce");
+            let mut req = request.into_request();
+            req.extensions_mut()
+                .insert(GrpcMethod::new("gravity.v1.Query", "BatchRequestByNonce"));
+            self.inner.unary(req, path, codec).await
         }
         pub async fn batch_confirms(
             &mut self,
             request: impl tonic::IntoRequest<super::QueryBatchConfirmsRequest>,
-        ) -> Result<tonic::Response<super::QueryBatchConfirmsResponse>, tonic::Status> {
-            self.inner
-                .ready()
-                .await
-                .map_err(|e| {
-                    tonic::Status::new(
-                        tonic::Code::Unknown,
-                        format!("Service was not ready: {}", e.into()),
-                    )
-                })?;
+        ) -> std::result::Result<tonic::Response<super::QueryBatchConfirmsResponse>, tonic::Status>
+        {
+            self.inner.ready().await.map_err(|e| {
+                tonic::Status::new(
+                    tonic::Code::Unknown,
+                    format!("Service was not ready: {}", e.into()),
+                )
+            })?;
             let codec = tonic::codec::ProstCodec::default();
-            let path = http::uri::PathAndQuery::from_static(
-                "/gravity.v1.Query/BatchConfirms",
-            );
-            self.inner.unary(request.into_request(), path, codec).await
+            let path = http::uri::PathAndQuery::from_static("/gravity.v1.Query/BatchConfirms");
+            let mut req = request.into_request();
+            req.extensions_mut()
+                .insert(GrpcMethod::new("gravity.v1.Query", "BatchConfirms"));
+            self.inner.unary(req, path, codec).await
         }
         pub async fn logic_confirms(
             &mut self,
             request: impl tonic::IntoRequest<super::QueryLogicConfirmsRequest>,
-        ) -> Result<tonic::Response<super::QueryLogicConfirmsResponse>, tonic::Status> {
-            self.inner
-                .ready()
-                .await
-                .map_err(|e| {
-                    tonic::Status::new(
-                        tonic::Code::Unknown,
-                        format!("Service was not ready: {}", e.into()),
-                    )
-                })?;
+        ) -> std::result::Result<tonic::Response<super::QueryLogicConfirmsResponse>, tonic::Status>
+        {
+            self.inner.ready().await.map_err(|e| {
+                tonic::Status::new(
+                    tonic::Code::Unknown,
+                    format!("Service was not ready: {}", e.into()),
+                )
+            })?;
             let codec = tonic::codec::ProstCodec::default();
-            let path = http::uri::PathAndQuery::from_static(
-                "/gravity.v1.Query/LogicConfirms",
-            );
-            self.inner.unary(request.into_request(), path, codec).await
+            let path = http::uri::PathAndQuery::from_static("/gravity.v1.Query/LogicConfirms");
+            let mut req = request.into_request();
+            req.extensions_mut()
+                .insert(GrpcMethod::new("gravity.v1.Query", "LogicConfirms"));
+            self.inner.unary(req, path, codec).await
         }
         pub async fn erc20_to_denom(
             &mut self,
             request: impl tonic::IntoRequest<super::QueryErc20ToDenomRequest>,
-        ) -> Result<tonic::Response<super::QueryErc20ToDenomResponse>, tonic::Status> {
-            self.inner
-                .ready()
-                .await
-                .map_err(|e| {
-                    tonic::Status::new(
-                        tonic::Code::Unknown,
-                        format!("Service was not ready: {}", e.into()),
-                    )
-                })?;
+        ) -> std::result::Result<tonic::Response<super::QueryErc20ToDenomResponse>, tonic::Status>
+        {
+            self.inner.ready().await.map_err(|e| {
+                tonic::Status::new(
+                    tonic::Code::Unknown,
+                    format!("Service was not ready: {}", e.into()),
+                )
+            })?;
             let codec = tonic::codec::ProstCodec::default();
-            let path = http::uri::PathAndQuery::from_static(
-                "/gravity.v1.Query/ERC20ToDenom",
-            );
-            self.inner.unary(request.into_request(), path, codec).await
+            let path = http::uri::PathAndQuery::from_static("/gravity.v1.Query/ERC20ToDenom");
+            let mut req = request.into_request();
+            req.extensions_mut()
+                .insert(GrpcMethod::new("gravity.v1.Query", "ERC20ToDenom"));
+            self.inner.unary(req, path, codec).await
         }
         pub async fn denom_to_erc20(
             &mut self,
             request: impl tonic::IntoRequest<super::QueryDenomToErc20Request>,
-        ) -> Result<tonic::Response<super::QueryDenomToErc20Response>, tonic::Status> {
-            self.inner
-                .ready()
-                .await
-                .map_err(|e| {
-                    tonic::Status::new(
-                        tonic::Code::Unknown,
-                        format!("Service was not ready: {}", e.into()),
-                    )
-                })?;
+        ) -> std::result::Result<tonic::Response<super::QueryDenomToErc20Response>, tonic::Status>
+        {
+            self.inner.ready().await.map_err(|e| {
+                tonic::Status::new(
+                    tonic::Code::Unknown,
+                    format!("Service was not ready: {}", e.into()),
+                )
+            })?;
             let codec = tonic::codec::ProstCodec::default();
-            let path = http::uri::PathAndQuery::from_static(
-                "/gravity.v1.Query/DenomToERC20",
-            );
-            self.inner.unary(request.into_request(), path, codec).await
+            let path = http::uri::PathAndQuery::from_static("/gravity.v1.Query/DenomToERC20");
+            let mut req = request.into_request();
+            req.extensions_mut()
+                .insert(GrpcMethod::new("gravity.v1.Query", "DenomToERC20"));
+            self.inner.unary(req, path, codec).await
         }
         pub async fn get_last_observed_eth_block(
             &mut self,
             request: impl tonic::IntoRequest<super::QueryLastObservedEthBlockRequest>,
-        ) -> Result<
+        ) -> std::result::Result<
             tonic::Response<super::QueryLastObservedEthBlockResponse>,
             tonic::Status,
         > {
-            self.inner
-                .ready()
-                .await
-                .map_err(|e| {
-                    tonic::Status::new(
-                        tonic::Code::Unknown,
-                        format!("Service was not ready: {}", e.into()),
-                    )
-                })?;
+            self.inner.ready().await.map_err(|e| {
+                tonic::Status::new(
+                    tonic::Code::Unknown,
+                    format!("Service was not ready: {}", e.into()),
+                )
+            })?;
             let codec = tonic::codec::ProstCodec::default();
-            let path = http::uri::PathAndQuery::from_static(
-                "/gravity.v1.Query/GetLastObservedEthBlock",
-            );
-            self.inner.unary(request.into_request(), path, codec).await
+            let path =
+                http::uri::PathAndQuery::from_static("/gravity.v1.Query/GetLastObservedEthBlock");
+            let mut req = request.into_request();
+            req.extensions_mut().insert(GrpcMethod::new(
+                "gravity.v1.Query",
+                "GetLastObservedEthBlock",
+            ));
+            self.inner.unary(req, path, codec).await
         }
         pub async fn get_last_observed_erc721_eth_block(
             &mut self,
-            request: impl tonic::IntoRequest<
-                super::QueryLastObservedErc721EthBlockRequest,
-            >,
-        ) -> Result<
+            request: impl tonic::IntoRequest<super::QueryLastObservedErc721EthBlockRequest>,
+        ) -> std::result::Result<
             tonic::Response<super::QueryLastObservedErc721EthBlockResponse>,
             tonic::Status,
         > {
-            self.inner
-                .ready()
-                .await
-                .map_err(|e| {
-                    tonic::Status::new(
-                        tonic::Code::Unknown,
-                        format!("Service was not ready: {}", e.into()),
-                    )
-                })?;
+            self.inner.ready().await.map_err(|e| {
+                tonic::Status::new(
+                    tonic::Code::Unknown,
+                    format!("Service was not ready: {}", e.into()),
+                )
+            })?;
             let codec = tonic::codec::ProstCodec::default();
             let path = http::uri::PathAndQuery::from_static(
                 "/gravity.v1.Query/GetLastObservedERC721EthBlock",
             );
-            self.inner.unary(request.into_request(), path, codec).await
+            let mut req = request.into_request();
+            req.extensions_mut().insert(GrpcMethod::new(
+                "gravity.v1.Query",
+                "GetLastObservedERC721EthBlock",
+            ));
+            self.inner.unary(req, path, codec).await
         }
         pub async fn get_last_observed_eth_nonce(
             &mut self,
             request: impl tonic::IntoRequest<super::QueryLastObservedEthNonceRequest>,
-        ) -> Result<
+        ) -> std::result::Result<
             tonic::Response<super::QueryLastObservedEthNonceResponse>,
             tonic::Status,
         > {
-            self.inner
-                .ready()
-                .await
-                .map_err(|e| {
-                    tonic::Status::new(
-                        tonic::Code::Unknown,
-                        format!("Service was not ready: {}", e.into()),
-                    )
-                })?;
+            self.inner.ready().await.map_err(|e| {
+                tonic::Status::new(
+                    tonic::Code::Unknown,
+                    format!("Service was not ready: {}", e.into()),
+                )
+            })?;
             let codec = tonic::codec::ProstCodec::default();
-            let path = http::uri::PathAndQuery::from_static(
-                "/gravity.v1.Query/GetLastObservedEthNonce",
-            );
-            self.inner.unary(request.into_request(), path, codec).await
+            let path =
+                http::uri::PathAndQuery::from_static("/gravity.v1.Query/GetLastObservedEthNonce");
+            let mut req = request.into_request();
+            req.extensions_mut().insert(GrpcMethod::new(
+                "gravity.v1.Query",
+                "GetLastObservedEthNonce",
+            ));
+            self.inner.unary(req, path, codec).await
         }
         pub async fn get_last_observed_erc721_eth_nonce(
             &mut self,
-            request: impl tonic::IntoRequest<
-                super::QueryLastObservedErc721EthNonceRequest,
-            >,
-        ) -> Result<
+            request: impl tonic::IntoRequest<super::QueryLastObservedErc721EthNonceRequest>,
+        ) -> std::result::Result<
             tonic::Response<super::QueryLastObservedErc721EthNonceResponse>,
             tonic::Status,
         > {
-            self.inner
-                .ready()
-                .await
-                .map_err(|e| {
-                    tonic::Status::new(
-                        tonic::Code::Unknown,
-                        format!("Service was not ready: {}", e.into()),
-                    )
-                })?;
+            self.inner.ready().await.map_err(|e| {
+                tonic::Status::new(
+                    tonic::Code::Unknown,
+                    format!("Service was not ready: {}", e.into()),
+                )
+            })?;
             let codec = tonic::codec::ProstCodec::default();
             let path = http::uri::PathAndQuery::from_static(
                 "/gravity.v1.Query/GetLastObservedERC721EthNonce",
             );
-            self.inner.unary(request.into_request(), path, codec).await
+            let mut req = request.into_request();
+            req.extensions_mut().insert(GrpcMethod::new(
+                "gravity.v1.Query",
+                "GetLastObservedERC721EthNonce",
+            ));
+            self.inner.unary(req, path, codec).await
         }
         pub async fn get_attestations(
             &mut self,
             request: impl tonic::IntoRequest<super::QueryAttestationsRequest>,
-        ) -> Result<tonic::Response<super::QueryAttestationsResponse>, tonic::Status> {
-            self.inner
-                .ready()
-                .await
-                .map_err(|e| {
-                    tonic::Status::new(
-                        tonic::Code::Unknown,
-                        format!("Service was not ready: {}", e.into()),
-                    )
-                })?;
+        ) -> std::result::Result<tonic::Response<super::QueryAttestationsResponse>, tonic::Status>
+        {
+            self.inner.ready().await.map_err(|e| {
+                tonic::Status::new(
+                    tonic::Code::Unknown,
+                    format!("Service was not ready: {}", e.into()),
+                )
+            })?;
             let codec = tonic::codec::ProstCodec::default();
-            let path = http::uri::PathAndQuery::from_static(
-                "/gravity.v1.Query/GetAttestations",
-            );
-            self.inner.unary(request.into_request(), path, codec).await
+            let path = http::uri::PathAndQuery::from_static("/gravity.v1.Query/GetAttestations");
+            let mut req = request.into_request();
+            req.extensions_mut()
+                .insert(GrpcMethod::new("gravity.v1.Query", "GetAttestations"));
+            self.inner.unary(req, path, codec).await
         }
         pub async fn get_erc721_attestations(
             &mut self,
             request: impl tonic::IntoRequest<super::QueryErc721AttestationsRequest>,
-        ) -> Result<
+        ) -> std::result::Result<
             tonic::Response<super::QueryErc721AttestationsResponse>,
             tonic::Status,
         > {
-            self.inner
-                .ready()
-                .await
-                .map_err(|e| {
-                    tonic::Status::new(
-                        tonic::Code::Unknown,
-                        format!("Service was not ready: {}", e.into()),
-                    )
-                })?;
+            self.inner.ready().await.map_err(|e| {
+                tonic::Status::new(
+                    tonic::Code::Unknown,
+                    format!("Service was not ready: {}", e.into()),
+                )
+            })?;
             let codec = tonic::codec::ProstCodec::default();
-            let path = http::uri::PathAndQuery::from_static(
-                "/gravity.v1.Query/GetERC721Attestations",
-            );
-            self.inner.unary(request.into_request(), path, codec).await
+            let path =
+                http::uri::PathAndQuery::from_static("/gravity.v1.Query/GetERC721Attestations");
+            let mut req = request.into_request();
+            req.extensions_mut()
+                .insert(GrpcMethod::new("gravity.v1.Query", "GetERC721Attestations"));
+            self.inner.unary(req, path, codec).await
         }
         pub async fn get_delegate_key_by_validator(
             &mut self,
             request: impl tonic::IntoRequest<super::QueryDelegateKeysByValidatorAddress>,
-        ) -> Result<
+        ) -> std::result::Result<
             tonic::Response<super::QueryDelegateKeysByValidatorAddressResponse>,
             tonic::Status,
         > {
-            self.inner
-                .ready()
-                .await
-                .map_err(|e| {
-                    tonic::Status::new(
-                        tonic::Code::Unknown,
-                        format!("Service was not ready: {}", e.into()),
-                    )
-                })?;
+            self.inner.ready().await.map_err(|e| {
+                tonic::Status::new(
+                    tonic::Code::Unknown,
+                    format!("Service was not ready: {}", e.into()),
+                )
+            })?;
             let codec = tonic::codec::ProstCodec::default();
-            let path = http::uri::PathAndQuery::from_static(
-                "/gravity.v1.Query/GetDelegateKeyByValidator",
-            );
-            self.inner.unary(request.into_request(), path, codec).await
+            let path =
+                http::uri::PathAndQuery::from_static("/gravity.v1.Query/GetDelegateKeyByValidator");
+            let mut req = request.into_request();
+            req.extensions_mut().insert(GrpcMethod::new(
+                "gravity.v1.Query",
+                "GetDelegateKeyByValidator",
+            ));
+            self.inner.unary(req, path, codec).await
         }
         pub async fn get_delegate_key_by_eth(
             &mut self,
             request: impl tonic::IntoRequest<super::QueryDelegateKeysByEthAddress>,
-        ) -> Result<
+        ) -> std::result::Result<
             tonic::Response<super::QueryDelegateKeysByEthAddressResponse>,
             tonic::Status,
         > {
-            self.inner
-                .ready()
-                .await
-                .map_err(|e| {
-                    tonic::Status::new(
-                        tonic::Code::Unknown,
-                        format!("Service was not ready: {}", e.into()),
-                    )
-                })?;
+            self.inner.ready().await.map_err(|e| {
+                tonic::Status::new(
+                    tonic::Code::Unknown,
+                    format!("Service was not ready: {}", e.into()),
+                )
+            })?;
             let codec = tonic::codec::ProstCodec::default();
-            let path = http::uri::PathAndQuery::from_static(
-                "/gravity.v1.Query/GetDelegateKeyByEth",
-            );
-            self.inner.unary(request.into_request(), path, codec).await
+            let path =
+                http::uri::PathAndQuery::from_static("/gravity.v1.Query/GetDelegateKeyByEth");
+            let mut req = request.into_request();
+            req.extensions_mut()
+                .insert(GrpcMethod::new("gravity.v1.Query", "GetDelegateKeyByEth"));
+            self.inner.unary(req, path, codec).await
         }
         pub async fn get_delegate_key_by_orchestrator(
             &mut self,
-            request: impl tonic::IntoRequest<
-                super::QueryDelegateKeysByOrchestratorAddress,
-            >,
-        ) -> Result<
+            request: impl tonic::IntoRequest<super::QueryDelegateKeysByOrchestratorAddress>,
+        ) -> std::result::Result<
             tonic::Response<super::QueryDelegateKeysByOrchestratorAddressResponse>,
             tonic::Status,
         > {
-            self.inner
-                .ready()
-                .await
-                .map_err(|e| {
-                    tonic::Status::new(
-                        tonic::Code::Unknown,
-                        format!("Service was not ready: {}", e.into()),
-                    )
-                })?;
+            self.inner.ready().await.map_err(|e| {
+                tonic::Status::new(
+                    tonic::Code::Unknown,
+                    format!("Service was not ready: {}", e.into()),
+                )
+            })?;
             let codec = tonic::codec::ProstCodec::default();
             let path = http::uri::PathAndQuery::from_static(
                 "/gravity.v1.Query/GetDelegateKeyByOrchestrator",
             );
-            self.inner.unary(request.into_request(), path, codec).await
+            let mut req = request.into_request();
+            req.extensions_mut().insert(GrpcMethod::new(
+                "gravity.v1.Query",
+                "GetDelegateKeyByOrchestrator",
+            ));
+            self.inner.unary(req, path, codec).await
         }
         pub async fn get_pending_send_to_eth(
             &mut self,
             request: impl tonic::IntoRequest<super::QueryPendingSendToEth>,
-        ) -> Result<
-            tonic::Response<super::QueryPendingSendToEthResponse>,
-            tonic::Status,
-        > {
-            self.inner
-                .ready()
-                .await
-                .map_err(|e| {
-                    tonic::Status::new(
-                        tonic::Code::Unknown,
-                        format!("Service was not ready: {}", e.into()),
-                    )
-                })?;
+        ) -> std::result::Result<tonic::Response<super::QueryPendingSendToEthResponse>, tonic::Status>
+        {
+            self.inner.ready().await.map_err(|e| {
+                tonic::Status::new(
+                    tonic::Code::Unknown,
+                    format!("Service was not ready: {}", e.into()),
+                )
+            })?;
             let codec = tonic::codec::ProstCodec::default();
-            let path = http::uri::PathAndQuery::from_static(
-                "/gravity.v1.Query/GetPendingSendToEth",
-            );
-            self.inner.unary(request.into_request(), path, codec).await
+            let path =
+                http::uri::PathAndQuery::from_static("/gravity.v1.Query/GetPendingSendToEth");
+            let mut req = request.into_request();
+            req.extensions_mut()
+                .insert(GrpcMethod::new("gravity.v1.Query", "GetPendingSendToEth"));
+            self.inner.unary(req, path, codec).await
         }
         pub async fn get_pending_ibc_auto_forwards(
             &mut self,
             request: impl tonic::IntoRequest<super::QueryPendingIbcAutoForwards>,
-        ) -> Result<
+        ) -> std::result::Result<
             tonic::Response<super::QueryPendingIbcAutoForwardsResponse>,
             tonic::Status,
         > {
-            self.inner
-                .ready()
-                .await
-                .map_err(|e| {
-                    tonic::Status::new(
-                        tonic::Code::Unknown,
-                        format!("Service was not ready: {}", e.into()),
-                    )
-                })?;
+            self.inner.ready().await.map_err(|e| {
+                tonic::Status::new(
+                    tonic::Code::Unknown,
+                    format!("Service was not ready: {}", e.into()),
+                )
+            })?;
             let codec = tonic::codec::ProstCodec::default();
-            let path = http::uri::PathAndQuery::from_static(
-                "/gravity.v1.Query/GetPendingIbcAutoForwards",
-            );
-            self.inner.unary(request.into_request(), path, codec).await
+            let path =
+                http::uri::PathAndQuery::from_static("/gravity.v1.Query/GetPendingIbcAutoForwards");
+            let mut req = request.into_request();
+            req.extensions_mut().insert(GrpcMethod::new(
+                "gravity.v1.Query",
+                "GetPendingIbcAutoForwards",
+            ));
+            self.inner.unary(req, path, codec).await
         }
         pub async fn get_list_evm_chains(
             &mut self,
             request: impl tonic::IntoRequest<super::QueryListEvmChains>,
-        ) -> Result<tonic::Response<super::QueryListEvmChainsResponse>, tonic::Status> {
-            self.inner
-                .ready()
-                .await
-                .map_err(|e| {
-                    tonic::Status::new(
-                        tonic::Code::Unknown,
-                        format!("Service was not ready: {}", e.into()),
-                    )
-                })?;
+        ) -> std::result::Result<tonic::Response<super::QueryListEvmChainsResponse>, tonic::Status>
+        {
+            self.inner.ready().await.map_err(|e| {
+                tonic::Status::new(
+                    tonic::Code::Unknown,
+                    format!("Service was not ready: {}", e.into()),
+                )
+            })?;
             let codec = tonic::codec::ProstCodec::default();
-            let path = http::uri::PathAndQuery::from_static(
-                "/gravity.v1.Query/GetListEvmChains",
-            );
-            self.inner.unary(request.into_request(), path, codec).await
+            let path = http::uri::PathAndQuery::from_static("/gravity.v1.Query/GetListEvmChains");
+            let mut req = request.into_request();
+            req.extensions_mut()
+                .insert(GrpcMethod::new("gravity.v1.Query", "GetListEvmChains"));
+            self.inner.unary(req, path, codec).await
         }
         pub async fn get_monitored_erc20_addresses(
             &mut self,
             request: impl tonic::IntoRequest<super::QueryMonitoredErc20Addresses>,
-        ) -> Result<
+        ) -> std::result::Result<
             tonic::Response<super::QueryMonitoredErc20AddressesResponse>,
             tonic::Status,
         > {
-            self.inner
-                .ready()
-                .await
-                .map_err(|e| {
-                    tonic::Status::new(
-                        tonic::Code::Unknown,
-                        format!("Service was not ready: {}", e.into()),
-                    )
-                })?;
+            self.inner.ready().await.map_err(|e| {
+                tonic::Status::new(
+                    tonic::Code::Unknown,
+                    format!("Service was not ready: {}", e.into()),
+                )
+            })?;
             let codec = tonic::codec::ProstCodec::default();
             let path = http::uri::PathAndQuery::from_static(
                 "/gravity.v1.Query/GetMonitoredERC20Addresses",
             );
-            self.inner.unary(request.into_request(), path, codec).await
+            let mut req = request.into_request();
+            req.extensions_mut().insert(GrpcMethod::new(
+                "gravity.v1.Query",
+                "GetMonitoredERC20Addresses",
+            ));
+            self.inner.unary(req, path, codec).await
         }
         pub async fn get_bridge_balance_snapshots(
             &mut self,
             request: impl tonic::IntoRequest<super::QueryBridgeBalanceSnapshots>,
-        ) -> Result<
+        ) -> std::result::Result<
             tonic::Response<super::QueryBridgeBalanceSnapshotsResponse>,
             tonic::Status,
         > {
-            self.inner
-                .ready()
-                .await
-                .map_err(|e| {
-                    tonic::Status::new(
-                        tonic::Code::Unknown,
-                        format!("Service was not ready: {}", e.into()),
-                    )
-                })?;
+            self.inner.ready().await.map_err(|e| {
+                tonic::Status::new(
+                    tonic::Code::Unknown,
+                    format!("Service was not ready: {}", e.into()),
+                )
+            })?;
             let codec = tonic::codec::ProstCodec::default();
-            let path = http::uri::PathAndQuery::from_static(
-                "/gravity.v1.Query/GetBridgeBalanceSnapshots",
-            );
-            self.inner.unary(request.into_request(), path, codec).await
+            let path =
+                http::uri::PathAndQuery::from_static("/gravity.v1.Query/GetBridgeBalanceSnapshots");
+            let mut req = request.into_request();
+            req.extensions_mut().insert(GrpcMethod::new(
+                "gravity.v1.Query",
+                "GetBridgeBalanceSnapshots",
+            ));
+            self.inner.unary(req, path, codec).await
         }
         pub async fn get_bridge_balance_snapshot_by_event_nonce(
             &mut self,
-            request: impl tonic::IntoRequest<
-                super::QueryBridgeBalanceSnapshotByEventNonce,
-            >,
-        ) -> Result<
+            request: impl tonic::IntoRequest<super::QueryBridgeBalanceSnapshotByEventNonce>,
+        ) -> std::result::Result<
             tonic::Response<super::QueryBridgeBalanceSnapshotByEventNonceResponse>,
             tonic::Status,
         > {
-            self.inner
-                .ready()
-                .await
-                .map_err(|e| {
-                    tonic::Status::new(
-                        tonic::Code::Unknown,
-                        format!("Service was not ready: {}", e.into()),
-                    )
-                })?;
+            self.inner.ready().await.map_err(|e| {
+                tonic::Status::new(
+                    tonic::Code::Unknown,
+                    format!("Service was not ready: {}", e.into()),
+                )
+            })?;
             let codec = tonic::codec::ProstCodec::default();
             let path = http::uri::PathAndQuery::from_static(
                 "/gravity.v1.Query/GetBridgeBalanceSnapshotByEventNonce",
             );
-            self.inner.unary(request.into_request(), path, codec).await
+            let mut req = request.into_request();
+            req.extensions_mut().insert(GrpcMethod::new(
+                "gravity.v1.Query",
+                "GetBridgeBalanceSnapshotByEventNonce",
+            ));
+            self.inner.unary(req, path, codec).await
         }
         pub async fn get_pending_erc721_ibc_auto_forwards(
             &mut self,
-            request: impl tonic::IntoRequest<
-                super::QueryPendingErc721IbcAutoForwardsRequest,
-            >,
-        ) -> Result<
+            request: impl tonic::IntoRequest<super::QueryPendingErc721IbcAutoForwardsRequest>,
+        ) -> std::result::Result<
             tonic::Response<super::QueryPendingErc721IbcAutoForwardsResponse>,
             tonic::Status,
         > {
-            self.inner
-                .ready()
-                .await
-                .map_err(|e| {
-                    tonic::Status::new(
-                        tonic::Code::Unknown,
-                        format!("Service was not ready: {}", e.into()),
-                    )
-                })?;
+            self.inner.ready().await.map_err(|e| {
+                tonic::Status::new(
+                    tonic::Code::Unknown,
+                    format!("Service was not ready: {}", e.into()),
+                )
+            })?;
             let codec = tonic::codec::ProstCodec::default();
             let path = http::uri::PathAndQuery::from_static(
                 "/gravity.v1.Query/GetPendingERC721IbcAutoForwards",
             );
-            self.inner.unary(request.into_request(), path, codec).await
+            let mut req = request.into_request();
+            req.extensions_mut().insert(GrpcMethod::new(
+                "gravity.v1.Query",
+                "GetPendingERC721IbcAutoForwards",
+            ));
+            self.inner.unary(req, path, codec).await
         }
     }
 }

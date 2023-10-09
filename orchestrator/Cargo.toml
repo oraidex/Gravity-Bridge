@@ -6,10 +6,10 @@ members = [
     "gravity_utils",
     "test_runner",
     "relayer",
+    "gravity_proto",
     "gbt",
     "metrics_exporter",
 ]
-exclude = ["proto_build"]
 default-members = ["gbt"]
 resolver = "2"
 
@@ -25,11 +25,14 @@ panic = 'abort'
 [workspace.dependencies]
 num256 = "0.5"
 clarity = "1.2.3"
-prost = "0.11"
-prost-types = "0.11"
-tonic = "0.8"
+prost = "0.12"
+prost-types = "0.12"
+tonic = "0.10"
 tokio = "1.21"
-cosmos-sdk-proto = { git = "https://github.com/oraichain/cosmos-rust", rev = "19f3de7", package = "cosmos-sdk-proto-althea" }
+cosmos-sdk-proto = { package = "cosmos-sdk-proto-althea", version = "0.16.0", features = [
+    "ethermint",
+    "bech32ibc",
+] }
 web30 = { git = "https://github.com/oraichain/web30.git", rev = "0a98bb0" }
 deep_space = { git = "https://github.com/oraichain/deep_space.git", rev = "311d302" }
 prometheus_exporter = { git = "https://github.com/jkilpatr/prometheus_exporter", rev = "c6a720a" }
