@@ -33,23 +33,17 @@ pub async fn relay_market_test(
     contact: &Contact,
     keys: Vec<ValidatorKeys>,
     gravity_address: EthAddress,
-    gravityerc721_address: EthAddress,
+    gravity_erc721_address: EthAddress,
 ) {
     let grpc_client = &mut grpc_client.clone();
     test_batches(
         web30,
         grpc_client,
-<<<<<<< HEAD
         evm_chain_prefix,
         contact,
         keys,
         gravity_address,
-=======
-        contact,
-        keys,
-        gravity_address,
-        gravityerc721_address,
->>>>>>> 81057dc97ff3a6f3702fca99300ddbb3a7011770
+        gravity_erc721_address,
     )
     .await
 }
@@ -61,7 +55,7 @@ async fn test_batches(
     contact: &Contact,
     keys: Vec<ValidatorKeys>,
     gravity_address: EthAddress,
-    gravityerc721_address: EthAddress,
+    gravity_erc721_address: EthAddress,
 ) {
     // Start Orchestrators with the default config, but modified to enable the integrated
     // relayer by default
@@ -71,7 +65,7 @@ async fn test_batches(
     start_orchestrators(
         keys.clone(),
         gravity_address,
-        gravityerc721_address,
+        gravity_erc721_address,
         false,
         default_config,
     )

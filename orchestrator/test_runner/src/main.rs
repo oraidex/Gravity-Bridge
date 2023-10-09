@@ -246,7 +246,7 @@ pub async fn main() {
     // the address of the deployed Gravity contract
     let gravity_address = contracts.gravity_contract;
     // the address of the deployed GravityERC721 contract
-    let gravityerc721_address = contracts.gravity_erc721_contract;
+    let gravity_erc721_address = contracts.gravity_erc721_contract;
     // addresses of deployed ERC20 token contracts to be used for testing
     let erc20_addresses = contracts.erc20_addresses.clone();
     // addresses of deployed ERC721 token contracts to be used for testing
@@ -326,7 +326,7 @@ pub async fn main() {
                 &gravity_contact,
                 keys,
                 gravity_address,
-                gravityerc721_address,
+                gravity_erc721_address,
                 erc20_addresses[0],
                 true,
             )
@@ -339,7 +339,7 @@ pub async fn main() {
                 grpc_client,
                 keys,
                 gravity_address,
-                gravityerc721_address,
+                gravity_erc721_address,
                 erc20_addresses,
             )
             .await;
@@ -352,7 +352,7 @@ pub async fn main() {
                 &gravity_contact,
                 keys,
                 gravity_address,
-                gravityerc721_address,
+                gravity_erc721_address,
             )
             .await;
             return;
@@ -361,18 +361,12 @@ pub async fn main() {
             valset_rewards_test(
                 &web30,
                 grpc_client,
-<<<<<<< HEAD
                 EVM_CHAIN_PREFIX.as_str(),
                 &contact,
                 keys,
                 gravity_address,
                 erc20_addresses,
-=======
-                &contact,
-                keys,
-                gravity_address,
-                gravityerc721_address,
->>>>>>> 81057dc97ff3a6f3702fca99300ddbb3a7011770
+                gravity_erc721_address,
             )
             .await;
             return;
@@ -384,7 +378,7 @@ pub async fn main() {
                 &gravity_contact,
                 keys,
                 gravity_address,
-                gravityerc721_address,
+                gravity_erc721_address,
                 false,
                 None,
             )
@@ -398,6 +392,7 @@ pub async fn main() {
                 &gravity_contact,
                 keys,
                 gravity_address,
+                gravity_erc721_address,
                 false,
             )
             .await;
@@ -407,17 +402,11 @@ pub async fn main() {
             relay_market_test(
                 &web30,
                 grpc_client,
-<<<<<<< HEAD
                 EVM_CHAIN_PREFIX.as_str(),
                 &contact,
                 keys,
                 gravity_address,
-=======
-                &contact,
-                keys,
-                gravity_address,
-                gravityerc721_address,
->>>>>>> 81057dc97ff3a6f3702fca99300ddbb3a7011770
+                gravity_erc721_address,
             )
             .await;
             return;
@@ -438,7 +427,7 @@ pub async fn main() {
                 &web30,
                 keys,
                 gravity_address,
-                gravityerc721_address,
+                gravity_erc721_address,
                 erc20_addresses[0],
             )
             .await;
@@ -450,7 +439,7 @@ pub async fn main() {
                 &gravity_contact,
                 keys,
                 gravity_address,
-                gravityerc721_address,
+                gravity_erc721_address,
                 erc20_addresses[0],
                 grpc_client,
             )
@@ -464,7 +453,7 @@ pub async fn main() {
                 &gravity_contact,
                 keys,
                 gravity_address,
-                gravityerc721_address,
+                gravity_erc721_address,
                 erc20_addresses[0],
             )
             .await;
@@ -478,7 +467,7 @@ pub async fn main() {
                 &contact,
                 keys,
                 gravity_address,
-                gravityerc721_address,
+                gravity_erc721_address,
                 erc20_addresses[0],
             )
             .await;
@@ -498,22 +487,13 @@ pub async fn main() {
             return;
         } else if test_type == "SIGNATURE_SLASHING" {
             info!("Starting Signature Slashing test");
-<<<<<<< HEAD
-            signature_slashing_test(&web30, grpc_client, &gravity_contact, keys, gravity_address)
-                .await;
-            return;
-        } else if test_type == "SLASHING_DELEGATION" {
-            info!("Starting Slashing Delegation test");
-            slashing_delegation_test(&web30, grpc_client, &gravity_contact, keys, gravity_address)
-                .await;
-=======
             signature_slashing_test(
                 &web30,
                 grpc_client,
-                &contact,
+                &gravity_contact,
                 keys,
                 gravity_address,
-                gravityerc721_address,
+                gravity_erc721_address,
             )
             .await;
             return;
@@ -522,28 +502,21 @@ pub async fn main() {
             slashing_delegation_test(
                 &web30,
                 grpc_client,
-                &contact,
+                &gravity_contact,
                 keys,
                 gravity_address,
-                gravityerc721_address,
+                gravity_erc721_address,
             )
             .await;
->>>>>>> 81057dc97ff3a6f3702fca99300ddbb3a7011770
             return;
         } else if test_type == "IBC_METADATA" {
             info!("Starting IBC metadata proposal test");
             ibc_metadata_proposal_test(
                 gravity_address,
-<<<<<<< HEAD
+                gravity_erc721_address,
                 keys,
                 grpc_client,
                 &gravity_contact,
-=======
-                gravityerc721_address,
-                keys,
-                grpc_client,
-                &contact,
->>>>>>> 81057dc97ff3a6f3702fca99300ddbb3a7011770
                 &web30,
             )
             .await;
@@ -552,16 +525,12 @@ pub async fn main() {
             info!("Starting ERC 721 transfer test");
             erc721_happy_path_test(
                 &web30,
-<<<<<<< HEAD
-                &gravity_contact,
-=======
                 grpc_client,
                 COSMOS_NODE_GRPC.clone(),
-                &contact,
->>>>>>> 81057dc97ff3a6f3702fca99300ddbb3a7011770
+                &gravity_contact,
                 keys,
                 gravity_address,
-                gravityerc721_address,
+                gravity_erc721_address,
                 erc721_addresses[0],
                 false,
             )
@@ -584,7 +553,7 @@ pub async fn main() {
                 keys,
                 ibc_keys,
                 gravity_address,
-                gravityerc721_address,
+                gravity_erc721_address,
                 erc20_addresses,
             )
             .await;
@@ -606,7 +575,7 @@ pub async fn main() {
                 keys,
                 ibc_keys,
                 gravity_address,
-                gravityerc721_address,
+                gravity_erc721_address,
                 erc20_addresses,
             )
             .await;
@@ -633,7 +602,7 @@ pub async fn main() {
                 keys,
                 ibc_keys,
                 gravity_address,
-                gravityerc721_address,
+                gravity_erc721_address,
                 erc20_addresses[0],
             )
             .await;
@@ -648,7 +617,7 @@ pub async fn main() {
                 keys,
                 ibc_keys,
                 gravity_address,
-                gravityerc721_address,
+                gravity_erc721_address,
                 erc20_addresses[0],
             )
             .await;
@@ -662,7 +631,7 @@ pub async fn main() {
                 grpc_client,
                 keys,
                 gravity_address,
-                gravityerc721_address,
+                gravity_erc721_address,
                 erc20_addresses,
             )
             .await;
@@ -680,7 +649,7 @@ pub async fn main() {
                 grpc_client,
                 keys,
                 gravity_address,
-                gravityerc721_address,
+                gravity_erc721_address,
                 erc20_addresses,
             )
             .await;
@@ -698,6 +667,7 @@ pub async fn main() {
                 keys,
                 ibc_keys,
                 gravity_address,
+                gravity_erc721_address,
                 erc20_addresses,
                 vulnerable_erc20,
             )
@@ -714,11 +684,12 @@ pub async fn main() {
                 keys,
                 ibc_keys,
                 gravity_address,
+                gravity_erc721_address,
             )
             .await;
             return;
         } else if test_type == "RUN_ORCH_ONLY" {
-            orch_only_test(keys, gravity_address, gravityerc721_address).await;
+            orch_only_test(keys, gravity_address, gravity_erc721_address).await;
             sleep(Duration::from_secs(1_000_000_000)).await;
             return;
         } else if test_type == "INFLATION_KNOCKDOWN" {
@@ -742,7 +713,7 @@ pub async fn main() {
         &gravity_contact,
         keys,
         gravity_address,
-        gravityerc721_address,
+        gravity_erc721_address,
         erc20_addresses[0],
         false,
     )

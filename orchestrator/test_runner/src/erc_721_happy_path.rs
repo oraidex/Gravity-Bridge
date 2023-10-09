@@ -1,34 +1,30 @@
 use crate::utils::*;
+use crate::EVM_CHAIN_PREFIX;
 use crate::MINER_ADDRESS;
 use crate::MINER_PRIVATE_KEY;
 use crate::OPERATION_TIMEOUT;
 use crate::TOTAL_TIMEOUT;
-<<<<<<< HEAD
-use clarity::Uint256;
-=======
 use bytes::BytesMut;
 use clarity::{Address as EthAddress, Uint256};
->>>>>>> 81057dc97ff3a6f3702fca99300ddbb3a7011770
+use cosmos_gravity::query::get_erc721_attestations;
 use deep_space::address::Address as CosmosAddress;
 use deep_space::Contact;
 use ethereum_gravity::send_erc721_to_cosmos::send_erc721_to_cosmos;
 use ethereum_gravity::utils::get_gravity_sol_address;
 use ethereum_gravity::utils::get_valset_nonce;
-use cosmos_gravity::query::get_erc721_attestations;
-use gravity_proto::nft::QueryNfTsRequest;
-use gravity_proto::nft::query_client::QueryClient as NftQueryClient;
 use gravity_proto::gravity::query_client::QueryClient as GravityQueryClient;
 use gravity_proto::gravity::MsgSendErc721ToCosmosClaim;
-use tonic::transport::Channel;
+use gravity_proto::nft::query_client::QueryClient as NftQueryClient;
+use gravity_proto::nft::QueryNfTsRequest;
 use gravity_utils::error::GravityError;
 use prost::Message;
 use std::any::type_name;
 use std::time::Duration;
 use std::time::Instant;
 use tokio::time::sleep as delay_for;
+use tonic::transport::Channel;
 use web30::client::Web3;
 use web30::types::SendTxOption;
-use web30::EthAddress;
 
 pub async fn erc721_happy_path_test(
     web30: &Web3,
@@ -37,15 +33,14 @@ pub async fn erc721_happy_path_test(
     contact: &Contact,
     keys: Vec<ValidatorKeys>,
     gravity_address: EthAddress,
-    gravityerc721_address: EthAddress,
+    gravity_erc721_address: EthAddress,
     erc721_address: EthAddress,
     validator_out: bool,
 ) {
-
     let mut grpc_client = grpc_client;
 
     let grav_sol_address_in_erc721 =
-        get_gravity_sol_address(gravityerc721_address, *MINER_ADDRESS, web30)
+        get_gravity_sol_address(gravity_erc721_address, *MINER_ADDRESS, web30)
             .await
             .unwrap();
 
@@ -57,7 +52,7 @@ pub async fn erc721_happy_path_test(
         grav_sol_address_in_erc721
     );
     info!("Gravity address is {}", gravity_address);
-    info!("GravityERC721 address is {}", gravityerc721_address);
+    info!("GravityERC721 address is {}", gravity_erc721_address);
 
     assert_eq!(grav_sol_address_in_erc721, gravity_address);
 
@@ -65,7 +60,7 @@ pub async fn erc721_happy_path_test(
     start_orchestrators(
         keys.clone(),
         gravity_address,
-        gravityerc721_address,
+        gravity_erc721_address,
         validator_out,
         no_relay_market_config,
     )
@@ -84,7 +79,7 @@ pub async fn erc721_happy_path_test(
             contact,
             user_keys.cosmos_address,
             gravity_address,
-            gravityerc721_address,
+            gravity_erc721_address,
             erc721_address,
             Uint256::from_be_bytes(&i.to_be_bytes()),
             None,
@@ -96,7 +91,7 @@ pub async fn erc721_happy_path_test(
     let token_id_for_approval = Uint256::from_be_bytes(&203_i32.to_be_bytes());
     test_erc721_transfer_utils(
         web30,
-        gravityerc721_address,
+        gravity_erc721_address,
         erc721_address,
         token_id_for_approval,
     )
@@ -149,7 +144,7 @@ pub async fn test_erc721_deposit_result(
     contact: &Contact,
     dest: CosmosAddress,
     gravity_address: EthAddress,
-    gravityerc721_address: EthAddress,
+    gravity_erc721_address: EthAddress,
     erc721_address: EthAddress,
     token_id: Uint256,
     timeout: Option<Duration>,
@@ -173,7 +168,7 @@ pub async fn test_erc721_deposit_result(
     // we send an ERC721 to gravityERC721.sol to register a deposit
     let tx_id = send_erc721_to_cosmos(
         erc721_address,
-        gravityerc721_address,
+        gravity_erc721_address,
         token_id,
         dest,
         *MINER_PRIVATE_KEY,
@@ -190,7 +185,14 @@ pub async fn test_erc721_deposit_result(
         .expect("Send to cosmos transaction failed to be included into ethereum side");
 
     let mut grpc_client = grpc_client.clone();
-    check_send_erc721_to_cosmos_attestation(&mut grpc_client, erc721_address, dest, *MINER_ADDRESS, token_id.clone()).await?;
+    check_send_erc721_to_cosmos_attestation(
+        &mut grpc_client,
+        erc721_address,
+        dest,
+        *MINER_ADDRESS,
+        token_id.clone(),
+    )
+    .await?;
 
     let start = Instant::now();
     let duration = match timeout {
@@ -198,37 +200,41 @@ pub async fn test_erc721_deposit_result(
         None => TOTAL_TIMEOUT,
     };
 
-
-    let mut grpc_nft_client = NftQueryClient::connect(cosmos_node_grpc)
-        .await
-        .unwrap();
+    let mut grpc_nft_client = NftQueryClient::connect(cosmos_node_grpc).await.unwrap();
 
     while Instant::now() - start < duration {
         // in this while loop wait for owner to change OR wait for event to fire
-<<<<<<< HEAD
         let owner = web30
             .get_erc721_owner_of(erc721_address, *MINER_ADDRESS, token_id)
             .await;
-=======
-        info!("Trying to get owner of token_class {} and token_id {} from Cosmos", format!("{}{}", "gravityerc721", erc721_address), token_id.clone());
+        info!(
+            "Trying to get owner of token_class {} and token_id {} from Cosmos",
+            format!("{}{}", owner.unwrap(), erc721_address),
+            token_id.clone()
+        );
         let res = grpc_nft_client
-        .nf_ts(QueryNfTsRequest {
-            class_id: format!("{}{}", "gravityerc721", erc721_address),
-            owner: dest.to_string(),
-            pagination: None,
-        })
-        .await;
->>>>>>> 81057dc97ff3a6f3702fca99300ddbb3a7011770
+            .nf_ts(QueryNfTsRequest {
+                class_id: format!("{}{}", "gravityerc721", erc721_address),
+                owner: dest.to_string(),
+                pagination: None,
+            })
+            .await;
 
         if res.is_err() {
-            error!("Failed to get nfts of token_class {} from Cosmos. Retrying...", format!("{}{}", "gravityerc721", erc721_address));
+            error!(
+                "Failed to get nfts of token_class {} from Cosmos. Retrying...",
+                format!("{}{}", "gravityerc721", erc721_address)
+            );
             contact.wait_for_next_block(TOTAL_TIMEOUT).await.unwrap();
             continue;
         }
 
         let nfts = res.unwrap().into_inner().nfts;
         if nfts.len() == 0 {
-            error!("No NFTs found for token_class {} from Cosmos. Retrying...", format!("{}{}", "gravityerc721", erc721_address));
+            error!(
+                "No NFTs found for token_class {} from Cosmos. Retrying...",
+                format!("{}{}", "gravityerc721", erc721_address)
+            );
             contact.wait_for_next_block(TOTAL_TIMEOUT).await.unwrap();
             continue;
         }
@@ -277,7 +283,8 @@ async fn check_send_erc721_to_cosmos_attestation(
             break;
         } else if Instant::now() - start > TOTAL_TIMEOUT {
             return Err(GravityError::InvalidBridgeStateError(
-                "Could not find the send_erc721_to_cosmos attestation we were looking for!".to_string(),
+                "Could not find the send_erc721_to_cosmos attestation we were looking for!"
+                    .to_string(),
             ));
         }
         info!("Looking for send_erc721_to_cosmos attestations");
@@ -291,7 +298,7 @@ pub async fn iterate_attestations<F: FnMut(T), T: Message + Default>(
     grpc_client: &mut GravityQueryClient<Channel>,
     f: &mut F,
 ) {
-    let attestations = get_erc721_attestations(grpc_client, None)
+    let attestations = get_erc721_attestations(grpc_client, EVM_CHAIN_PREFIX.as_str(), None)
         .await
         .expect("Something happened while getting attestations after delegating to validator");
     for (i, att) in attestations.into_iter().enumerate() {

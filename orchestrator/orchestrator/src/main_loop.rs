@@ -63,7 +63,7 @@ pub async fn orchestrator_main_loop(
     grpc_client: GravityQueryClient<Channel>,
     evm_chain_prefix: &str,
     gravity_contract_address: EthAddress,
-    gravityerc721_contract_address: EthAddress,
+    gravity_erc721_address: EthAddress,
     gravity_id: String,
     user_fee_amount: Coin,
     config: GravityBridgeToolsConfig,
@@ -114,7 +114,7 @@ pub async fn orchestrator_main_loop(
         contact.clone(),
         grpc_client.clone(),
         &evm_chain_prefix,
-        gravityerc721_contract_address,
+        gravity_erc721_address,
         ContractType::GravityERC721,
         fee.clone(),
     );

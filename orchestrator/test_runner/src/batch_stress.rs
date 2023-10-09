@@ -44,7 +44,7 @@ pub async fn batch_stress_test(
     grpc_client: GravityQueryClient<Channel>,
     keys: Vec<ValidatorKeys>,
     gravity_address: EthAddress,
-    gravityerc721_address: EthAddress,
+    gravity_erc721_address: EthAddress,
     erc20_addresses: Vec<EthAddress>,
 ) {
     let mut grpc_client = grpc_client;
@@ -53,7 +53,7 @@ pub async fn batch_stress_test(
     start_orchestrators(
         keys.clone(),
         gravity_address,
-        gravityerc721_address,
+        gravity_erc721_address,
         false,
         no_relay_market_config,
     )

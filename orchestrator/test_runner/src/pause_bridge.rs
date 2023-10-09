@@ -30,7 +30,7 @@ pub async fn pause_bridge_test(
     keys: Vec<ValidatorKeys>,
     gravity_address: EthAddress,
     erc20_address: EthAddress,
-    gravityerc721_address: EthAddress,
+    gravity_erc721_address: EthAddress,
 ) {
     let mut grpc_client = grpc_client.clone();
 
@@ -49,7 +49,7 @@ pub async fn pause_bridge_test(
     start_orchestrators(
         keys.clone(),
         gravity_address,
-        gravityerc721_address,
+        gravity_erc721_address,
         false,
         no_relay_market_config,
     )

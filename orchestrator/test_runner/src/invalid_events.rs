@@ -33,7 +33,7 @@ pub async fn invalid_events(
     contact: &Contact,
     keys: Vec<ValidatorKeys>,
     gravity_address: EthAddress,
-    gravityerc721_address: EthAddress,
+    gravity_erc721_address: EthAddress,
     erc20_address: EthAddress,
     grpc_client: GravityQueryClient<Channel>,
 ) {
@@ -60,7 +60,7 @@ pub async fn invalid_events(
     start_orchestrators(
         keys.clone(),
         gravity_address,
-        gravityerc721_address,
+        gravity_erc721_address,
         false,
         no_relay_market_config,
     )
@@ -117,7 +117,7 @@ pub async fn invalid_events(
     // make sure this actual deployment works after all the bad ones
     let _ = deploy_cosmos_representing_erc20_and_check_adoption(
         gravity_address,
-        gravityerc721_address,
+        gravity_erc721_address,
         web30,
         None,
         &mut grpc_client,

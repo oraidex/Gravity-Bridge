@@ -15,7 +15,7 @@ use web30::client::Web3;
 
 pub async fn ibc_metadata_proposal_test(
     gravity_address: Address,
-    gravityerc721_address: Address,
+    gravity_erc721_address: Address,
     keys: Vec<ValidatorKeys>,
     grpc_client: GravityQueryClient<Channel>,
     contact: &Contact,
@@ -115,7 +115,7 @@ pub async fn ibc_metadata_proposal_test(
     info!("Deploying representative ERC20");
     deploy_cosmos_representing_erc20_and_check_adoption(
         gravity_address,
-        gravityerc721_address,
+        gravity_erc721_address,
         web30,
         Some(keys),
         &mut grpc_client,

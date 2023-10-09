@@ -58,14 +58,14 @@ pub async fn ibc_auto_forward_test(
     keys: Vec<ValidatorKeys>,
     ibc_keys: Vec<CosmosPrivateKey>,
     gravity_address: EthAddress,
-    gravityerc721_address: EthAddress,
+    gravity_erc721_address: EthAddress,
     erc20_address: EthAddress,
 ) {
     let no_relay_market_config = create_default_test_config();
     start_orchestrators(
         keys.clone(),
         gravity_address,
-        gravityerc721_address,
+        gravity_erc721_address,
         false,
         no_relay_market_config,
     )

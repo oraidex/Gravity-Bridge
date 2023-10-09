@@ -29,7 +29,7 @@ pub async fn unhalt_bridge_test(
     contact: &Contact,
     keys: Vec<ValidatorKeys>,
     gravity_address: EthAddress,
-    gravityerc721_address: EthAddress,
+    gravity_erc721_address: EthAddress,
     erc20_address: EthAddress,
 ) {
     let prefix = contact.get_prefix();
@@ -56,7 +56,7 @@ pub async fn unhalt_bridge_test(
     start_orchestrators(
         keys.clone(),
         gravity_address,
-        gravityerc721_address,
+        gravity_erc721_address,
         false,
         no_relay_market_config,
     )

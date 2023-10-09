@@ -21,7 +21,7 @@ pub async fn slashing_delegation_test(
     contact: &Contact,
     keys: Vec<ValidatorKeys>,
     gravity_address: EthAddress,
-    gravityerc721_address: EthAddress,
+    gravity_erc721_address: EthAddress,
 ) {
     let mut grpc_client = grpc_client;
 
@@ -77,7 +77,7 @@ pub async fn slashing_delegation_test(
     start_orchestrators(
         keys.clone(),
         gravity_address,
-        gravityerc721_address,
+        gravity_erc721_address,
         true,
         no_relay_market_config,
     )

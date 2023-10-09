@@ -59,10 +59,18 @@ pub async fn ica_host_happy_path(
     keys: Vec<ValidatorKeys>,
     ibc_keys: Vec<CosmosPrivateKey>,
     gravity_address: EthAddress,
+    gravity_erc721_address: EthAddress,
 ) {
     let mut grpc_client = grpc_client;
     let no_relay_market_config = create_default_test_config();
-    start_orchestrators(keys.clone(), gravity_address, false, no_relay_market_config).await;
+    start_orchestrators(
+        keys.clone(),
+        gravity_address,
+        gravity_erc721_address,
+        false,
+        no_relay_market_config,
+    )
+    .await;
 
     let gravity_channel_qc = IbcChannelQueryClient::connect(COSMOS_NODE_GRPC.as_str())
         .await
@@ -134,6 +142,7 @@ pub async fn ica_host_happy_path(
         Err(_) => {
             deploy_cosmos_representing_erc20_and_check_adoption(
                 gravity_address,
+                gravity_erc721_address,
                 web30,
                 Some(keys.clone()),
                 &mut grpc_client,

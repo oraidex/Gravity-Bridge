@@ -25,11 +25,8 @@ pub async fn valset_rewards_test(
     contact: &Contact,
     keys: Vec<ValidatorKeys>,
     gravity_address: EthAddress,
-<<<<<<< HEAD
     erc20_addresses: Vec<EthAddress>,
-=======
-    gravityerc721_address: EthAddress,
->>>>>>> 81057dc97ff3a6f3702fca99300ddbb3a7011770
+    gravity_erc721_address: EthAddress,
 ) {
     let mut grpc_client = grpc_client;
     let token_to_send_to_eth = footoken_metadata(contact).await.base;
@@ -38,7 +35,7 @@ pub async fn valset_rewards_test(
     // by the Cosmos chain
     let erc20_contract = deploy_cosmos_representing_erc20_and_check_adoption(
         gravity_address,
-        gravityerc721_address,
+        gravity_erc721_address,
         web30,
         Some(keys.clone()),
         &mut grpc_client,

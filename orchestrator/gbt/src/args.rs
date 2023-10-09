@@ -182,7 +182,7 @@ pub struct Erc721ToCosmosOpts {
     pub gravity_contract_address: EthAddress,
     /// The address fo the GravityERC721 contract on Ethereum
     #[clap(long, parse(try_from_str))]
-    pub gravityerc721_contract_address: EthAddress,
+    pub gravity_erc721_address: EthAddress,
     /// The ERC721 contract address of the ERC721 you are sending
     #[clap(long, parse(try_from_str))]
     pub token_contract_address: EthAddress,

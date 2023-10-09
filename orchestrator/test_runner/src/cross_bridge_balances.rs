@@ -61,6 +61,7 @@ pub async fn cross_bridge_balance_test(
     keys: Vec<ValidatorKeys>,
     ibc_keys: Vec<CosmosPrivateKey>,
     gravity_address: EthAddress,
+    gravity_erc721_address: EthAddress,
     erc20_addresses: Vec<EthAddress>,
     vulnerable_erc20_address: EthAddress,
 ) {
@@ -107,6 +108,7 @@ pub async fn cross_bridge_balance_test(
     start_orchestrators(
         keys.clone(),
         gravity_address,
+        gravity_erc721_address,
         false,
         no_relayer_config.clone(),
     )
@@ -138,6 +140,7 @@ pub async fn cross_bridge_balance_test(
         keys: keys.clone(),
         ibc_keys: ibc_keys.clone(),
         gravity_address,
+        gravity_erc721_address,
         evm_chain_prefix: evm_chain_param.evm_chain_prefix.clone(),
         gravity_id: evm_chain_param.gravity_id.clone(),
         erc20_addresses: erc20_addresses.clone(),
@@ -410,6 +413,7 @@ pub struct SetupArgs {
     pub keys: Vec<ValidatorKeys>,
     pub ibc_keys: Vec<CosmosPrivateKey>,
     pub gravity_address: EthAddress,
+    pub gravity_erc721_address: EthAddress,
     pub gravity_id: String,
     pub erc20_addresses: Vec<EthAddress>,
     pub vulnerable_erc20_address: EthAddress,
@@ -441,6 +445,7 @@ pub async fn setup(
         keys,
         ibc_keys,
         gravity_address,
+        gravity_erc721_address,
         gravity_id,
         erc20_addresses,
         vulnerable_erc20_address,
@@ -525,6 +530,7 @@ pub async fn setup(
     // This call does not depend on an active relayer
     let footoken_erc20 = deploy_cosmos_representing_erc20_and_check_adoption(
         gravity_address,
+        gravity_erc721_address,
         &web30,
         None, // Already started the orchestrators with custom config
         &mut grpc,
@@ -613,6 +619,7 @@ pub async fn setup(
         gravity_bank_qc,
         gravity_ibc_transfer_qc,
         gravity_address,
+        gravity_erc721_address,
         &web30,
         grpc.clone(),
     )
@@ -854,6 +861,7 @@ pub async fn create_ibc_token_erc20_representation(
     gravity_bank_qc: BankQueryClient<Channel>,
     gravity_ibc_transfer_qc: IbcTransferQueryClient<Channel>,
     gravity_contract_address: EthAddress,
+    gravity_erc721_address: EthAddress,
     web30: &Web3,
     gravity_qc: GravityQueryClient<Channel>,
 ) -> Result<(String, EthAddress), CosmosGrpcError> {
@@ -939,6 +947,7 @@ pub async fn create_ibc_token_erc20_representation(
     info!("Deploying representative ERC20 for foreign stake token");
     let erc20 = deploy_cosmos_representing_erc20_and_check_adoption(
         gravity_contract_address,
+        gravity_erc721_address,
         web30,
         Some(keys),
         &mut gravity_qc,

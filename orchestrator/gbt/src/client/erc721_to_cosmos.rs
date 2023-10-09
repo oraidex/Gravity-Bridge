@@ -6,7 +6,7 @@ use gravity_utils::connection_prep::{check_for_eth, create_rpc_connections};
 
 pub async fn erc721_to_cosmos(args: Erc721ToCosmosOpts, prefix: String) {
     let gravity_address = args.gravity_contract_address;
-    let gravityerc721_address = args.gravityerc721_contract_address;
+    let gravity_erc721_address = args.gravity_erc721_address;
     let erc721_address = args.token_contract_address;
     let cosmos_dest = args.destination;
     let ethereum_key = args.ethereum_key;
@@ -35,7 +35,7 @@ pub async fn erc721_to_cosmos(args: Erc721ToCosmosOpts, prefix: String) {
     // we send erc721 token to the gravityerc721 contract to register a deposit
     let res = send_erc721_to_cosmos(
         erc721_address,
-        gravityerc721_address,
+        gravity_erc721_address,
         token_id.parse().unwrap(),
         cosmos_dest,
         ethereum_key,

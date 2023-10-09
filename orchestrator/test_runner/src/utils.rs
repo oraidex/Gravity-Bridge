@@ -335,7 +335,7 @@ pub struct ValidatorKeys {
 pub async fn start_orchestrators(
     keys: Vec<ValidatorKeys>,
     gravity_address: EthAddress,
-    gravityerc721_address: EthAddress,
+    gravity_erc721_address: EthAddress,
     validator_out: bool,
     orchestrator_config: GravityBridgeToolsConfig,
 ) {
@@ -385,12 +385,8 @@ pub async fn start_orchestrators(
                 grpc_client,
                 EVM_CHAIN_PREFIX.as_str(),
                 gravity_address,
-<<<<<<< HEAD
+                gravity_erc721_address,
                 evm_chain_params.gravity_id,
-=======
-                gravityerc721_address,
-                params.gravity_id,
->>>>>>> 81057dc97ff3a6f3702fca99300ddbb3a7011770
                 get_fee(None),
                 config,
             );

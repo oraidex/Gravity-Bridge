@@ -34,7 +34,7 @@ pub async fn send_to_eth_fees_test(
     gravity_client: GravityQueryClient<Channel>,
     keys: Vec<ValidatorKeys>,
     gravity_address: EthAddress,
-    gravityerc721_address: EthAddress,
+    gravity_erc721_address: EthAddress,
     erc20_addresses: Vec<EthAddress>,
 ) {
     info!("Enter send to eth fees test");
@@ -44,7 +44,7 @@ pub async fn send_to_eth_fees_test(
         &gravity_client,
         keys.clone(),
         gravity_address,
-        gravityerc721_address,
+        gravity_erc721_address,
         *erc20_addresses.get(0).unwrap(),
     )
     .await;
@@ -199,7 +199,7 @@ pub async fn setup(
     grpc_client: &GravityQueryClient<Channel>,
     keys: Vec<ValidatorKeys>,
     gravity_address: EthAddress,
-    gravityerc721_address: EthAddress,
+    gravity_erc721_address: EthAddress,
     erc20_address: EthAddress,
 ) -> (Metadata, BridgeUserKey) {
     info!("Begin setup, create footoken erc20");
@@ -207,7 +207,7 @@ pub async fn setup(
 
     let _ = deploy_cosmos_representing_erc20_and_check_adoption(
         gravity_address,
-        gravityerc721_address,
+        gravity_erc721_address,
         web30,
         Some(keys.clone()),
         &mut (grpc_client.clone()),
