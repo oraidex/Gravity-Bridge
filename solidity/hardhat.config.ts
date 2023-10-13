@@ -1,7 +1,7 @@
 import "dotenv/config";
 import "@nomiclabs/hardhat-waffle";
 import "hardhat-gas-reporter";
-import "hardhat-typechain";
+import "@typechain/hardhat";
 import "hardhat-contract-sizer";
 import { task, extendEnvironment } from "hardhat/config";
 import {
