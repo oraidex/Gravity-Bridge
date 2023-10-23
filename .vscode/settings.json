@@ -8,5 +8,16 @@
     "solidity.packageDefaultDependenciesDirectory": "solidity/node_modules",
     "files.associations": {
         "validator-eth-keys": "cpp"
-    }
+    },
+    "editor.defaultFormatter": "esbenp.prettier-vscode",
+    "editor.formatOnSave": true,
+    "editor.formatOnPaste": false,
+    "prettier.useEditorConfig": false,
+    "prettier.useTabs": false,
+    "prettier.trailingComma": "none",
+    "prettier.tabWidth": 2,
+    "prettier.printWidth": 120,
+    "prettier.semi": true,
+    "prettier.singleQuote": true,
+    "typescript.tsdk": "solidity/node_modules/typescript/lib"
 }

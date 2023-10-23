@@ -11,7 +11,7 @@
     "evm_fork": "npx hardhat node --fork https://eth-mainnet.alchemyapi.io/v2/${ALCHEMY_ID} --fork-block-number 12782071"
   },
   "author": "Jehan Tremback",
-  "license": "None",
+  "license": "MIT",
   "devDependencies": {
     "@commitlint/cli": "^9.1.2",
     "@commitlint/config-conventional": "^9.1.2",
@@ -20,7 +20,11 @@
     "@nomiclabs/hardhat-ethers": "^2.0.0",
     "@nomiclabs/hardhat-waffle": "^2.0.0",
     "@openzeppelin/contracts": "4.3.1",
+    "@oraichain/common-contracts-build": "^1.0.33",
+    "@oraichain/common-contracts-sdk": "^1.0.31",
+    "@oraichain/cw-simulate": "^2.8.71",
     "@typechain/ethers-v5": "^11.1.1",
+    "@typechain/hardhat": "^9.0.0",
     "@types/chai": "^4.2.13",
     "@types/command-line-args": "^5.0.0",
     "@types/fs-extra": "^9.0.1",
@@ -43,7 +47,6 @@
     "hardhat": "^2.18.1",
     "hardhat-contract-sizer": "^2.10.0",
     "hardhat-gas-reporter": "^1.0.9",
-    "@typechain/hardhat": "^9.0.0",
     "husky": "^4.3.0",
     "mocha": "^8.1.3",
     "prettier": "^2.1.2",
