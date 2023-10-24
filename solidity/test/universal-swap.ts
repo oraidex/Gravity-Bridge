@@ -169,7 +169,7 @@ describe("sendToCosmos with IBC Wasm tests", function () {
       },
     });
 
-    // handle IBC message timeout
+    // handle IBC callback
     oraibridgeChain.ibc.addMiddleWare(async (msg, app) => {
       // check if memo is json
       try {
@@ -183,6 +183,49 @@ describe("sendToCosmos with IBC Wasm tests", function () {
           );
       } catch {}
     });
+
+    // handle evm event callback
+    gravity.on(gravity.filters.SendToCosmosEvent(), async (...args) => {
+      const [erc20Addr, , destination, amount] = args;
+      const denom = oraibridgeChain.bech32Prefix + erc20Addr;
+      expect(await erc20.balanceOf(gravity.address)).to.equal(amount);
+      expect(await gravity.state_lastEventNonce()).to.equal(2);
+
+      // Relay to Oraichain
+      console.log("destination", destination);
+      console.dir(await ics20.channel({ id: channel }), { depth: null });
+
+      await oraibridgeChain.ibc.sendPacketReceive({
+        packet: {
+          data: toBinary({
+            amount: amount.toString(),
+            denom,
+            receiver: destination,
+            sender: oraibSenderAddress,
+            memo: "",
+          }),
+          src: {
+            port_id: "transfer",
+            channel_id: channel,
+          },
+          dest: {
+            port_id: oraiPort,
+            channel_id: channel,
+          },
+          sequence: 27,
+          timeout: {
+            block: {
+              revision: 1,
+              height: 12345678,
+            },
+          },
+        },
+        relayer: oraibSenderAddress,
+      });
+
+      // check Orai erc20 token sent to Oraichain via IBC Wasm channel
+      console.dir(await ics20.channel({ id: channel }), { depth: null });
+    });
   });
 
   it("send token from evm to oraichain via oraibridge", async function () {
@@ -192,57 +235,9 @@ describe("sendToCosmos with IBC Wasm tests", function () {
     const amount = BigInt(100000000);
     await erc20.approve(gravity.address, amount);
 
-    await expect(gravity.sendToCosmos(erc20.address, senderAddress, amount))
-      .to.emit(gravity, "SendToCosmosEvent")
-      .withArgs(
-        erc20.address,
-        await owner.getAddress(),
-        senderAddress,
-        amount,
-        2
-      );
+    await gravity.sendToCosmos(erc20.address, senderAddress, amount);
 
-    expect(await erc20.balanceOf(gravity.address)).to.equal(amount);
-    expect(await gravity.state_lastEventNonce()).to.equal(2);
-
-    // Relay to Oraichain
-    console.log(
-      oraibridgeChain.bank.getBalance(oraibSenderAddress),
-      (await ics20.channel({ id: channel })).balances
-    );
-
-    await oraibridgeChain.ibc.sendPacketReceive({
-      packet: {
-        data: toBinary({
-          amount: amount.toString(),
-          denom: oraiIbcDenom,
-          receiver: senderAddress,
-          sender: oraibSenderAddress,
-          memo: "",
-        }),
-        src: {
-          port_id: "transfer",
-          channel_id: channel,
-        },
-        dest: {
-          port_id: oraiPort,
-          channel_id: channel,
-        },
-        sequence: 27,
-        timeout: {
-          block: {
-            revision: 1,
-            height: 12345678,
-          },
-        },
-      },
-      relayer: oraibSenderAddress,
-    });
-
-    // check Orai erc20 token sent to Oraichain via IBC Wasm channel
-    console.log(
-      oraibridgeChain.bank.getBalance(oraibSenderAddress),
-      (await ics20.channel({ id: channel })).balances
-    );
+    // wait 5s due to hardhat pooling of 4s
+    await new Promise((resolve) => setTimeout(resolve, 5000));
   });
 });

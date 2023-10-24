@@ -2,11 +2,7 @@ import { ethers } from "hardhat";
 import { Overrides } from "@ethersproject/contracts";
 import { makeCheckpoint, getSignerAddresses, ZeroAddress } from "./pure";
 import { Signer } from "ethers";
-import {
-  ERC20__factory,
-  Gravity__factory,
-  TestERC20Custom__factory,
-} from "../typechain";
+import { Gravity__factory, TestERC20Custom__factory } from "../typechain";
 
 export async function deployContracts(
   gravityId: string = "foo",
