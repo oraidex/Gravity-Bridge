@@ -205,7 +205,7 @@ describe("sendToCosmos with IBC Wasm tests", function () {
             memo: "",
           }),
           src: {
-            port_id: "transfer",
+            port_id: "",
             channel_id: channel,
           },
           dest: {
@@ -235,9 +235,19 @@ describe("sendToCosmos with IBC Wasm tests", function () {
     const amount = BigInt(100000000);
     await erc20.approve(gravity.address, amount);
 
-    await gravity.sendToCosmos(erc20.address, senderAddress, amount);
+    await gravity
+      .sendToCosmos(erc20.address, senderAddress, amount)
+      // on development, we can trigger it immediately instead of waiting for polling
+      .then((tx) => tx.wait())
+      .then((rc) =>
+        rc.events?.forEach(
+          (event) => event.event && gravity.emit(event.event, ...event.args!)
+        )
+      );
 
-    // wait 5s due to hardhat pooling of 4s
-    await new Promise((resolve) => setTimeout(resolve, 5000));
+    await new Promise((resolve) => setTimeout(resolve, 100));
+
+    // // wait 5s due to hardhat pooling of 4s
+    // await new Promise((resolve) => setTimeout(resolve, 5000));
   });
 });
