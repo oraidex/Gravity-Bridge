@@ -675,7 +675,7 @@ func (msg MsgLogicCallExecutedClaim) Route() string { return RouterKey }
 // note that the Orchestrator is the only field excluded from this hash, this is because that value is used higher up in the store
 // structure for who has made what claim and is verified by the msg ante-handler for signatures
 func (b *MsgLogicCallExecutedClaim) ClaimHash() ([]byte, error) {
-	path := fmt.Sprintf("%d,%d,%s/%d/", b.EventNonce, b.EthBlockHeight, b.InvalidationId, b.InvalidationNonce)
+	path := fmt.Sprintf("%d/%d/%s/%d/", b.EventNonce, b.EthBlockHeight, b.InvalidationId, b.InvalidationNonce)
 	return tmhash.Sum([]byte(path)), nil
 }
 
