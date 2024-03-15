@@ -1,7 +1,7 @@
 import chai from "chai";
 import { ethers } from "hardhat";
 import { solidity } from "ethereum-waffle";
-import { GravityERC721 } from "../typechain";
+import { GravityERC721, GravityERC721__factory } from "../typechain";
 import { deployContractsERC721 } from "../test-utils/deployERC721";
 import {
   getSignerAddresses,
@@ -35,12 +35,9 @@ async function runTest(opts: {
     checkpoint,
   } = await deployContractsERC721(gravityId, validators, powers);
 
-  const TestGravityERC721Contract = await ethers.getContractFactory(
-    "GravityERC721"
-  );
-  const ERC721LogicContract = (await TestGravityERC721Contract.deploy(
-    gravity.address
-  )) as GravityERC721;
+  const ERC721LogicContract = await new GravityERC721__factory(
+    signers[0]
+  ).deploy(gravity.address);
 
   // Transfer out to Cosmos, locking coins
   // =====================================

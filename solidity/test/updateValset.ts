@@ -251,16 +251,12 @@ describe("updateValset tests", function () {
 
   it("pays reward correctly", async function () {
     let { gravity, checkpoint } = await runTest({ withReward: true });
-    expect((await gravity.state_lastValsetCheckpoint())[0]).to.equal(
-      checkpoint
-    );
+    expect(await gravity.state_lastValsetCheckpoint()).to.equal(checkpoint);
   });
 
   it("happy path", async function () {
     let { gravity, checkpoint } = await runTest({});
-    expect((await gravity.state_lastValsetCheckpoint())[0]).to.equal(
-      checkpoint
-    );
+    expect(await gravity.state_lastValsetCheckpoint()).to.equal(checkpoint);
   });
 });
 

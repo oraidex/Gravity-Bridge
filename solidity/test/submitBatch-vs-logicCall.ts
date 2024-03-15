@@ -6,6 +6,8 @@ import {
   Gravity,
   TestERC20A,
   ReentrantERC20,
+  ReentrantERC20__factory,
+  TestTokenBatchMiddleware__factory,
 } from "../typechain";
 
 import { deployContracts } from "../test-utils";
@@ -71,12 +73,9 @@ async function prep() {
     powers
   );
 
-  const ReentrantERC20Contract = await ethers.getContractFactory(
-    "ReentrantERC20"
-  );
-  const reentrantERC20 = (await ReentrantERC20Contract.deploy(
+  const reentrantERC20 = await new ReentrantERC20__factory(signers[0]).deploy(
     gravity.address
-  )) as ReentrantERC20;
+  );
 
   return {
     signers,
@@ -206,11 +205,9 @@ async function runLogicCallTest(opts: {
     reentrantERC20,
   } = await prep();
 
-  const TestTokenBatchMiddleware = await ethers.getContractFactory(
-    "TestTokenBatchMiddleware"
-  );
-  const tokenBatchMiddleware =
-    (await TestTokenBatchMiddleware.deploy()) as TestTokenBatchMiddleware;
+  const tokenBatchMiddleware = await new TestTokenBatchMiddleware__factory(
+    signers[0]
+  ).deploy();
   await tokenBatchMiddleware.transferOwnership(gravity.address);
 
   // Lock tokens in gravity

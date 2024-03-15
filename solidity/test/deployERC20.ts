@@ -74,10 +74,11 @@ async function runTest(opts: {}) {
   }
   const txDestinations = await getSignerAddresses(txDestinationsInt);
   let batchNonce = 1;
-  let batchTimeout = 10000;
+  let batchTimeout = ethers.provider.blockNumber + 10000;
 
   // Call method
   // ===========
+
   const methodName = ethers.utils.formatBytes32String("transactionBatch");
   let abiEncoded = ethers.utils.defaultAbiCoder.encode(
     [
