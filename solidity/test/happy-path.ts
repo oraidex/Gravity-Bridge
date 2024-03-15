@@ -14,10 +14,8 @@ import {
 chai.use(solidity);
 const { expect } = chai;
 
-
 describe("Gravity happy path valset update + batch submit", function () {
   it("Happy path", async function () {
-
     // DEPLOY CONTRACTS
     // ================
 
@@ -30,19 +28,14 @@ describe("Gravity happy path valset update + batch submit", function () {
       validators: signers.slice(0, examplePowers().length),
       valsetNonce: 0,
       rewardAmount: 0,
-      rewardToken: ZeroAddress
-    }
+      rewardToken: ZeroAddress,
+    };
 
-
-
-    const {
-      gravity,
-      testERC20,
-      checkpoint: deployCheckpoint
-    } = await deployContracts(gravityId, valset0.validators, valset0.powers);
-
-
-
+    const { gravity, testERC20 } = await deployContracts(
+      gravityId,
+      valset0.validators,
+      valset0.powers
+    );
 
     // UDPATEVALSET
     // ============
@@ -59,9 +52,9 @@ describe("Gravity happy path valset update + batch submit", function () {
         validators: validators,
         valsetNonce: 1,
         rewardAmount: 0,
-        rewardToken: ZeroAddress
-      }
-    })()
+        rewardToken: ZeroAddress,
+      };
+    })();
 
     // redefine valset0 and 1 with strings for 'validators'
     const valset0_str = {
@@ -69,15 +62,15 @@ describe("Gravity happy path valset update + batch submit", function () {
       validators: await getSignerAddresses(valset0.validators),
       valsetNonce: valset0.valsetNonce,
       rewardAmount: valset0.rewardAmount,
-      rewardToken: valset0.rewardToken
-    }
+      rewardToken: valset0.rewardToken,
+    };
     const valset1_str = {
       powers: valset1.powers,
       validators: await getSignerAddresses(valset1.validators),
       valsetNonce: valset1.valsetNonce,
       rewardAmount: valset1.rewardAmount,
-      rewardToken: valset1.rewardToken
-    }
+      rewardToken: valset1.rewardToken,
+    };
 
     const checkpoint1 = makeCheckpoint(
       valset1_str.validators,
@@ -95,20 +88,17 @@ describe("Gravity happy path valset update + batch submit", function () {
 
       valset0_str,
 
-      sigs1,
+      sigs1
     );
 
-    expect((await gravity.functions.state_lastValsetCheckpoint())[0]).to.equal(checkpoint1);
-
-
-
+    expect(await gravity.state_lastValsetCheckpoint()).to.equal(checkpoint1);
 
     // SUBMITBATCH
     // ==========================
 
     // Transfer out to Cosmos, locking coins
-    await testERC20.functions.approve(gravity.address, 1000);
-    await gravity.functions.sendToCosmos(
+    await testERC20.approve(gravity.address, 1000);
+    await gravity.sendToCosmos(
       testERC20.address,
       ethers.utils.formatBytes32String("myCosmosAddress"),
       1000
@@ -129,12 +119,10 @@ describe("Gravity happy path valset update + batch submit", function () {
 
     const txDestinations = await getSignerAddresses(txDestinationsInt);
 
-    const batchNonce = 1
-    const batchTimeout = 10000000
+    const batchNonce = 1;
+    const batchTimeout = 10000000;
 
-    const methodName = ethers.utils.formatBytes32String(
-      "transactionBatch"
-    );
+    const methodName = ethers.utils.formatBytes32String("transactionBatch");
 
     let abiEncoded = ethers.utils.defaultAbiCoder.encode(
       [
@@ -145,7 +133,7 @@ describe("Gravity happy path valset update + batch submit", function () {
         "uint256[]",
         "uint256",
         "address",
-        "uint256"
+        "uint256",
       ],
       [
         gravityId,
@@ -155,13 +143,15 @@ describe("Gravity happy path valset update + batch submit", function () {
         txFees,
         batchNonce,
         testERC20.address,
-        batchTimeout
+        batchTimeout,
       ]
     );
 
     let digest = ethers.utils.keccak256(abiEncoded);
 
     let sigs = await signHash(valset1.validators, digest);
+
+    const signerBalance = await testERC20.balanceOf(signers[0].address);
 
     let batchSubmitTx = await gravity.submitBatch(
       valset1_str,
@@ -177,17 +167,13 @@ describe("Gravity happy path valset update + batch submit", function () {
     );
 
     // check that the transfer was successful
-    expect(
-      await (
-        await testERC20.functions.balanceOf(await signers[6].getAddress())
-      )[0].toNumber()
-    ).to.equal(1);
+    expect((await testERC20.balanceOf(signers[6].address)).toNumber()).to.equal(
+      1
+    );
 
     // check that the relayer was paid
-    expect(
-      await (
-        await testERC20.functions.balanceOf(await batchSubmitTx.from)
-      )[0].toNumber()
-    ).to.equal(9000 + totalFees);
+    expect(await testERC20.balanceOf(batchSubmitTx.from)).to.equal(
+      signerBalance.add(totalFees)
+    );
   });
 });
