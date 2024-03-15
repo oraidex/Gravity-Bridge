@@ -44,8 +44,8 @@ async function runTest(opts: {
 
   // Transfer out to Cosmos, locking coins
   // =====================================
-  await testERC20.functions.approve(gravity.address, 1000);
-  await gravity.functions.sendToCosmos(
+  await testERC20.approve(gravity.address, 1000);
+  await gravity.sendToCosmos(
     testERC20.address,
     ethers.utils.formatBytes32String("myCosmosAddress"),
     1000
@@ -157,8 +157,8 @@ async function runTest(opts: {
     powers,
     valsetNonce: currentValsetNonce,
     rewardAmount: 0,
-    rewardToken: ZeroAddress
-  }
+    rewardToken: ZeroAddress,
+  };
 
   let batchSubmitTx = await gravity.submitBatch(
     valset,
@@ -202,9 +202,7 @@ describe("submitBatch tests", function () {
   it("throws on non matching checkpoint for current valset", async function () {
     await expect(
       runTest({ nonMatchingCurrentValset: true })
-    ).to.be.revertedWith(
-      "IncorrectCheckpoint()"
-    );
+    ).to.be.revertedWith("IncorrectCheckpoint()");
   });
 
   it("throws on bad validator sig", async function () {
@@ -254,8 +252,8 @@ describe("submitBatch Go test hash", function () {
 
     // Transfer out to Cosmos, locking coins
     // =====================================
-    await testERC20.functions.approve(gravity.address, 1000);
-    await gravity.functions.sendToCosmos(
+    await testERC20.approve(gravity.address, 1000);
+    await gravity.sendToCosmos(
       testERC20.address,
       ethers.utils.formatBytes32String("myCosmosAddress"),
       1000
@@ -263,9 +261,8 @@ describe("submitBatch Go test hash", function () {
 
     // Call method
     // ===========
-    const batchMethodName = ethers.utils.formatBytes32String(
-      "transactionBatch"
-    );
+    const batchMethodName =
+      ethers.utils.formatBytes32String("transactionBatch");
     const abiEncodedBatch = ethers.utils.defaultAbiCoder.encode(
       [
         "bytes32",
@@ -311,8 +308,8 @@ describe("submitBatch Go test hash", function () {
       powers,
       valsetNonce: currentValsetNonce,
       rewardAmount: 0,
-      rewardToken: ZeroAddress
-    }
+      rewardToken: ZeroAddress,
+    };
 
     await gravity.submitBatch(
       valset,

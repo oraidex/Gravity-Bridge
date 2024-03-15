@@ -30,9 +30,9 @@ async function runTest(opts: {}) {
 
   // Transfer out to Cosmos, locking coins
   // =====================================
-  await testERC20.functions.approve(gravity.address, 1000);
+  await testERC20.approve(gravity.address, 1000);
   await expect(
-    gravity.functions.sendToCosmos(
+    gravity.sendToCosmos(
       testERC20.address,
       ethers.utils.formatBytes32String("myCosmosAddress"),
       1000
@@ -47,16 +47,14 @@ async function runTest(opts: {}) {
       2
     );
 
-  expect((await testERC20.functions.balanceOf(gravity.address))[0]).to.equal(
-    1000
-  );
-  expect((await gravity.functions.state_lastEventNonce())[0]).to.equal(2);
+  expect(await testERC20.balanceOf(gravity.address)).to.equal(1000);
+  expect(await gravity.state_lastEventNonce()).to.equal(2);
 
   // Do it again
   // =====================================
-  await testERC20.functions.approve(gravity.address, 1000);
+  await testERC20.approve(gravity.address, 1000);
   await expect(
-    gravity.functions.sendToCosmos(
+    gravity.sendToCosmos(
       testERC20.address,
       ethers.utils.formatBytes32String("myCosmosAddress"),
       1000
@@ -71,10 +69,8 @@ async function runTest(opts: {}) {
       3
     );
 
-  expect((await testERC20.functions.balanceOf(gravity.address))[0]).to.equal(
-    2000
-  );
-  expect((await gravity.functions.state_lastEventNonce())[0]).to.equal(3);
+  expect(await testERC20.balanceOf(gravity.address)).to.equal(2000);
+  expect(await gravity.state_lastEventNonce()).to.equal(3);
 }
 
 describe("sendToCosmos tests", function () {

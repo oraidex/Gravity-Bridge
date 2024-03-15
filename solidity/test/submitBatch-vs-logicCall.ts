@@ -1,7 +1,12 @@
 import chai from "chai";
 import { ethers } from "hardhat";
 import { solidity } from "ethereum-waffle";
-import { TestTokenBatchMiddleware } from "../typechain/TestTokenBatchMiddleware";
+import {
+  TestTokenBatchMiddleware,
+  Gravity,
+  TestERC20A,
+  ReentrantERC20,
+} from "../typechain";
 
 import { deployContracts } from "../test-utils";
 import {
@@ -12,9 +17,6 @@ import {
   ZeroAddress,
 } from "../test-utils/pure";
 import { Signer } from "ethers";
-import { Gravity } from "../typechain/Gravity";
-import { TestERC20A } from "../typechain/TestERC20A";
-import { ReentrantERC20 } from "../typechain/ReentrantERC20";
 
 chai.use(solidity);
 const { expect } = chai;
@@ -45,8 +47,8 @@ async function sendToCosmos(
 ) {
   // Transfer out to Cosmos, locking coins
   // =====================================
-  await testERC20.functions.approve(gravity.address, numCoins);
-  await gravity.functions.sendToCosmos(
+  await testERC20.approve(gravity.address, numCoins);
+  await gravity.sendToCosmos(
     testERC20.address,
     ethers.utils.formatBytes32String("myCosmosAddress"),
     numCoins
@@ -62,7 +64,6 @@ async function prep() {
 
   let powers = examplePowers();
   let validators = signers.slice(0, powers.length);
-
 
   const { gravity, testERC20 } = await deployContracts(
     gravityId,
@@ -89,28 +90,20 @@ async function prep() {
 }
 
 async function runSubmitBatchTest(opts: { batchSize: number }) {
-  const {
-    signers,
-    gravityId,
-    powers,
-    validators,
-    gravity,
-    testERC20,
-  } = await prep();
+  const { signers, gravityId, powers, validators, gravity, testERC20 } =
+    await prep();
 
   // Lock tokens in gravity
   // ====================
   await sendToCosmos(gravity, testERC20, 1000);
 
   expect(
-    (await testERC20.functions.balanceOf(gravity.address))[0].toNumber(),
+    (await testERC20.balanceOf(gravity.address)).toNumber(),
     "gravity does not have correct balance after sendToCosmos"
   ).to.equal(1000);
 
   expect(
-    (
-      await testERC20.functions.balanceOf(await signers[0].getAddress())
-    )[0].toNumber(),
+    (await testERC20.balanceOf(await signers[0].getAddress())).toNumber(),
     "msg.sender does not have correct balance after sendToCosmos"
   ).to.equal(9000);
 
@@ -156,8 +149,8 @@ async function runSubmitBatchTest(opts: { batchSize: number }) {
     powers,
     valsetNonce: 0,
     rewardAmount: 0,
-    rewardToken: ZeroAddress
-  }
+    rewardToken: ZeroAddress,
+  };
 
   await gravity.submitBatch(
     valset,
@@ -173,31 +166,27 @@ async function runSubmitBatchTest(opts: { batchSize: number }) {
   );
 
   expect(
-    (
-      await testERC20.functions.balanceOf(await signers[5].getAddress())
-    )[0].toNumber(),
+    (await testERC20.balanceOf(await signers[5].getAddress())).toNumber(),
     "first address in tx batch does not have correct balance after submitBatch"
   ).to.equal(1);
 
   expect(
     (
-      await testERC20.functions.balanceOf(
+      await testERC20.balanceOf(
         await signers[5 + txBatch.numTxs - 1].getAddress()
       )
-    )[0].toNumber(),
+    ).toNumber(),
     "last address in tx batch does not have correct balance after submitBatch"
   ).to.equal(1);
 
   expect(
-    (await testERC20.functions.balanceOf(gravity.address))[0].toNumber(),
+    (await testERC20.balanceOf(gravity.address)).toNumber(),
     "gravity does not have correct balance after submitBatch"
     // Each tx in batch is worth 1 coin sent + 1 coin fee
   ).to.equal(1000 - txBatch.numTxs * 2);
 
   expect(
-    (
-      await testERC20.functions.balanceOf(await signers[0].getAddress())
-    )[0].toNumber(),
+    (await testERC20.balanceOf(await signers[0].getAddress())).toNumber(),
     "msg.sender does not have correct balance after submitBatch"
     // msg.sender has received 1 coin in fees for each tx
   ).to.equal(9000 + txBatch.numTxs);
@@ -220,7 +209,8 @@ async function runLogicCallTest(opts: {
   const TestTokenBatchMiddleware = await ethers.getContractFactory(
     "TestTokenBatchMiddleware"
   );
-  const tokenBatchMiddleware = (await TestTokenBatchMiddleware.deploy()) as TestTokenBatchMiddleware;
+  const tokenBatchMiddleware =
+    (await TestTokenBatchMiddleware.deploy()) as TestTokenBatchMiddleware;
   await tokenBatchMiddleware.transferOwnership(gravity.address);
 
   // Lock tokens in gravity
@@ -228,14 +218,12 @@ async function runLogicCallTest(opts: {
   await sendToCosmos(gravity, testERC20, 1000);
 
   expect(
-    (await testERC20.functions.balanceOf(gravity.address))[0].toNumber(),
+    (await testERC20.balanceOf(gravity.address)).toNumber(),
     "gravity does not have correct balance after sendToCosmos"
   ).to.equal(1000);
 
   expect(
-    (
-      await testERC20.functions.balanceOf(await signers[0].getAddress())
-    )[0].toNumber(),
+    (await testERC20.balanceOf(await signers[0].getAddress())).toNumber(),
     "msg.sender does not have correct balance after sendToCosmos"
   ).to.equal(9000);
 
@@ -302,8 +290,8 @@ async function runLogicCallTest(opts: {
     powers,
     valsetNonce: 0,
     rewardAmount: 0,
-    rewardToken: ZeroAddress
-  }
+    rewardToken: ZeroAddress,
+  };
 
   await gravity.submitLogicCall(
     valset,
@@ -313,31 +301,27 @@ async function runLogicCallTest(opts: {
   );
 
   expect(
-    (
-      await testERC20.functions.balanceOf(await signers[5].getAddress())
-    )[0].toNumber(),
+    (await testERC20.balanceOf(await signers[5].getAddress())).toNumber(),
     "first address in tx batch does not have correct balance after submitLogicCall"
   ).to.equal(1);
 
   expect(
     (
-      await testERC20.functions.balanceOf(
+      await testERC20.balanceOf(
         await signers[5 + txBatch.numTxs - 1].getAddress()
       )
-    )[0].toNumber(),
+    ).toNumber(),
     "last address in tx batch does not have correct balance after submitLogicCall"
   ).to.equal(1);
 
   expect(
-    (await testERC20.functions.balanceOf(gravity.address))[0].toNumber(),
+    (await testERC20.balanceOf(gravity.address)).toNumber(),
     "gravity does not have correct balance after submitLogicCall"
     // Each tx in batch is worth 1 coin sent + 1 coin fee
   ).to.equal(1000 - txBatch.numTxs * 2);
 
   expect(
-    (
-      await testERC20.functions.balanceOf(await signers[0].getAddress())
-    )[0].toNumber(),
+    (await testERC20.balanceOf(await signers[0].getAddress())).toNumber(),
     "msg.sender does not have correct balance after submitLogicCall"
     // msg.sender has received 1 coin in fees for each tx
   ).to.equal(9000 + txBatch.numTxs);

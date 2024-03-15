@@ -28,7 +28,7 @@ async function runTest(opts: {
   // Transfer out to Cosmos, locking coins
   // =====================================
   if (!opts.wrongERC721Owner) {
-    await testERC721.functions.approve(gravityERC721.address, 190);
+    await testERC721.approve(gravityERC721.address, 190);
   }
   await firstCall(gravityERC721, testERC721, signers, gravity);
   let secondERC721 = await getSecondERC721(
@@ -38,7 +38,7 @@ async function runTest(opts: {
     opts.ERC721NotInContract
   );
   if (!opts.ERC721NotExist && !opts.ERC721NotInContract) {
-    await testERC721.functions.approve(gravityERC721.address, secondERC721);
+    await testERC721.approve(gravityERC721.address, secondERC721);
   }
   await secondCall(gravityERC721, testERC721, signers, gravity, secondERC721);
 }
@@ -82,10 +82,8 @@ async function firstCall(
       2
     );
   expect((await testERC721.ownerOf(190))[0]).to.equal(gravityERC721.address);
-  expect((await gravity.functions.state_lastEventNonce())[0]).to.equal(1);
-  expect(
-    (await gravityERC721.functions.state_lastERC721EventNonce())[0]
-  ).to.equal(2);
+  expect(await gravity.state_lastEventNonce()).to.equal(1);
+  expect(await gravityERC721.state_lastERC721EventNonce()).to.equal(2);
 }
 
 async function secondCall(
@@ -113,10 +111,8 @@ async function secondCall(
   expect((await testERC721.ownerOf(secondERC721))[0]).to.equal(
     gravityERC721.address
   );
-  expect((await gravity.functions.state_lastEventNonce())[0]).to.equal(1);
-  expect(
-    (await gravityERC721.functions.state_lastERC721EventNonce())[0]
-  ).to.equal(3);
+  expect(await gravity.state_lastEventNonce()).to.equal(1);
+  expect(await gravityERC721.state_lastERC721EventNonce()).to.equal(3);
 }
 
 describe("sendERC721ToCosmos tests", function () {

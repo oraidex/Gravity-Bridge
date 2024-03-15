@@ -11,14 +11,11 @@ import {
   parseEvent,
 } from "../test-utils/pure";
 import { BigNumber } from "ethers";
+import { ERC20__factory } from "../typechain";
 chai.use(solidity);
 const { expect } = chai;
 
-
 async function runTest(opts: {}) {
-
-
-
   // Prep and deploy Gravity contract
   // ========================
   const signers = await ethers.getSigners();
@@ -29,40 +26,39 @@ async function runTest(opts: {}) {
   const {
     gravity,
     testERC20,
-    checkpoint: deployCheckpoint
+    checkpoint: deployCheckpoint,
   } = await deployContracts(gravityId, validators, powers);
-
-
-
 
   // Deploy ERC20 contract representing Cosmos asset
   // ===============================================
-  const eventArgs = await parseEvent(gravity, gravity.deployERC20('uatom', 'Atom', 'ATOM', 6), 1)
+  const eventArgs = await parseEvent(
+    gravity,
+    gravity.deployERC20("uatom", "Atom", "ATOM", 6),
+    1
+  );
 
   expect(eventArgs).to.deep.equal({
-    _cosmosDenom: 'uatom',
+    _cosmosDenom: "uatom",
     _tokenContract: eventArgs._tokenContract, // We don't know this ahead of time
-    _name: 'Atom',
-    _symbol: 'ATOM',
+    _name: "Atom",
+    _symbol: "ATOM",
     _decimals: 6,
-    _eventNonce: BigNumber.from(2)
-  })
-
-
-
+    _eventNonce: BigNumber.from(2),
+  });
 
   // Connect to deployed contract for testing
   // ========================================
-  let ERC20contract = new ethers.Contract(eventArgs._tokenContract, [
-    "function balanceOf(address account) view returns (uint256 balance)"
-  ], gravity.provider);
+  let ERC20contract = ERC20__factory.connect(
+    eventArgs._tokenContract,
+    gravity.provider
+  );
 
-
-  const maxUint256 = BigNumber.from(2).pow(256).sub(1)
+  const maxUint256 = BigNumber.from(2).pow(256).sub(1);
 
   // Check that gravity balance is correct
-  expect((await ERC20contract.functions.balanceOf(gravity.address)).toString()).to.equal(maxUint256.toString())
-
+  expect((await ERC20contract.balanceOf(gravity.address)).toString()).to.equal(
+    maxUint256.toString()
+  );
 
   // Prepare batch
   // ===============================
@@ -77,17 +73,12 @@ async function runTest(opts: {}) {
     txDestinationsInt[i] = signers[i + 5];
   }
   const txDestinations = await getSignerAddresses(txDestinationsInt);
-  let batchNonce = 1
-  let batchTimeout = 10000
-
-
-
+  let batchNonce = 1;
+  let batchTimeout = 10000;
 
   // Call method
   // ===========
-  const methodName = ethers.utils.formatBytes32String(
-    "transactionBatch"
-  );
+  const methodName = ethers.utils.formatBytes32String("transactionBatch");
   let abiEncoded = ethers.utils.defaultAbiCoder.encode(
     [
       "bytes32",
@@ -97,7 +88,7 @@ async function runTest(opts: {}) {
       "uint256[]",
       "uint256",
       "address",
-      "uint256"
+      "uint256",
     ],
     [
       gravityId,
@@ -107,7 +98,7 @@ async function runTest(opts: {}) {
       txFees,
       batchNonce,
       eventArgs._tokenContract,
-      batchTimeout
+      batchTimeout,
     ]
   );
   let digest = ethers.utils.keccak256(abiEncoded);
@@ -119,8 +110,8 @@ async function runTest(opts: {}) {
     powers,
     valsetNonce: currentValsetNonce,
     rewardAmount: 0,
-    rewardToken: ZeroAddress
-  }
+    rewardToken: ZeroAddress,
+  };
 
   await gravity.submitBatch(
     valset,
@@ -136,16 +127,20 @@ async function runTest(opts: {}) {
   );
 
   // Check that Gravity's balance is correct
-  expect((await ERC20contract.functions.balanceOf(gravity.address)).toString()).to.equal(maxUint256.sub(200).toString())
+  expect((await ERC20contract.balanceOf(gravity.address)).toString()).to.equal(
+    maxUint256.sub(200).toString()
+  );
 
   // Check that one of the recipient's balance is correct
-  expect((await ERC20contract.functions.balanceOf(await signers[6].getAddress())).toString()).to.equal('1')
+  expect(
+    (await ERC20contract.balanceOf(await signers[6].getAddress())).toString()
+  ).to.equal("1");
 }
 
 describe("deployERC20 tests", function () {
   // There is no way for this function to throw so there are
   // no throwing tests
   it("runs", async function () {
-    await runTest({})
+    await runTest({});
   });
 });
