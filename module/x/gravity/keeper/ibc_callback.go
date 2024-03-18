@@ -66,6 +66,30 @@ func GetReceivedCoin(srcPort, srcChannel, dstPort, dstChannel, rawDenom, rawAmt 
 	}
 }
 
+func (k Keeper) CollectBatchFees(ctx sdk.Context, evmChainPrefix string, receivedAmount *sdk.Coin) (sdk.Int, error) {
+	evmChainData := k.GetEvmChainData(ctx, evmChainPrefix)
+	batchFees := sdk.ZeroInt()
+	if evmChainData == nil {
+		return batchFees, sdkerrors.Wrap(types.ErrEvmChainNotFound, "Could not find the evm chain given the evm chain prefix: "+evmChainPrefix)
+	}
+	switch evmChainPrefix {
+	// FIXME: need a more accurate way to calculate relayer fees. Currently we consider relayer fees = 1% of every token
+	case "oraib":
+		batchFees = receivedAmount.Amount.QuoRaw(100)
+	case "eth-mainnet":
+		batchFees = receivedAmount.Amount.QuoRaw(100)
+	case "trontrx-mainnet":
+		batchFees = receivedAmount.Amount.QuoRaw(100)
+	default:
+		// by default, if we have not charged the evm chain prefix yet then we do nothing
+	}
+	receivedAmount.Amount = receivedAmount.Amount.Sub(batchFees)
+	if receivedAmount.Amount.IsZero() {
+		return batchFees, sdkerrors.Wrap(types.ErrInvalid, "Received amount is empty after deducting batch fees")
+	}
+	return batchFees, nil
+}
+
 // OnRecvPacket performs the ICS20 middleware receive callback for automatically
 // converting an IBC Coin to their ERC20 representation.
 // For the conversion to succeed, the IBC denomination must have previously been
@@ -132,12 +156,15 @@ func (k Keeper) OnRecvPacket(
 		return channeltypes.NewErrorAcknowledgement(sdkerrors.Wrap(types.ErrInvalid, "destination address is invalid or blacklisted").Error())
 	}
 
-	batchFees := sdk.ZeroInt()
-	params, err := k.GetParamsIfSet(ctx)
-	if err == nil {
-		// The params have been set, get the min send to eth fee
-		batchFees = sdk.NewInt(int64(params.MinChainFeeBasisPoints))
+	batchFees, err := k.CollectBatchFees(ctx, evmChainPrefix, &coin)
+	if err != nil {
+		return channeltypes.NewErrorAcknowledgement(err.Error())
 	}
+	// params, err := k.GetParamsIfSet(ctx)
+	// if err == nil {
+	// 	// The params have been set, get the min send to eth fee
+	// 	batchFees = sdk.NewInt(int64(params.MinChainFeeBasisPoints))
+	// }
 
 	// finally add to outgoing pool and waiting for gbt to submit it via MsgRequestBatch
 	txID, err := k.AddToOutgoingPool(ctx, evmChainPrefix, sender, *dest, coin, sdk.Coin{Denom: coin.Denom, Amount: batchFees})

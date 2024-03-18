@@ -8,6 +8,7 @@ import (
 	"github.com/Gravity-Bridge/Gravity-Bridge/module/x/gravity/types"
 	"github.com/cosmos/cosmos-sdk/crypto/keys/secp256k1"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 	transfertypes "github.com/cosmos/ibc-go/v3/modules/apps/transfer/types"
 	clienttypes "github.com/cosmos/ibc-go/v3/modules/core/02-client/types"
 	channeltypes "github.com/cosmos/ibc-go/v3/modules/core/04-channel/types"
@@ -155,4 +156,108 @@ func TestOnRecvPacket(t *testing.T) {
 
 	}
 
+}
+
+func TestCollectBatchFees(t *testing.T) {
+
+	input := CreateTestEnv(t)
+	defer func() { input.Context.Logger().Info("Asserting invariants at test end"); input.AssertInvariants() }()
+
+	ctx := input.Context
+
+	evmChains := []types.EvmChain{
+		{EvmChainPrefix: "eth-mainnet", EvmChainName: "Ethereum Mainnet", EvmChainNetVersion: 1},
+		{EvmChainPrefix: "oraib", EvmChainName: "BSC Mainnet", EvmChainNetVersion: 56},
+		{EvmChainPrefix: "trontrx-mainnet", EvmChainName: "Tron Mainnet", EvmChainNetVersion: 724},
+	}
+	// add oraibridge mainnet evm prefixes for testing
+	for _, evmChain := range evmChains {
+		input.GravityKeeper.SetLatestValsetNonce(ctx, evmChain.EvmChainPrefix, 0)
+		input.GravityKeeper.setLastObservedEventNonce(ctx, evmChain.EvmChainPrefix, 0)
+		input.GravityKeeper.SetLastSlashedValsetNonce(ctx, evmChain.EvmChainPrefix, 0)
+		input.GravityKeeper.SetLastSlashedBatchBlock(ctx, evmChain.EvmChainPrefix, 0)
+		input.GravityKeeper.SetLastSlashedLogicCallBlock(ctx, evmChain.EvmChainPrefix, 0)
+		input.GravityKeeper.setID(ctx, 0, types.AppendChainPrefix(types.KeyLastTXPoolID, evmChain.EvmChainPrefix))
+		input.GravityKeeper.setID(ctx, 0, types.AppendChainPrefix(types.KeyLastOutgoingBatchID, evmChain.EvmChainPrefix))
+		input.GravityKeeper.SetEvmChainData(ctx, evmChain)
+	}
+
+	testCases := []struct {
+		name                      string
+		evmChainPrefix            string
+		receivedAmount            sdk.Int
+		expectedBatchFees         sdk.Int
+		expectedNewReceivedAmount sdk.Int
+		expectedError             error
+	}{
+		{
+			name:                      "case 1: err case prefix unknown-prefix receivedAmount > 100",
+			evmChainPrefix:            "unknown-prefix",
+			receivedAmount:            sdk.NewInt(1000),
+			expectedBatchFees:         sdk.ZeroInt(),
+			expectedNewReceivedAmount: sdk.NewInt(1000),
+			expectedError:             sdkerrors.Wrap(types.ErrEvmChainNotFound, "Could not find the evm chain given the evm chain prefix: unknown-prefix"),
+		},
+		{
+			name:                      "case 2: happy case prefix eth-mainnet receivedAmount > 100",
+			evmChainPrefix:            "eth-mainnet",
+			receivedAmount:            sdk.NewInt(1000),
+			expectedBatchFees:         sdk.NewInt(10),
+			expectedNewReceivedAmount: sdk.NewInt(990),
+			expectedError:             nil,
+		},
+		{
+			name:                      "case 3: happy case prefix eth-mainnet receivedAmount < 100",
+			evmChainPrefix:            "eth-mainnet",
+			receivedAmount:            sdk.NewInt(99),
+			expectedBatchFees:         sdk.NewInt(0),
+			expectedNewReceivedAmount: sdk.NewInt(99),
+			expectedError:             nil,
+		},
+		{
+			name:                      "case 4: happy case prefix oraib receivedAmount > 100",
+			evmChainPrefix:            "oraib",
+			receivedAmount:            sdk.NewInt(100),
+			expectedBatchFees:         sdk.NewInt(1),
+			expectedNewReceivedAmount: sdk.NewInt(99),
+			expectedError:             nil,
+		},
+		{
+			name:                      "case 5: happy case prefix trontrx-mainnet receivedAmount > 100",
+			evmChainPrefix:            "trontrx-mainnet",
+			receivedAmount:            sdk.NewInt(100),
+			expectedBatchFees:         sdk.NewInt(1),
+			expectedNewReceivedAmount: sdk.NewInt(99),
+			expectedError:             nil,
+		},
+		{
+			name:                      "case 6: happy case prefix ethereum receivedAmount > 100, found but charge no batch fees",
+			evmChainPrefix:            EthChainPrefix,
+			receivedAmount:            sdk.NewInt(100),
+			expectedBatchFees:         sdk.NewInt(0),
+			expectedNewReceivedAmount: sdk.NewInt(100),
+			expectedError:             nil,
+		},
+		{
+			name:                      "case 6: err case received amount = 0",
+			evmChainPrefix:            "eth-mainnet",
+			receivedAmount:            sdk.NewInt(0),
+			expectedBatchFees:         sdk.NewInt(0),
+			expectedNewReceivedAmount: sdk.NewInt(0),
+			expectedError:             sdkerrors.Wrap(types.ErrInvalid, "Received amount is empty after deducting batch fees"),
+		},
+	}
+
+	for _, tc := range testCases {
+		fmt.Println(tc.name)
+		coin := sdk.NewCoin("orai", tc.receivedAmount)
+		batchFees, err := input.GravityKeeper.CollectBatchFees(ctx, tc.evmChainPrefix, &coin)
+		require.Equal(t, tc.expectedBatchFees.Int64(), batchFees.Int64())
+		if tc.expectedError == nil {
+			require.Equal(t, tc.expectedError, err)
+		} else {
+			require.Equal(t, tc.expectedError.Error(), err.Error())
+		}
+		require.Equal(t, tc.expectedNewReceivedAmount.Int64(), coin.Amount.Int64())
+	}
 }
