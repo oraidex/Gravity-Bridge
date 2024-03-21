@@ -78,9 +78,9 @@ func (k Keeper) BuildOutgoingTxBatch(
 	k.SetPastEthSignatureCheckpoint(ctx, evmChainPrefix, checkpoint)
 
 	// emit batch tx ids as well for scanning
-	batchedTxIds := []uint64{}
+	batchedTxIds := []sdk.Attribute{}
 	for _, tx := range selectedTxs {
-		batchedTxIds = append(batchedTxIds, tx.Id)
+		batchedTxIds = append(batchedTxIds, sdk.NewAttribute("batched_tx_id", strconv.FormatUint(tx.Id, 10)))
 	}
 	ctx.EventManager().EmitTypedEvent(
 		&types.EventOutgoingBatch{
@@ -88,9 +88,9 @@ func (k Keeper) BuildOutgoingTxBatch(
 			BridgeChainId:  strconv.Itoa(int(k.GetBridgeChainID(ctx, evmChainPrefix))),
 			BatchId:        string(types.GetOutgoingTxBatchKey(evmChainPrefix, contract, nextID)),
 			Nonce:          fmt.Sprint(nextID),
-			BatchedTxIds:   batchedTxIds,
 		},
 	)
+	ctx.EventManager().EmitEvent(sdk.NewEvent("batched_tx_ids", batchedTxIds...))
 	return batch, nil
 }
 

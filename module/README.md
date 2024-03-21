@@ -29,10 +29,10 @@ make proto-gen
 
 ## Test
 
-go test ./x/gravity/migrations/v3/... -v --count=1
-go test ./x/gravity/keeper/... -v --count=1
-go test ./x/gravity/... -v --count=1
-go test ./x/gravity/types/... -v --count=1
+go test ./x/gravity/migrations/v3/... -v --count=1 | grep FAIL
+go test ./x/gravity/keeper/... -v --count=1 | grep FAIL
+go test ./x/gravity/... -v --count=1 | grep FAIL
+go test ./x/gravity/types/... -v --count=1 | grep FAIL
 
 ## Update swagger
 

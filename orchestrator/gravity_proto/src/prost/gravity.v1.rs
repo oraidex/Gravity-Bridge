@@ -279,8 +279,6 @@ pub struct EventOutgoingBatch {
     pub batch_id: ::prost::alloc::string::String,
     #[prost(string, tag = "4")]
     pub nonce: ::prost::alloc::string::String,
-    #[prost(uint64, repeated, packed = "false", tag = "5")]
-    pub batched_tx_ids: ::prost::alloc::vec::Vec<u64>,
 }
 /// BridgeValidator represents a validator's ETH address and its power
 #[allow(clippy::derive_partial_eq_without_eq)]

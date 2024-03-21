@@ -15,6 +15,8 @@ import (
 	ibcexported "github.com/cosmos/ibc-go/v3/modules/core/exported"
 )
 
+const BatchFeesRate int64 = 0 // 0 / 1000
+
 // IsModuleAccount returns true if the given account is a module account
 func IsModuleAccount(acc authtypes.AccountI) bool {
 	_, isModuleAccount := acc.(authtypes.ModuleAccountI)
@@ -75,11 +77,11 @@ func (k Keeper) CollectBatchFees(ctx sdk.Context, evmChainPrefix string, receive
 	switch evmChainPrefix {
 	// FIXME: need a more accurate way to calculate relayer fees. Currently we consider relayer fees = 1% of every token
 	case "oraib":
-		batchFees = receivedAmount.Amount.QuoRaw(100)
+		batchFees = receivedAmount.Amount.MulRaw(BatchFeesRate).QuoRaw(1000)
 	case "eth-mainnet":
-		batchFees = receivedAmount.Amount.QuoRaw(100)
+		batchFees = receivedAmount.Amount.MulRaw(BatchFeesRate).QuoRaw(1000)
 	case "trontrx-mainnet":
-		batchFees = receivedAmount.Amount.QuoRaw(100)
+		batchFees = receivedAmount.Amount.MulRaw(BatchFeesRate).QuoRaw(1000)
 	default:
 		// by default, if we have not charged the evm chain prefix yet then we do nothing
 	}
