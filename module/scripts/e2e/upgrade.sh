@@ -4,7 +4,7 @@
 
 OLD_VERSION=${OLD_VERSION:-"v1.0.3"}
 ARGS="--chain-id testing -y --keyring-backend test --fees 200uoraib --gas auto --gas-adjustment 1.5 -b block"
-NEW_VERSION=${NEW_VERSION:-"v1.0.4"}
+NEW_VERSION=${NEW_VERSION:-"txidevent"}
 VALIDATOR_HOME=${VALIDATOR_HOME:-"$HOME/.gravity/validator1"}
 
 # kill all running binaries
@@ -52,6 +52,9 @@ screen -S validator3 -d -m gravity start --home=$HOME/.gravity/validator3 --mini
 # sleep a bit for the network to start 
 echo "Sleep to wait for the network to start..."
 sleep 7
+
+# send test uoraib to a test account
+gravity tx bank send $(gravity keys show validator1 -a --keyring-backend=test --home=$HOME/.gravity/validator1) oraib14n3tx8s5ftzhlxvq0w5962v60vd82h305kec0j 50000uoraib --keyring-backend=test --home=$HOME/.gravity/validator1 --chain-id=testing --broadcast-mode block --gas 200000 --fees 2uoraib --node http://localhost:26657 --yes
 
 height_before=$(curl --no-progress-meter http://localhost:1317/blocks/latest | jq '.block.header.height | tonumber')
 
