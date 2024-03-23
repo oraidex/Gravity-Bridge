@@ -503,7 +503,7 @@ func CmdCancelSendToEth() *cobra.Command {
 func CmdRequestBatch() *cobra.Command {
 	// nolint: exhaustruct
 	cmd := &cobra.Command{
-		Use:   "request-batch [token_contract_address][evm-chain-prefix]",
+		Use:   "request-batch [token_contract_address] [evm-chain-prefix]",
 		Short: "Request a new batch on the cosmos side for pooled withdrawal transactions",
 		Args:  cobra.ExactArgs(2),
 		RunE: func(cmd *cobra.Command, args []string) error {
