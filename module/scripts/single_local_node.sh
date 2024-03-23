@@ -26,8 +26,8 @@ update_genesis () {
 update_genesis '.app_state["staking"]["params"]["bond_denom"]="uoraib"'
 
 # create validator node 1s
-gravity add-genesis-account $(gravity keys show validator1 -a --keyring-backend=test --home=$HOME/.gravity/validator1) 1000000000000uoraib,1000000000000stake,100000000000000000000oraib0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2 --home=$HOME/.gravity/validator1
-gravity add-genesis-account $(gravity keys show orchestrator1 -a --keyring-backend=test --home=$HOME/.gravity/validator1) 1000000000000uoraib,1000000000000stake,100000000000000000000oraib0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2 --home=$HOME/.gravity/validator1
+gravity add-genesis-account $(gravity keys show validator1 -a --keyring-backend=test --home=$HOME/.gravity/validator1) 1000000000000uoraib,1000000000000stake,1000000000000000000000x0000000000000000000000000000000000C0FFEE  --home=$HOME/.gravity/validator1
+gravity add-genesis-account $(gravity keys show orchestrator1 -a --keyring-backend=test --home=$HOME/.gravity/validator1) 1000000000000uoraib,1000000000000stake,100000000000000000000oraib0x0000000000000000000000000000000000C0FFEE  --home=$HOME/.gravity/validator1
 gravity gentx validator1 500000000uoraib 0x$(cat $HOME/.gravity/validator1/UTC--* | jq -r '.address') $(gravity keys show orchestrator1 -a --bech acc  --keyring-backend=test --home=$HOME/.gravity/validator1) --keyring-backend=test --home=$HOME/.gravity/validator1 --chain-id=testing
 gravity collect-gentxs --home=$HOME/.gravity/validator1
 # gravity validate-genesis --home=$HOME/.gravity/validator1
@@ -43,6 +43,7 @@ update_genesis '.app_state["gov"]["deposit_params"]["min_deposit"][0]["denom"]="
 # update mint genesis
 update_genesis '.app_state["mint"]["params"]["mint_denom"]="uoraib"'
 update_genesis '.app_state["gov"]["voting_params"]["voting_period"]="30s"'
+update_genesis '.app_state["gravity"]["evm_chains"]=[{"evm_chain": {"evm_chain_prefix": "oraib","evm_chain_name": "Binance Smart Chain","evm_chain_net_version": "56"},gravity_nonces: {},valsets: [],valset_confirms: [],batches: [],batch_confirms: [],logic_calls: [],logic_call_confirms: [],attestations: [],delegate_keys: [],erc20_to_denoms: [],unbatched_transfers: []}]'
 # port key (validator1 uses default ports)
 # validator1 1317, 9090, 9091, 26658, 26657, 26656, 6060
 

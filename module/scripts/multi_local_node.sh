@@ -22,10 +22,8 @@ gravity keys add validator1 --keyring-backend=test --home=$HOME/.gravity/validat
 gravity keys add validator2 --keyring-backend=test --home=$HOME/.gravity/validator2
 gravity keys add validator3 --keyring-backend=test --home=$HOME/.gravity/validator3
 
-# create keys for orchestrators
+# create key orchestrator1 for validator1
 gravity keys add orchestrator1 --keyring-backend=test --home=$HOME/.gravity/validator1
-gravity keys add orchestrator2 --keyring-backend=test --home=$HOME/.gravity/validator2
-gravity keys add orchestrator3 --keyring-backend=test --home=$HOME/.gravity/validator3
 
 # add eth keys
 gravity eth_keys add --keyring-backend=test --home=$HOME/.gravity/validator1
@@ -39,7 +37,8 @@ update_genesis () {
 # change staking denom to uoraib
 update_genesis '.app_state["staking"]["params"]["bond_denom"]="uoraib"'
 
-# create validator node 1
+# create validator node 1 and faucet some for orchestrator1
+gravity add-genesis-account $(gravity keys show orchestrator1 -a --keyring-backend=test --home=$HOME/.gravity/validator1) 1000000uoraib,100000000000000000000oraib0x0000000000000000000000000000000000C0FFEE  --home=$HOME/.gravity/validator1
 gravity add-genesis-account $(gravity keys show validator1 -a --keyring-backend=test --home=$HOME/.gravity/validator1) 1000000000000uoraib,1000000000000stake --home=$HOME/.gravity/validator1
 gravity gentx validator1 500000000uoraib 0x$(cat $HOME/.gravity/validator1/UTC--* | jq -r '.address') $(gravity keys show orchestrator1 -a --bech acc  --keyring-backend=test --home=$HOME/.gravity/validator1) --keyring-backend=test --home=$HOME/.gravity/validator1 --chain-id=testing
 gravity collect-gentxs --home=$HOME/.gravity/validator1
@@ -56,6 +55,8 @@ update_genesis '.app_state["gov"]["deposit_params"]["min_deposit"][0]["denom"]="
 # update mint genesis
 update_genesis '.app_state["mint"]["params"]["mint_denom"]="uoraib"'
 update_genesis '.app_state["gov"]["voting_params"]["voting_period"]="30s"'
+# add bsc chain
+update_genesis '.app_state["gravity"]["evm_chains"]=[{"evm_chain": {"evm_chain_prefix": "oraib","evm_chain_name": "Binance Smart Chain","evm_chain_net_version": "56"},gravity_nonces: {},valsets: [],valset_confirms: [],batches: [],batch_confirms: [],logic_calls: [],logic_call_confirms: [],attestations: [],delegate_keys: [],erc20_to_denoms: [],unbatched_transfers: []}]'
 # port key (validator1 uses default ports)
 # validator1 1317, 9090, 9091, 26658, 26657, 26656, 6060
 # validator2 1316, 9088, 9089, 26655, 26654, 26653, 6061
