@@ -25,9 +25,9 @@ update_genesis () {
 # change staking denom to uoraib
 update_genesis '.app_state["staking"]["params"]["bond_denom"]="uoraib"'
 
-# create validator node 1
-gravity add-genesis-account $(gravity keys show validator1 -a --keyring-backend=test --home=$HOME/.gravity/validator1) 1000000000000uoraib,1000000000000stake --home=$HOME/.gravity/validator1
-gravity add-genesis-account $(gravity keys show orchestrator1 -a --keyring-backend=test --home=$HOME/.gravity/validator1) 1000000000000uoraib,1000000000000stake --home=$HOME/.gravity/validator1
+# create validator node 1s
+gravity add-genesis-account $(gravity keys show validator1 -a --keyring-backend=test --home=$HOME/.gravity/validator1) 1000000000000uoraib,1000000000000stake,100000000000000000000oraib0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2 --home=$HOME/.gravity/validator1
+gravity add-genesis-account $(gravity keys show orchestrator1 -a --keyring-backend=test --home=$HOME/.gravity/validator1) 1000000000000uoraib,1000000000000stake,100000000000000000000oraib0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2 --home=$HOME/.gravity/validator1
 gravity gentx validator1 500000000uoraib 0x$(cat $HOME/.gravity/validator1/UTC--* | jq -r '.address') $(gravity keys show orchestrator1 -a --bech acc  --keyring-backend=test --home=$HOME/.gravity/validator1) --keyring-backend=test --home=$HOME/.gravity/validator1 --chain-id=testing
 gravity collect-gentxs --home=$HOME/.gravity/validator1
 # gravity validate-genesis --home=$HOME/.gravity/validator1

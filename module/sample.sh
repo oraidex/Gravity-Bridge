@@ -1,0 +1,3 @@
+gravity tx gravity send-to-eth 0x0deB52499C2e9F3921c631cb6Ad3522C576d5484 12500000000000000000oraib0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2 1000000000000000000oraib0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2 2500000000000000oraib0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2 oraib --fees 10uoraib  --from orchestrator1 --chain-id testing --home $HOME/.gravity/validator1 --keyring-backend test
+
+gravity tx gravity request-batch oraib0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2 oraib --fees 10uoraib  --from orchestrator1 --chain-id testing --home $HOME/.gravity/validator1 --keyring-backend test
