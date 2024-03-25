@@ -74,6 +74,7 @@ const config: HardhatUserConfig = {
       forking: {
         url: "https://rpc.ankr.com/eth_goerli",
         blockNumber: 8218229,
+        enabled: false, // turn off because of goerli is dead
       },
       mining: {
         auto: false,
