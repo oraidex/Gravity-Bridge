@@ -1,4 +1,5 @@
 #!/bin/bash
+set -ux
 
 # setup the network using the old binary
 
@@ -20,7 +21,7 @@ cd $current_dir
 sh $PWD/scripts/multi_local_node.sh
 
 # test send from cosmos to eth
-gravity tx gravity send-to-eth 0x0000000000000000000000000000000000071001 12500000000000000000oraib0x0000000000000000000000000000000000C0FFEE 1000000000000000000oraib0x0000000000000000000000000000000000C0FFEE 2500000000000000oraib0x0000000000000000000000000000000000C0FFEE oraib --fees 10uoraib  --from orchestrator1 --chain-id testing --home $HOME/.gravity/validator1 --keyring-backend test -y
+gravity tx gravity send-to-eth 0x0000000000000000000000000000000000071001 12500000000000000000oraib0x0000000000000000000000000000000000C0FFEE 1000000000000000000oraib0x0000000000000000000000000000000000C0FFEE 2500000000000000oraib0x0000000000000000000000000000000000C0FFEE oraib --fees 10uoraib  --from orchestrator1 --chain-id testing --home $HOME/.gravity/validator1 --keyring-backend test -y -b block
 
 # test send request batch, can not set this on because client cli of this request-batch
 # at v1.0.3 version is wrong format
@@ -58,12 +59,10 @@ screen -S validator3 -d -m gravity start --home=$HOME/.gravity/validator3 --mini
 
 # sleep a bit for the network to start 
 echo "Sleep to wait for the network to start..."
-sleep 7
+sleep 10
 
 # test send from cosmos to eth
-gravity tx gravity send-to-eth 0x0000000000000000000000000000000000071001 12500000000000000000oraib0x0000000000000000000000000000000000C0FFEE 1000000000000000000oraib0x0000000000000000000000000000000000C0FFEE 2500000000000000oraib0x0000000000000000000000000000000000C0FFEE oraib --fees 10uoraib  --from orchestrator1 --chain-id testing --home $HOME/.gravity/validator1 --keyring-backend test -y
-echo "Wait 10s for tx is executed on blockchain..."
-sleep 10
+gravity tx gravity send-to-eth 0x0000000000000000000000000000000000071001 12500000000000000000oraib0x0000000000000000000000000000000000C0FFEE 1000000000000000000oraib0x0000000000000000000000000000000000C0FFEE 2500000000000000oraib0x0000000000000000000000000000000000C0FFEE oraib --fees 10uoraib  --from orchestrator1 --chain-id testing --home $HOME/.gravity/validator1 --keyring-backend test -y -b block
 
 # test send request batch
 txhash=$(gravity tx gravity request-batch oraib0x0000000000000000000000000000000000C0FFEE oraib --fees 10uoraib  --from orchestrator1 --chain-id testing --home $HOME/.gravity/validator1 --keyring-backend test -y | grep -o 'txhash: [^ ]*' | awk '{print $2}')
