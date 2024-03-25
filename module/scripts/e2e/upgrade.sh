@@ -66,7 +66,7 @@ echo "Wait 10s for tx is executed on blockchain..."
 sleep 10
 
 # test send request batch
-txhash=$(gravity tx gravity request-batch oraib0x0000000000000000000000000000000000C0FFEE oraib --fees 10uoraib  --from orchestrator1 --chain-id testing --home $HOME/.gravity/validator1 --keyring-backend test -y | grep -oP 'txhash: \K\S+')
+txhash=$(gravity tx gravity request-batch oraib0x0000000000000000000000000000000000C0FFEE oraib --fees 10uoraib  --from orchestrator1 --chain-id testing --home $HOME/.gravity/validator1 --keyring-backend test -y | grep -o 'txhash: [^ ]*' | awk '{print $2}')
 
 echo "Wait 10s for tx $txhash is executed on blockchain..."
 sleep 10
