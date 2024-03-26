@@ -62,13 +62,17 @@ echo "Sleep to wait for the network to start..."
 sleep 10
 
 # test send from cosmos to eth
-gravity tx gravity send-to-eth 0x0000000000000000000000000000000000071001 12500000000000000000oraib0x0000000000000000000000000000000000C0FFEE 1000000000000000000oraib0x0000000000000000000000000000000000C0FFEE 2500000000000000oraib0x0000000000000000000000000000000000C0FFEE oraib --fees 10uoraib  --from orchestrator1 --chain-id testing --home $HOME/.gravity/validator1 --keyring-backend test -y -b block
+gravity tx gravity send-to-eth 0x0000000000000000000000000000000000071001 12500000000000000000oraib0x0000000000000000000000000000000000C0FFEE 1000000000000000000oraib0x0000000000000000000000000000000000C0FFEE 2500000000000000oraib0x0000000000000000000000000000000000C0FFEE oraib --fees 10000uoraib  --from orchestrator1 --chain-id testing --home $HOME/.gravity/validator1 --keyring-backend test -y -b block --gas 400000000
+
+# total of 3 tx ids
+gravity tx gravity send-to-eth 0x0000000000000000000000000000000000071001 12500000000000000000oraib0x0000000000000000000000000000000000C0FFEE 1000000000000000000oraib0x0000000000000000000000000000000000C0FFEE 2500000000000000oraib0x0000000000000000000000000000000000C0FFEE oraib --fees 10000uoraib  --from orchestrator1 --chain-id testing --home $HOME/.gravity/validator1 --keyring-backend test -y -b block --gas 400000000
 
 # test send request batch
-txhash=$(gravity tx gravity request-batch oraib0x0000000000000000000000000000000000C0FFEE oraib --fees 10uoraib  --from orchestrator1 --chain-id testing --home $HOME/.gravity/validator1 --keyring-backend test -y | grep -o 'txhash: [^ ]*' | awk '{print $2}')
+txhash=$(gravity tx gravity request-batch oraib0x0000000000000000000000000000000000C0FFEE oraib --fees 10000uoraib --gas 400000000 --from orchestrator1 --chain-id testing --home $HOME/.gravity/validator1 --keyring-backend test -y | grep -o 'txhash: [^ ]*' | awk '{print $2}')
 
 echo "Wait 10s for tx $txhash is executed on blockchain..."
 sleep 10
+echo "$(curl -s "http://127.0.0.1:26657/tx?hash=0x$txhash&prove=true" | jq -r '.result.tx_result.log')" | grep -q "batched_tx_ids"
 if echo "$(curl -s "http://127.0.0.1:26657/tx?hash=0x$txhash&prove=true" | jq -r '.result.tx_result.log')" | grep -q "batched_tx_ids"
 then
     echo "Testcase success, batched_tx_ids already exist on event"
