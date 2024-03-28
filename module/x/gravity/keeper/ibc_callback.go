@@ -15,6 +15,8 @@ import (
 	ibcexported "github.com/cosmos/ibc-go/v3/modules/core/exported"
 )
 
+const BatchFeesRate int64 = 0 // 0 / 1000
+
 // IsModuleAccount returns true if the given account is a module account
 func IsModuleAccount(acc authtypes.AccountI) bool {
 	_, isModuleAccount := acc.(authtypes.ModuleAccountI)
@@ -64,6 +66,30 @@ func GetReceivedCoin(srcPort, srcChannel, dstPort, dstChannel, rawDenom, rawAmt 
 		Denom:  voucherDenom,
 		Amount: amount,
 	}
+}
+
+func (k Keeper) CollectBatchFees(ctx sdk.Context, evmChainPrefix string, receivedAmount *sdk.Coin) (sdk.Int, error) {
+	evmChainData := k.GetEvmChainData(ctx, evmChainPrefix)
+	batchFees := sdk.ZeroInt()
+	if evmChainData == nil {
+		return batchFees, sdkerrors.Wrap(types.ErrEvmChainNotFound, "Could not find the evm chain given the evm chain prefix: "+evmChainPrefix)
+	}
+	switch evmChainPrefix {
+	// FIXME: need a more accurate way to calculate relayer fees. Currently we consider relayer fees = 1% of every token
+	case "oraib":
+		batchFees = receivedAmount.Amount.MulRaw(BatchFeesRate).QuoRaw(1000)
+	case "eth-mainnet":
+		batchFees = receivedAmount.Amount.MulRaw(BatchFeesRate).QuoRaw(1000)
+	case "trontrx-mainnet":
+		batchFees = receivedAmount.Amount.MulRaw(BatchFeesRate).QuoRaw(1000)
+	default:
+		// by default, if we have not charged the evm chain prefix yet then we do nothing
+	}
+	receivedAmount.Amount = receivedAmount.Amount.Sub(batchFees)
+	if receivedAmount.Amount.IsZero() {
+		return batchFees, sdkerrors.Wrap(types.ErrInvalid, "Received amount is empty after deducting batch fees")
+	}
+	return batchFees, nil
 }
 
 // OnRecvPacket performs the ICS20 middleware receive callback for automatically
@@ -132,6 +158,10 @@ func (k Keeper) OnRecvPacket(
 		return channeltypes.NewErrorAcknowledgement(sdkerrors.Wrap(types.ErrInvalid, "destination address is invalid or blacklisted").Error())
 	}
 
+	// batchFees, err := k.CollectBatchFees(ctx, evmChainPrefix, &coin)
+	// if err != nil {
+	// 	return channeltypes.NewErrorAcknowledgement(err.Error())
+	// }
 	batchFees := sdk.ZeroInt()
 	params, err := k.GetParamsIfSet(ctx)
 	if err == nil {
