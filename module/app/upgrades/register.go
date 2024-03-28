@@ -1,6 +1,7 @@
 package upgrades
 
 import (
+	"github.com/Gravity-Bridge/Gravity-Bridge/module/app/upgrades/singlestep"
 	gravitykeeper "github.com/Gravity-Bridge/Gravity-Bridge/module/x/gravity/keeper"
 	"github.com/cosmos/cosmos-sdk/types/module"
 	authkeeper "github.com/cosmos/cosmos-sdk/x/auth/keeper"
@@ -66,8 +67,8 @@ func RegisterUpgradeHandlers(
 	// 	tron.GetTronUpgradeHandler(mm, configurator, crisisKeeper),
 	// )
 
-	// upgradeKeeper.SetUpgradeHandler(
-	// 	singlestep.PlanName,
-	// 	singlestep.GetUpgradeHandler(mm, configurator, crisisKeeper),
-	// )
+	upgradeKeeper.SetUpgradeHandler(
+		singlestep.PlanName,
+		singlestep.GetUpgradeHandler(mm, configurator, crisisKeeper),
+	)
 }
