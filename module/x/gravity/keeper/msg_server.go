@@ -415,6 +415,16 @@ func (k msgServer) BatchSendToEthClaim(c context.Context, msg *types.MsgBatchSen
 	if err != nil {
 		return nil, err
 	}
+	ctx.EventManager().EmitTypedEvent(
+		&types.MsgBatchSendToEthClaim{
+			EventNonce:     msg.EventNonce,
+			BatchNonce:     msg.BatchNonce,
+			EthBlockHeight: msg.EthBlockHeight,
+			TokenContract:  msg.TokenContract,
+			Orchestrator:   msg.Orchestrator,
+			EvmChainPrefix: msg.EvmChainPrefix,
+		},
+	)
 
 	return &types.MsgBatchSendToEthClaimResponse{}, nil
 }
