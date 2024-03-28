@@ -70,9 +70,4 @@ func RegisterUpgradeHandlers(
 	// 	singlestep.PlanName,
 	// 	singlestep.GetUpgradeHandler(mm, configurator, crisisKeeper),
 	// )
-
-	// upgradeKeeper.SetUpgradeHandler(
-	// 	txidevent.PlanName,
-	// 	txidevent.GetUpgradeHandler(mm, configurator, crisisKeeper),
-	// )
 }
