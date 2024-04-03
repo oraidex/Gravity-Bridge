@@ -194,7 +194,8 @@ message MsgConfirmLogicCallResponse {}
 
 message MsgRequestLogicCall {
   OutgoingLogicCall outgoing_logic_call = 1;  
-  string evm_chain_prefix = 2;
+  string sender = 2;
+  string evm_chain_prefix = 3;
 }
 
 message MsgRequestLogicCallResponse {}

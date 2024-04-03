@@ -830,3 +830,23 @@ func (msg MsgSubmitBadSignatureEvidence) Type() string { return "Submit_Bad_Sign
 
 // Route should return the name of the module
 func (msg MsgSubmitBadSignatureEvidence) Route() string { return RouterKey }
+
+
+
+// GetSigners defines whose signature is required
+func (msg MsgRequestLogicCall) GetSigners() []sdk.AccAddress {
+	acc, err := sdk.AccAddressFromBech32(msg.Sender)
+	if err != nil {
+		panic("Invalid signer for MsgRequestLogicCall")
+	}
+	return []sdk.AccAddress{acc}
+}
+
+// ValidateBasic performs stateless checks
+func (msg *MsgRequestLogicCall) ValidateBasic() (err error) {
+	if _, err = sdk.ValAddressFromBech32(msg.Sender); err != nil {
+		return sdkerrors.Wrap(sdkerrors.ErrInvalidAddress, msg.Sender)
+	}
+
+	return nil
+}
