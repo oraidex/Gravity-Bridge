@@ -6,6 +6,7 @@ import (
 
 	"github.com/cosmos/cosmos-sdk/store/prefix"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 
 	"github.com/Gravity-Bridge/Gravity-Bridge/module/x/gravity/types"
 )
@@ -33,7 +34,7 @@ func (k Keeper) GetOutgoingLogicCall(ctx sdk.Context, evmChainPrefix string, inv
 
 // SetOutogingLogicCall sets an outgoing logic call, panics if one already exists at this
 // index, since we collect signatures over logic calls no mutation can be valid
-func (k Keeper) SetOutgoingLogicCall(ctx sdk.Context, evmChainPrefix string, call types.OutgoingLogicCall) {
+func (k Keeper) SetOutgoingLogicCall(ctx sdk.Context, evmChainPrefix string, call types.OutgoingLogicCall) error {
 	store := ctx.KVStore(k.storeKey)
 
 	// Store checkpoint to prove that this logic call actually happened
@@ -41,10 +42,12 @@ func (k Keeper) SetOutgoingLogicCall(ctx sdk.Context, evmChainPrefix string, cal
 	k.SetPastEthSignatureCheckpoint(ctx, evmChainPrefix, checkpoint)
 	key := types.GetOutgoingLogicCallKey(evmChainPrefix, call.InvalidationId, call.InvalidationNonce)
 	if store.Has(key) {
-		panic("Can not overwrite logic call")
+		// panic("Can not overwrite logic call")
+		return sdkerrors.Wrap(types.ErrDuplicate, "Can not overwrite logic call")
 	}
-	store.Set(key,
-		k.cdc.MustMarshal(&call))
+	store.Set(key, k.cdc.MustMarshal(&call))
+
+	return nil
 }
 
 // DeleteOutgoingLogicCall deletes outgoing logic calls

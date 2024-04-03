@@ -3,6 +3,7 @@ package gravity.v1;
 import "cosmos/base/v1beta1/coin.proto";
 import "gogoproto/gogo.proto";
 import "google/api/annotations.proto";
+import "gravity/v1/batch.proto";
 import "gravity/v1/types.proto";
 import "google/protobuf/any.proto";
 import "cosmos_proto/cosmos.proto";
@@ -22,43 +23,37 @@ service Msg {
   rpc ConfirmBatch(MsgConfirmBatch) returns (MsgConfirmBatchResponse) {
     option (google.api.http).post = "/gravity/v1/confirm_batch";
   }
-  rpc ConfirmLogicCall(MsgConfirmLogicCall)
-      returns (MsgConfirmLogicCallResponse) {
+  rpc ConfirmLogicCall(MsgConfirmLogicCall) returns (MsgConfirmLogicCallResponse) {
     option (google.api.http).post = "/gravity/v1/confim_logic";
   }
-  rpc SendToCosmosClaim(MsgSendToCosmosClaim)
-      returns (MsgSendToCosmosClaimResponse) {
+  rpc RequestLogicCall(MsgRequestLogicCall) returns (MsgRequestLogicCallResponse)  {
+    option (google.api.http).post = "/gravity/v1/request_logic";
+  }
+  rpc SendToCosmosClaim(MsgSendToCosmosClaim) returns (MsgSendToCosmosClaimResponse) {
     option (google.api.http).post = "/gravity/v1/send_to_cosmos_claim";
   }
-  rpc ExecuteIbcAutoForwards(MsgExecuteIbcAutoForwards)
-      returns (MsgExecuteIbcAutoForwardsResponse) {
+  rpc ExecuteIbcAutoForwards(MsgExecuteIbcAutoForwards) returns (MsgExecuteIbcAutoForwardsResponse) {
     option (google.api.http).post = "/gravity/v1/execute_ibc_auto_forwards";
   }
-  rpc BatchSendToEthClaim(MsgBatchSendToEthClaim)
-      returns (MsgBatchSendToEthClaimResponse) {
+  rpc BatchSendToEthClaim(MsgBatchSendToEthClaim) returns (MsgBatchSendToEthClaimResponse) {
     option (google.api.http).post = "/gravity/v1/batch_send_to_eth_claim";
   }
-  rpc ValsetUpdateClaim(MsgValsetUpdatedClaim)
-      returns (MsgValsetUpdatedClaimResponse) {
+  rpc ValsetUpdateClaim(MsgValsetUpdatedClaim) returns (MsgValsetUpdatedClaimResponse) {
     option (google.api.http).post = "/gravity/v1/valset_updated_claim";
   }
-  rpc ERC20DeployedClaim(MsgERC20DeployedClaim)
-      returns (MsgERC20DeployedClaimResponse) {
+  rpc ERC20DeployedClaim(MsgERC20DeployedClaim) returns (MsgERC20DeployedClaimResponse) {
     option (google.api.http).post = "/gravity/v1/erc20_deployed_claim";
   }
-  rpc LogicCallExecutedClaim(MsgLogicCallExecutedClaim)
-      returns (MsgLogicCallExecutedClaimResponse) {
+  rpc LogicCallExecutedClaim(MsgLogicCallExecutedClaim) returns (MsgLogicCallExecutedClaimResponse) {
     option (google.api.http).post = "/gravity/v1/logic_call_executed_claim";
   }
-  rpc SetOrchestratorAddress(MsgSetOrchestratorAddress)
-      returns (MsgSetOrchestratorAddressResponse) {
+  rpc SetOrchestratorAddress(MsgSetOrchestratorAddress) returns (MsgSetOrchestratorAddressResponse) {
     option (google.api.http).post = "/gravity/v1/set_orchestrator_address";
   }
   rpc CancelSendToEth(MsgCancelSendToEth) returns (MsgCancelSendToEthResponse) {
     option (google.api.http).post = "/gravity/v1/cancel_send_to_eth";
   }
-  rpc SubmitBadSignatureEvidence(MsgSubmitBadSignatureEvidence)
-      returns (MsgSubmitBadSignatureEvidenceResponse) {
+  rpc SubmitBadSignatureEvidence(MsgSubmitBadSignatureEvidence) returns (MsgSubmitBadSignatureEvidenceResponse) {
     option (google.api.http).post = "/gravity/v1/submit_bad_signature_evidence";
   }
 }
@@ -196,6 +191,13 @@ message MsgConfirmLogicCall {
 }
 
 message MsgConfirmLogicCallResponse {}
+
+message MsgRequestLogicCall {
+  OutgoingLogicCall outgoing_logic_call = 1;  
+  string evm_chain_prefix = 2;
+}
+
+message MsgRequestLogicCallResponse {}
 
 // MsgSendToCosmosClaim
 // When more than 66% of the active validator set has
@@ -367,6 +369,11 @@ message EventMultisigUpdateRequest {
 }
 
 message EventOutgoingLogicCallCanceled {
+  string logic_call_invalidation_id = 1;
+  string logic_call_invalidation_nonce = 2;
+}
+
+message EventOutgoingLogicCallCreated {
   string logic_call_invalidation_id = 1;
   string logic_call_invalidation_nonce = 2;
 }

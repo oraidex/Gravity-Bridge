@@ -226,6 +226,28 @@ func (k msgServer) ConfirmBatch(c context.Context, msg *types.MsgConfirmBatch) (
 	return nil, nil
 }
 
+// RequestLogicCall handles submitLogicCall
+// Subtle: this method shadows the method (Keeper).RequestLogicCall of msgServer.Keeper.
+func (k *msgServer) RequestLogicCall(c context.Context, msg *types.MsgRequestLogicCall) (*types.MsgRequestLogicCallResponse, error) {
+	ctx := sdk.UnwrapSDKContext(c)
+
+	
+	// update logic call
+	err := k.SetOutgoingLogicCall(ctx, msg.EvmChainPrefix, *msg.OutgoingLogicCall)
+	if err != nil {
+		return nil, err
+	}
+
+	ctx.EventManager().EmitTypedEvent(
+		&types.EventOutgoingLogicCallCreated{
+			LogicCallInvalidationId:    fmt.Sprint(msg.OutgoingLogicCall.InvalidationId),
+			LogicCallInvalidationNonce: fmt.Sprint(msg.OutgoingLogicCall.InvalidationNonce),
+		},
+	)
+
+	return &types.MsgRequestLogicCallResponse{}, nil
+}
+
 // ConfirmLogicCall handles MsgConfirmLogicCall
 func (k msgServer) ConfirmLogicCall(c context.Context, msg *types.MsgConfirmLogicCall) (*types.MsgConfirmLogicCallResponse, error) {
 	ctx := sdk.UnwrapSDKContext(c)
