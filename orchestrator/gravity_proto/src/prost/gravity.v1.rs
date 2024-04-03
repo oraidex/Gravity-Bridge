@@ -410,22 +410,42 @@ pub struct AddEvmChainProposal {
     pub evm_chain_net_version: u64,
     #[prost(string, tag = "6")]
     pub gravity_id: ::prost::alloc::string::String,
+    #[prost(string, tag = "7")]
+    pub bridge_ethereum_address: ::prost::alloc::string::String,
 }
-/// PendingIbcAutoForward represents a SendToCosmos transaction with a foreign CosmosReceiver which will be added to the
-/// PendingIbcAutoForward queue in attestation_handler and sent over IBC on some submission of a MsgExecuteIbcAutoForwards
+/// RemoveEvmChainProposal
+/// this types allows users to remove an EVM chain through gov proposal
+#[allow(clippy::derive_partial_eq_without_eq)]
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct RemoveEvmChainProposal {
+    #[prost(string, tag = "1")]
+    pub title: ::prost::alloc::string::String,
+    #[prost(string, tag = "2")]
+    pub description: ::prost::alloc::string::String,
+    #[prost(string, tag = "3")]
+    pub evm_chain_prefix: ::prost::alloc::string::String,
+}
+/// PendingIbcAutoForward represents a SendToCosmos transaction with a foreign
+/// CosmosReceiver which will be added to the PendingIbcAutoForward queue in
+/// attestation_handler and sent over IBC on some submission of a
+/// MsgExecuteIbcAutoForwards
 #[allow(clippy::derive_partial_eq_without_eq)]
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct PendingIbcAutoForward {
-    /// the destination address. sdk.AccAddress does not preserve foreign prefixes
+    /// the destination address. sdk.AccAddress does
     #[prost(string, tag = "1")]
     pub foreign_receiver: ::prost::alloc::string::String,
-    /// the token sent from ethereum to the ibc-enabled chain over `IbcChannel`
+    /// not preserve foreign prefixes
+    ///
+    /// the token sent from ethereum to the
     #[prost(message, optional, tag = "2")]
     pub token: ::core::option::Option<cosmos_sdk_proto::cosmos::base::v1beta1::Coin>,
+    /// ibc-enabled chain over `IbcChannel`
+    ///
     /// the IBC channel to send `Amount` over via ibc-transfer module
     #[prost(string, tag = "3")]
     pub ibc_channel: ::prost::alloc::string::String,
-    /// the EventNonce from the MsgSendToCosmosClaim, used for ordering the queue
+    /// the EventNonce from the MsgSendToCosmosClaim, used
     #[prost(uint64, tag = "4")]
     pub event_nonce: u64,
 }
@@ -598,6 +618,17 @@ pub struct MsgConfirmLogicCall {
 #[allow(clippy::derive_partial_eq_without_eq)]
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct MsgConfirmLogicCallResponse {}
+#[allow(clippy::derive_partial_eq_without_eq)]
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct MsgRequestLogicCall {
+    #[prost(message, optional, tag = "1")]
+    pub outgoing_logic_call: ::core::option::Option<OutgoingLogicCall>,
+    #[prost(string, tag = "2")]
+    pub evm_chain_prefix: ::prost::alloc::string::String,
+}
+#[allow(clippy::derive_partial_eq_without_eq)]
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct MsgRequestLogicCallResponse {}
 /// MsgSendToCosmosClaim
 /// When more than 66% of the active validator set has
 /// claimed to have seen the deposit enter the ethereum blockchain coins are
@@ -871,6 +902,14 @@ pub struct EventOutgoingLogicCallCanceled {
 }
 #[allow(clippy::derive_partial_eq_without_eq)]
 #[derive(Clone, PartialEq, ::prost::Message)]
+pub struct EventOutgoingLogicCallCreated {
+    #[prost(string, tag = "1")]
+    pub logic_call_invalidation_id: ::prost::alloc::string::String,
+    #[prost(string, tag = "2")]
+    pub logic_call_invalidation_nonce: ::prost::alloc::string::String,
+}
+#[allow(clippy::derive_partial_eq_without_eq)]
+#[derive(Clone, PartialEq, ::prost::Message)]
 pub struct EventSignatureSlashing {
     #[prost(string, tag = "1")]
     pub r#type: ::prost::alloc::string::String,
@@ -1045,6 +1084,25 @@ pub mod msg_client {
             let codec = tonic::codec::ProstCodec::default();
             let path = http::uri::PathAndQuery::from_static(
                 "/gravity.v1.Msg/ConfirmLogicCall",
+            );
+            self.inner.unary(request.into_request(), path, codec).await
+        }
+        pub async fn request_logic_call(
+            &mut self,
+            request: impl tonic::IntoRequest<super::MsgRequestLogicCall>,
+        ) -> Result<tonic::Response<super::MsgRequestLogicCallResponse>, tonic::Status> {
+            self.inner
+                .ready()
+                .await
+                .map_err(|e| {
+                    tonic::Status::new(
+                        tonic::Code::Unknown,
+                        format!("Service was not ready: {}", e.into()),
+                    )
+                })?;
+            let codec = tonic::codec::ProstCodec::default();
+            let path = http::uri::PathAndQuery::from_static(
+                "/gravity.v1.Msg/RequestLogicCall",
             );
             self.inner.unary(request.into_request(), path, codec).await
         }
