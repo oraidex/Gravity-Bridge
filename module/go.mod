@@ -157,3 +157,5 @@ replace github.com/gogo/protobuf => github.com/regen-network/protobuf v1.3.3-alp
 replace github.com/gogo/grpc => google.golang.org/grpc v1.33.2
 
 replace google.golang.org/grpc => google.golang.org/grpc v1.33.2
+
+replace github.com/tendermint/tendermint => github.com/oraichain/tendermint v0.34.23-fix-double-quote-query
