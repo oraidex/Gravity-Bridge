@@ -435,7 +435,7 @@ pub async fn query_evm_chain_from_net_version(
     if let Err(status) = evm_chain_params {
         panic!(
             "Received an error when querying for evm chain params: {}",
-            status.to_string()
+            status
         );
     }
     let evm_chain_params = evm_chain_params.unwrap().evm_chain_params;
@@ -449,7 +449,7 @@ pub async fn query_evm_chain_from_net_version(
     if active_evm_chains.len() > 1 {
         panic!("Cannot allow two chains having the same net version to be active!");
     };
-    if active_evm_chains.len() < 1 {
+    if active_evm_chains.is_empty() {
         panic!(
             "There's no active chain given the net version: {}!",
             net_version
@@ -462,3 +462,4 @@ pub async fn query_evm_chain_from_net_version(
             && active_evm_chains[0].evm_chain_prefix == chain.evm_chain_prefix
     })
 }
+

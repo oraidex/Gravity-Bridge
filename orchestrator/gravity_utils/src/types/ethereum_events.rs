@@ -231,7 +231,7 @@ impl ValsetUpdatedEvent {
 
 impl EthereumEvent for ValsetUpdatedEvent {
     fn get_block_height(&self) -> u64 {
-        downcast_uint256(self.block_height.clone()).unwrap()
+        downcast_uint256(self.block_height).unwrap()
     }
 
     fn get_event_nonce(&self) -> u64 {
@@ -255,7 +255,7 @@ impl EthereumEvent for ValsetUpdatedEvent {
         }
         let valset_nonce: u64 = valset_nonce.to_string().parse().unwrap();
 
-        let block_height = if let Some(bn) = input.block_number.clone() {
+        let block_height = if let Some(bn) = input.block_number {
             if bn > u64::MAX.into() {
                 return Err(Web3Error::InvalidEventLog(
                     "Event nonce overflow! probably incorrect parsing".to_string(),
@@ -335,12 +335,12 @@ impl ContractEvent for ValsetUpdatedEvent {
 
         // guard code
         let event_nonce = extract_event_nonce(result)?;
-        let powers: Vec<&str> = result["_powers"].as_str().unwrap().split("\n").collect();
+        let powers: Vec<&str> = result["_powers"].as_str().unwrap().split('\n').collect();
 
         let validators: Vec<&str> = result["_validators"]
             .as_str()
             .unwrap()
-            .split("\n")
+            .split('\n')
             .collect();
 
         let mut members = vec![];
@@ -395,7 +395,7 @@ pub struct TransactionBatchExecutedEvent {
 
 impl EthereumEvent for TransactionBatchExecutedEvent {
     fn get_block_height(&self) -> u64 {
-        downcast_uint256(self.block_height.clone()).unwrap()
+        downcast_uint256(self.block_height).unwrap()
     }
 
     fn get_event_nonce(&self) -> u64 {
@@ -409,7 +409,7 @@ impl EthereumEvent for TransactionBatchExecutedEvent {
             let batch_nonce = Uint256::from_be_bytes(batch_nonce_data);
             let erc20 = EthAddress::from_slice(&erc20_data[12..32])?;
             let event_nonce = Uint256::from_be_bytes(&input.data);
-            let block_height = if let Some(bn) = input.block_number.clone() {
+            let block_height = if let Some(bn) = input.block_number {
                 if bn > u64::MAX.into() {
                     return Err(Web3Error::InvalidEventLog(
                         "Block height overflow! probably incorrect parsing".to_string(),
@@ -625,7 +625,7 @@ impl SendToCosmosEvent {
 }
 impl EthereumEvent for SendToCosmosEvent {
     fn get_block_height(&self) -> u64 {
-        downcast_uint256(self.block_height.clone()).unwrap()
+        downcast_uint256(self.block_height).unwrap()
     }
 
     fn get_event_nonce(&self) -> u64 {
@@ -637,7 +637,7 @@ impl EthereumEvent for SendToCosmosEvent {
         if let (Some(erc20_data), Some(sender_data)) = topics {
             let erc20 = EthAddress::from_slice(&erc20_data[12..32])?;
             let sender = EthAddress::from_slice(&sender_data[12..32])?;
-            let block_height = if let Some(bn) = input.block_number.clone() {
+            let block_height = if let Some(bn) = input.block_number {
                 if bn > u64::MAX.into() {
                     return Err(Web3Error::InvalidEventLog(
                         "Block height overflow! probably incorrect parsing".to_string(),
@@ -1002,7 +1002,7 @@ impl Erc20DeployedEvent {
 
 impl EthereumEvent for Erc20DeployedEvent {
     fn get_block_height(&self) -> u64 {
-        downcast_uint256(self.block_height.clone()).unwrap()
+        downcast_uint256(self.block_height).unwrap()
     }
 
     fn get_event_nonce(&self) -> u64 {
@@ -1014,7 +1014,7 @@ impl EthereumEvent for Erc20DeployedEvent {
         if let Some(new_token_contract_data) = token_contract {
             let erc20 = EthAddress::from_slice(&new_token_contract_data[12..32])?;
 
-            let block_height = if let Some(bn) = input.block_number.clone() {
+            let block_height = if let Some(bn) = input.block_number {
                 if bn > u64::MAX.into() {
                     return Err(Web3Error::InvalidEventLog(
                         "Event nonce overflow! probably incorrect parsing".to_string(),
@@ -1138,7 +1138,7 @@ pub struct LogicCallExecutedEvent {
 
 impl EthereumEvent for LogicCallExecutedEvent {
     fn get_block_height(&self) -> u64 {
-        downcast_uint256(self.block_height.clone()).unwrap()
+        downcast_uint256(self.block_height).unwrap()
     }
 
     fn get_event_nonce(&self) -> u64 {

@@ -163,7 +163,7 @@ pub async fn example_ethermint_key_usage(
         .await;
     debug!("user_send is {:?}", user_send);
 
-    let expected_balance = start_balance.amount.clone() - send_amount.clone();
+    let expected_balance = start_balance.amount - send_amount;
     let balance = contact
         .get_balance(user_cosmos_address, denom.clone())
         .await

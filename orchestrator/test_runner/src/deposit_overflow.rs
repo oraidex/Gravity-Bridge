@@ -126,7 +126,7 @@ pub async fn deposit_overflow_test(
     // Uint256 max of false_claims_erc20 token
     expected_cosmos_coins = vec![
         Coin {
-            amount: normal_amount.clone() + normal_amount.clone(),
+            amount: normal_amount + normal_amount,
             denom: check_module_denom.clone(),
         },
         Coin {

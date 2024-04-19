@@ -228,22 +228,22 @@ pub async fn get_last_checked_block(
 
     let block_to_search = convert_block_to_search();
 
-    let mut current_block: Uint256 = latest_block.clone();
+    let mut current_block: Uint256 = latest_block;
 
     let (previous_block, mut prev_checked_block) =
         get_last_checked_block_info(evm_chain_prefix).unwrap_or((0u8.into(), None));
 
-    while current_block.clone() > previous_block {
+    while current_block > previous_block {
         info!(
             "Oracle is resyncing, looking back into the history to find our last event nonce {}, on block {}",
             last_event_nonce, current_block
         );
-        let end_search = if current_block.clone() < block_to_search.into() {
+        let end_search = if current_block < block_to_search.into() {
             0u8.into()
         } else {
             Uint256::max(
-                current_block.clone() - block_to_search.into(),
-                previous_block.clone(),
+                current_block - block_to_search.into(),
+                previous_block,
             )
         };
 
@@ -311,7 +311,7 @@ pub async fn get_last_checked_block(
     }
 
     // return cached valset
-    if let Some(last_checked_block) = prev_checked_block.clone() {
+    if let Some(last_checked_block) = prev_checked_block {
         // cache latest_eth_valset and current_block
         set_last_checked_block_info(evm_chain_prefix, (latest_block, prev_checked_block));
         return last_checked_block;

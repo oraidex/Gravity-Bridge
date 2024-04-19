@@ -17,7 +17,7 @@ pub fn convert_block_to_search() -> u128 {
     env::var("BLOCK_TO_SEARCH")
         .unwrap_or_else(|_| BLOCKS_TO_SEARCH.to_string())
         .parse::<u128>()
-        .unwrap_or_else(|_| BLOCKS_TO_SEARCH)
+        .unwrap_or( BLOCKS_TO_SEARCH)
 }
 
 // TODO: using leveldb
@@ -53,28 +53,28 @@ pub async fn find_latest_valset(
 ) -> Result<Valset, GravityError> {
     let block_to_search = convert_block_to_search();
     let latest_block = web3.eth_block_number().await?;
-    let mut current_block: Uint256 = latest_block.clone();
+    let mut current_block: Uint256 = latest_block;
 
     let (previous_block, mut previous_valset) =
         get_latest_valset_info(evm_chain_prefix).unwrap_or((0u8.into(), None));
 
-    while current_block.clone() > previous_block {
+    while current_block > previous_block {
         trace!(
             "About to submit a Valset or Batch looking back into the history to find the last Valset Update, on block {}",
             current_block
         );
-        let end_search = if current_block.clone() < block_to_search.into() {
+        let end_search = if current_block < block_to_search.into() {
             0u8.into()
         } else {
             Uint256::max(
-                current_block.clone() - block_to_search.into(),
-                previous_block.clone(),
+                current_block - block_to_search.into(),
+                previous_block,
             )
         };
         let all_valset_events: Vec<ValsetUpdatedEvent> = match web3
             .parse_event(
-                end_search.clone(),
-                Some(current_block.clone()),
+                end_search,
+                Some(current_block),
                 gravity_contract_address,
                 VALSET_UPDATED_EVENT_SIG,
             )

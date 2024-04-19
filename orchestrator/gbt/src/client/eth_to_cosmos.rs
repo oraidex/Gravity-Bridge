@@ -48,7 +48,7 @@ pub async fn eth_to_cosmos(args: EthToCosmosOpts, prefix: String) {
             erc20_address
         );
         exit(1);
-    } else if amount.clone() > erc20_balance {
+    } else if amount > erc20_balance {
         error!("Insufficient balance {} > {}", amount, erc20_balance);
         exit(1);
     }

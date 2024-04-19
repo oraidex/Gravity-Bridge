@@ -51,18 +51,20 @@ pub async fn request_batches(
     }
     let eth_gas_price = eth_gas_price.unwrap();
 
-    let batch_fees = get_pending_batch_fees(grpc_client, evm_chain_prefix).await;
-    if let Err(e) = batch_fees {
-        warn!("Failed to get batch fees with {:?}", e);
-        return;
-    }
-    let batch_fees = batch_fees.unwrap();
-    if batch_fees.batch_fees.is_empty() {
+    let batch_fees = match get_pending_batch_fees(grpc_client, evm_chain_prefix).await {
+        Ok(val) => val.batch_fees,
+        Err(e) => {
+            warn!("Failed to get batch fees with {:?}", e);
+            return;
+        }
+    };
+
+    if batch_fees.is_empty() {
         debug!("No pending batches to request: Empty batch fees response")
     }
 
     let mut batch_requested = false;
-    for fee in batch_fees.batch_fees {
+    for fee in batch_fees {
         let total_fee: Uint256 = fee.total_fees.parse().unwrap();
         let token: EthAddress = fee.token.parse().unwrap();
         let denom = get_erc20_to_denom(grpc_client, evm_chain_prefix, token).await;
@@ -77,7 +79,7 @@ pub async fn request_batches(
 
         match config.batch_request_mode {
             BatchRequestMode::ProfitableOnly => {
-                let weth_cost_estimate = eth_gas_price.clone() * BATCH_GAS.into();
+                let weth_cost_estimate = eth_gas_price * BATCH_GAS.into();
                 match get_weth_price_with_retries(eth_address, token, total_fee, web30).await {
                     Ok(price) => {
                         if price > weth_cost_estimate {

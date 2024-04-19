@@ -100,16 +100,15 @@ pub async fn relayer_main_loop(
             get_acceptable_gas_price(relayer_config.altruistic_acceptable_gas_price_percentage);
         debug!(
             "current ethereum gas price: {:?}, ideal gas price: {:?}",
-            current_gas_price.clone().map(print_gwei),
-            ideal_gas.clone().map(print_gwei)
+            current_gas_price.map(print_gwei),
+            ideal_gas.map(print_gwei)
         );
-        let should_relay_altruistic = if let (Some(current_price), Some(good_price)) =
-            (current_gas_price.clone(), ideal_gas.clone())
-        {
-            current_price <= good_price
-        } else {
-            false
-        };
+        let should_relay_altruistic =
+            if let (Some(current_price), Some(good_price)) = (current_gas_price, ideal_gas) {
+                current_price <= good_price
+            } else {
+                false
+            };
 
         single_relayer_iteration(
             evm_chain_prefix,
@@ -172,18 +171,20 @@ pub async fn single_relayer_iteration(
     let should_relay_batches = relayer_config.batch_relaying_mode != BatchRelayingMode::Altruistic
         || should_relay_altruistic;
 
-    let current_valset = find_latest_valset(
+    let current_valset = match find_latest_valset(
         &mut grpc_client,
         evm_chain_prefix,
         gravity_contract_address,
         web3,
     )
-    .await;
-    if current_valset.is_err() {
-        error!("Could not get current valset! {:?}", current_valset);
-        return;
-    }
-    let current_valset = current_valset.unwrap();
+    .await
+    {
+        Ok(val) => val,
+        Err(err) => {
+            error!("Could not get current valset! {}", err.to_string());
+            return;
+        }
+    };
 
     if should_relay_valsets {
         relay_valsets(

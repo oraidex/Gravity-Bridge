@@ -55,17 +55,17 @@ pub async fn check_for_events(
     // if the latest block is more than BLOCKS_TO_SEARCH ahead do not search the full history
     // comparison only to prevent panic on underflow.
     let latest_block = if latest_block > starting_block
-        && latest_block.clone() - starting_block.clone() > block_to_search.into()
+        && latest_block - starting_block > block_to_search.into()
     {
-        starting_block.clone() + block_to_search.into()
+        starting_block + block_to_search.into()
     } else {
         latest_block
     };
 
     let deposits = web3
         .parse_event(
-            starting_block.clone(),
-            Some(latest_block.clone()),
+            starting_block,
+            Some(latest_block),
             gravity_contract_address,
             SENT_TO_COSMOS_EVENT_SIG,
         )
@@ -73,32 +73,32 @@ pub async fn check_for_events(
 
     let batches = web3
         .parse_event(
-            starting_block.clone(),
-            Some(latest_block.clone()),
+            starting_block,
+            Some(latest_block),
             gravity_contract_address,
             TRANSACTION_BATCH_EXECUTED_EVENT_SIG,
         )
         .await;
     let valsets = web3
         .parse_event(
-            starting_block.clone(),
-            Some(latest_block.clone()),
+            starting_block,
+            Some(latest_block),
             gravity_contract_address,
             VALSET_UPDATED_EVENT_SIG,
         )
         .await;
     let erc20_deployed = web3
         .parse_event(
-            starting_block.clone(),
-            Some(latest_block.clone()),
+            starting_block,
+            Some(latest_block),
             gravity_contract_address,
             ERC20_DEPLOYED_EVENT_SIG,
         )
         .await;
     let logic_call_executed = web3
         .parse_event(
-            starting_block.clone(),
-            Some(latest_block.clone()),
+            starting_block,
+            Some(latest_block),
             gravity_contract_address,
             LOGIC_CALL_EVENT_SIG,
         )

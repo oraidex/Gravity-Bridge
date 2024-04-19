@@ -155,8 +155,8 @@ pub async fn relay_logic_calls(
                 "We have detected latest LogicCall {} but latest on Ethereum is {} This LogicCall is estimated to cost {} Gas @ {} Gwei / {:.4} ETH to submit",
                 latest_cosmos_call_nonce,
                 latest_ethereum_call,
-                cost.gas.clone(),
-                print_gwei(cost.gas_price.clone()),
+                cost.gas,
+                print_gwei(cost.gas_price),
                 print_eth(cost.get_total())
             );
 

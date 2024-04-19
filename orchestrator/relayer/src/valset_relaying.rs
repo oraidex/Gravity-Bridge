@@ -126,8 +126,8 @@ async fn relay_valid_valset(
     info!(
        "We have detected that valset {} is valid to submit. Latest on Ethereum is {} This update is estimated to cost {} Gas @ {} Gwei/ {:.4} ETH to submit",
         valset_to_relay.nonce, current_valset.nonce,
-        cost.gas.clone(),
-        print_gwei(cost.gas_price.clone()),
+        cost.gas,
+        print_gwei(cost.gas_price),
         print_eth(cost.get_total())
     );
 
@@ -176,13 +176,12 @@ async fn find_latest_valid_valset(
     // this is used to display the state of the last validator set to fail signature checks
     let mut last_error = None;
     while latest_nonce > current_valset.nonce {
-        let valset = get_valset(grpc_client, evm_chain_prefix, latest_nonce).await;
-        if let Ok(Some(valset)) = valset {
+        if let Ok(Some(valset)) = get_valset(grpc_client, evm_chain_prefix, latest_nonce).await {
             // check that we got the right valset, should never occur
             assert_eq!(valset.nonce, latest_nonce);
-            let confirms =
-                get_all_valset_confirms(grpc_client, evm_chain_prefix, latest_nonce).await;
-            if let Ok(confirms) = confirms {
+            if let Ok(confirms) =
+                get_all_valset_confirms(grpc_client, evm_chain_prefix, latest_nonce).await
+            {
                 // search for invalid confirms, should never occur
                 for confirm in confirms.iter() {
                     assert_eq!(valset.nonce, confirm.nonce);
@@ -191,20 +190,18 @@ async fn find_latest_valid_valset(
                 // order valset sigs prepares signatures for submission, notice we compare
                 // them to the 'current' set in the bridge, this confirms for us that the validator set
                 // we have here can be submitted to the bridge in it's current state
-                let res = current_valset.order_sigs(&hash, &confirms);
-                if res.is_ok() {
-                    if !valset.enough_power() {
-                        warn!("Validator set {} can not be executed, power is too low to pass following measures. How was this generated?", valset.nonce);
-                    } else {
+                if let Err(e) = current_valset.order_sigs(&hash, &confirms) {
+                    // this error prints details about why the valset is not valid, look at it
+                    // if you are confused
+                    last_error = Some(e);
+                } else {
+                    if valset.enough_power() {
                         latest_confirms = Some(confirms);
                         latest_valset = Some(valset);
                         // once we have the latest validator set we can submit exit
                         break;
                     }
-                } else if let Err(e) = res {
-                    // this error prints details about why the valset is not valid, look at it
-                    // if you are confused
-                    last_error = Some(e);
+                    warn!("Validator set {} can not be executed, power is too low to pass following measures. How was this generated?", valset.nonce);
                 }
             }
         }
@@ -234,13 +231,9 @@ async fn should_relay_valset(
         // if the user has configured only profitable relaying then it is our only consideration
         ValsetRelayingMode::ProfitableOnly { margin } => match valset.reward_token {
             Some(reward_token) => {
-                let price = get_weth_price_with_retries(
-                    pubkey,
-                    reward_token,
-                    valset.reward_amount.clone(),
-                    web3,
-                )
-                .await;
+                let price =
+                    get_weth_price_with_retries(pubkey, reward_token, valset.reward_amount, web3)
+                        .await;
                 let cost_with_margin = get_cost_with_margin(cost.get_total(), *margin);
                 // we need to see how much WETH we can get for the reward token amount,
                 // and compare that value to the gas cost times the margin

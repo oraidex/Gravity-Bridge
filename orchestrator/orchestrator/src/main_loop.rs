@@ -71,12 +71,12 @@ pub async fn orchestrator_main_loop(
         web3.clone(),
         contact.clone(),
         grpc_client.clone(),
-        &evm_chain_prefix,
+        evm_chain_prefix,
         gravity_contract_address,
         fee.clone(),
     );
     let b = eth_signer_main_loop(
-        &evm_chain_prefix,
+        evm_chain_prefix,
         cosmos_key,
         ethereum_key,
         contact.clone(),
@@ -89,7 +89,7 @@ pub async fn orchestrator_main_loop(
         web3.clone(),
         contact.clone(),
         grpc_client.clone(),
-        &evm_chain_prefix,
+        evm_chain_prefix,
         gravity_contract_address,
         gravity_id,
         Some(fee.clone()),
@@ -227,7 +227,7 @@ pub async fn eth_oracle_main_loop(
             gravity_contract_address,
             cosmos_key,
             fee.clone(),
-            last_checked_block.clone(),
+            last_checked_block,
         )
         .await
         {

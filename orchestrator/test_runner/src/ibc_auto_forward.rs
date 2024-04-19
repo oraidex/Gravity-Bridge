@@ -566,7 +566,7 @@ pub async fn test_ibc_auto_forward_happy_path(
         (Some(pre), Some(post)) => {
             let pre_amt = Uint256::from_str(&pre.amount).unwrap();
             let post_amt = Uint256::from_str(&post.amount).unwrap();
-            if post_amt < pre_amt || pre_amt.clone() - post_amt != amount.clone() {
+            if post_amt < pre_amt || pre_amt - post_amt != amount {
                 panic!(
                     "Incorrect ibc auto-forward balance for user {}: actual {} != expected {}",
                     dest,
@@ -859,13 +859,13 @@ pub async fn test_ibc_auto_forward_native_hijack(
                 }
             }
             (Some(pre), Some(post)) => {
-                match post.amount.cmp(&(pre.amount.clone() + amt.clone())) {
+                match post.amount.cmp(&(pre.amount + amt)) {
                     Ordering::Less => {
                         panic!( // At this point there's no explanation for the lack of funds
                            "Failed SendToCosmos native hijack: Discovered unexpected local balance with user {}: actual {} != expected {}",
                            gravity_prefixed_dest,
                            post.amount,
-                           (pre.amount + amt.clone())
+                           (pre.amount + amt)
                         );
                     }
                     Ordering::Equal => {
@@ -1024,13 +1024,13 @@ pub async fn test_ibc_auto_forward_unregistered_chain(
                 }
             }
             (Some(pre), Some(post)) => {
-                match post.amount.cmp(&(pre.amount.clone() + amt.clone())) {
+                match post.amount.cmp(&(pre.amount + amt)) {
                     Ordering::Less => {
                         panic!( // At this point there's no explanation for the lack of funds
                             "Failed SendToCosmos unregistered chain: Discovered unexpected local balance with user {}: actual {} != expected {}",
                             gravity_prefixed_dest,
                             post.amount,
-                            (pre.amount + amt.clone())
+                            (pre.amount + amt)
                         );
                     }
                     Ordering::Equal => {

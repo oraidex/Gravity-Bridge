@@ -306,8 +306,8 @@ async fn submit_batches(
 
                 info!(
                     "We have detected a batch to relay. This batch is estimated to cost {} Gas @ {} gwei / {:.4} ETH to submit",
-                    cost.gas.clone(),
-                    print_gwei(cost.gas_price.clone()),
+                    cost.gas,
+                    print_gwei(cost.gas_price),
                     print_eth(cost.get_total())
                 );
                 oldest_signed_batch

@@ -361,7 +361,7 @@ pub async fn test_erc20_deposit_result(
                 // When a bridge governance vote happens, the orchestrator will replay all incomplete
                 // sends to cosmos on the next send to cosmos transaction, so we need to use expected_change
                 if let Some(expected) = expected_change.clone() {
-                    if end_coin.amount.clone() - start_coin.amount.clone() == expected
+                    if end_coin.amount - start_coin.amount == expected
                         && start_coin.denom == end_coin.denom
                     {
                         info!(
@@ -371,14 +371,14 @@ pub async fn test_erc20_deposit_result(
                         return Ok(());
                     }
                 } else {
-                    let expected_end = start_coin.amount.checked_add(&amount.clone());
+                    let expected_end = start_coin.amount.checked_add(&amount);
                     if expected_end.is_none() {
                         info!(
                             "Expecting overflow from addition of {:?} + {:?}!",
                             start_coin.amount,
-                            amount.clone()
+                            amount
                         );
-                    } else if start_coin.amount + amount.clone() == end_coin.amount
+                    } else if start_coin.amount + amount == end_coin.amount
                         && start_coin.denom == end_coin.denom
                     {
                         info!(
