@@ -40,3 +40,5 @@ tmp
 
 .DS_Store
 yarn-error.log
+.scannerwork/
+.env
