@@ -268,8 +268,8 @@ func (i *InternalERC20Tokens) Add(n InternalERC20Token) {
 
 // Sort orders the elements of i by contract address
 func (i InternalERC20Tokens) Sort() {
-	slices.SortFunc(i, func(a, b *InternalERC20Token) bool {
-		return a.Contract.GetAddress().String() < b.Contract.GetAddress().String()
+	slices.SortFunc(i, func(a, b *InternalERC20Token) int {
+		return strings.Compare(a.Contract.GetAddress().String(), b.Contract.GetAddress().String())
 	})
 }
 

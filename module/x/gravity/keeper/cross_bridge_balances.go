@@ -8,6 +8,7 @@ import (
 	"encoding/hex"
 	"fmt"
 	"math"
+	"strings"
 
 	"golang.org/x/exp/slices"
 
@@ -178,11 +179,11 @@ func (k Keeper) storeBridgeBalanceSnapshot(ctx sdk.Context, snapshot types.Bridg
 	key := types.GetBridgeBalanceSnapshotKey(snapshot.EventNonce, snapshot.EvmChainPrefix)
 
 	// Sort the balances by contract address for consistency
-	slices.SortFunc(snapshot.Balances, func(a, b *types.ERC20Token) bool {
+	slices.SortFunc(snapshot.Balances, func(a, b *types.ERC20Token) int {
 		if a == nil || b == nil {
 			panic("nil balance when trying to sort snapshot balances")
 		}
-		return a.Contract < b.Contract
+		return strings.Compare(a.Contract, b.Contract)
 	})
 
 	store.Set(key, k.cdc.MustMarshal(&snapshot))

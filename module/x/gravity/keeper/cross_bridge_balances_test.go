@@ -2,6 +2,7 @@ package keeper
 
 import (
 	"fmt"
+	"strings"
 	"testing"
 
 	"github.com/stretchr/testify/require"
@@ -26,11 +27,11 @@ func TestGetBridgeBalanceSnapshots(t *testing.T) {
 		balances = append(balances, &bal)
 	}
 	// The balances which
-	slices.SortFunc(balances, func(a, b *types.ERC20Token) bool {
+	slices.SortFunc(balances, func(a, b *types.ERC20Token) int {
 		if a == nil || b == nil {
 			panic("nil balance when trying to sort snapshot balances")
 		}
-		return a.Contract < b.Contract
+		return strings.Compare(a.Contract, b.Contract)
 	})
 
 	// Create test snapshots
