@@ -278,7 +278,7 @@ func valsetSlashing(ctx sdk.Context, k keeper.Keeper, params types.Params, evmCh
 					// refresh validator before slashing/jailing
 					val = updateValidator(ctx, k, val.GetOperator())
 					if !val.IsJailed() {
-						k.StakingKeeper.Slash(ctx, consAddr, ctx.BlockHeight(), val.ConsensusPower(sdk.DefaultPowerReduction), params.SlashFractionValset)
+						k.StakingKeeper.Slash(ctx, consAddr, ctx.BlockHeight(), val.ConsensusPower(sdk.DefaultPowerReduction), params.SlashFractionValset, 0)
 						if err := ctx.EventManager().EmitTypedEvent(
 							&types.EventSignatureSlashing{
 								Type:    types.AttributeKeyValsetSignatureSlashing,
@@ -325,7 +325,7 @@ func valsetSlashing(ctx sdk.Context, k keeper.Keeper, params types.Params, evmCh
 					// refresh validator before slashing/jailing
 					validator = updateValidator(ctx, k, validator.GetOperator())
 					if !validator.IsJailed() {
-						k.StakingKeeper.Slash(ctx, valConsAddr, ctx.BlockHeight(), validator.ConsensusPower(sdk.DefaultPowerReduction), params.SlashFractionValset)
+						k.StakingKeeper.Slash(ctx, valConsAddr, ctx.BlockHeight(), validator.ConsensusPower(sdk.DefaultPowerReduction), params.SlashFractionValset, 0)
 						if err := ctx.EventManager().EmitTypedEvent(
 							&types.EventSignatureSlashing{
 								Type:    types.AttributeKeyValsetSignatureSlashing,
@@ -434,7 +434,7 @@ func batchSlashing(ctx sdk.Context, k keeper.Keeper, params types.Params, evmCha
 					// refresh validator before slashing/jailing
 					val = updateValidator(ctx, k, val.GetOperator())
 					if !val.IsJailed() {
-						k.StakingKeeper.Slash(ctx, consAddr, ctx.BlockHeight(), val.ConsensusPower(sdk.DefaultPowerReduction), params.SlashFractionBatch)
+						k.StakingKeeper.Slash(ctx, consAddr, ctx.BlockHeight(), val.ConsensusPower(sdk.DefaultPowerReduction), params.SlashFractionBatch, 0)
 						if err := ctx.EventManager().EmitTypedEvent(
 							&types.EventSignatureSlashing{
 								Type:    types.AttributeKeyBatchSignatureSlashing,
@@ -513,7 +513,7 @@ func logicCallSlashing(ctx sdk.Context, k keeper.Keeper, params types.Params, ev
 					// refresh validator before slashing/jailing
 					val = updateValidator(ctx, k, val.GetOperator())
 					if !val.IsJailed() {
-						k.StakingKeeper.Slash(ctx, consAddr, ctx.BlockHeight(), val.ConsensusPower(sdk.DefaultPowerReduction), params.SlashFractionLogicCall)
+						k.StakingKeeper.Slash(ctx, consAddr, ctx.BlockHeight(), val.ConsensusPower(sdk.DefaultPowerReduction), params.SlashFractionLogicCall, 0)
 						if err := ctx.EventManager().EmitTypedEvent(
 							&types.EventSignatureSlashing{
 								Type:    types.AttributeKeyLogicCallSignatureSlashing,

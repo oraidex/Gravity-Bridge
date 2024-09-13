@@ -10,8 +10,8 @@ require (
 )
 
 replace (
-	// Lock us into the v0.45 line
-	github.com/cosmos/cosmos-sdk => github.com/cosmos/cosmos-sdk v0.45.16
+	// Use cosmos-sdk of Oraichain fork
+	github.com/cosmos/cosmos-sdk => github.com/oraichain/cosmos-sdk v0.45.17-0.20240822154747-4cc2e82d6f68
 
 	// Althea-net fork removes ibc-go v3 dep, tendermint->cometbft issue
 	github.com/evmos/ethermint => github.com/althea-net/ethermint v0.19.5

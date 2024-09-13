@@ -74,7 +74,7 @@ func (k Keeper) checkBadSignatureEvidenceInternal(ctx sdk.Context, evmChainPrefi
 	params := k.GetParams(ctx)
 	if !val.IsJailed() {
 		k.StakingKeeper.Jail(ctx, cons)
-		k.StakingKeeper.Slash(ctx, cons, ctx.BlockHeight(), val.ConsensusPower(sdk.DefaultPowerReduction), params.SlashFractionBadEthSignature)
+		k.StakingKeeper.Slash(ctx, cons, ctx.BlockHeight(), val.ConsensusPower(sdk.DefaultPowerReduction), params.SlashFractionBadEthSignature, 0)
 	}
 
 	return nil
