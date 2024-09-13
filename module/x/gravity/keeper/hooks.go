@@ -2,12 +2,16 @@ package keeper
 
 import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	"github.com/cosmos/cosmos-sdk/x/slashing/types"
 )
 
 // Wrapper struct
 type Hooks struct {
 	k Keeper
 }
+
+// Implements StakingHooks interface
+var _ types.StakingHooks = Hooks{}
 
 // Create new gravity hooks
 func (k Keeper) Hooks() Hooks {
@@ -46,4 +50,7 @@ func (h Hooks) BeforeValidatorSlashed(ctx sdk.Context, valAddr sdk.ValAddress, f
 func (h Hooks) BeforeDelegationSharesModified(ctx sdk.Context, delAddr sdk.AccAddress, valAddr sdk.ValAddress) {
 }
 func (h Hooks) AfterDelegationModified(ctx sdk.Context, delAddr sdk.AccAddress, valAddr sdk.ValAddress) {
+}
+func (h Hooks) AfterUnbondingInitiated(_ sdk.Context, _ uint64) error {
+	return nil
 }
