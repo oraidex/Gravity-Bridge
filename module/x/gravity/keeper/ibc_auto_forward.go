@@ -14,12 +14,12 @@ import (
 	"fmt"
 	"time"
 
+	"cosmossdk.io/store/prefix"
 	"github.com/Gravity-Bridge/Gravity-Bridge/module/x/gravity/types"
-	"github.com/cosmos/cosmos-sdk/store/prefix"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
-	ibctransfertypes "github.com/cosmos/ibc-go/v4/modules/apps/transfer/types"
-	ibcclienttypes "github.com/cosmos/ibc-go/v4/modules/core/02-client/types"
+	ibctransfertypes "github.com/cosmos/ibc-go/v8/modules/apps/transfer/types"
+	ibcclienttypes "github.com/cosmos/ibc-go/v8/modules/core/02-client/types"
 )
 
 // ValidatePendingIbcAutoForward performs basic validation, asserts the nonce is not ahead of what gravity is aware of,

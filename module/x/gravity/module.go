@@ -6,10 +6,10 @@ import (
 	"fmt"
 	"math/rand"
 
-	"github.com/gorilla/mux"
 	grpcruntime "github.com/grpc-ecosystem/grpc-gateway/runtime"
 	"github.com/spf13/cobra"
 
+	abci "github.com/cometbft/cometbft/abci/types"
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/codec"
 	codectypes "github.com/cosmos/cosmos-sdk/codec/types"
@@ -17,10 +17,8 @@ import (
 	"github.com/cosmos/cosmos-sdk/types/module"
 	simtypes "github.com/cosmos/cosmos-sdk/types/simulation"
 	bankkeeper "github.com/cosmos/cosmos-sdk/x/bank/keeper"
-	abci "github.com/tendermint/tendermint/abci/types"
 
 	"github.com/Gravity-Bridge/Gravity-Bridge/module/x/gravity/client/cli"
-	"github.com/Gravity-Bridge/Gravity-Bridge/module/x/gravity/client/rest"
 	"github.com/Gravity-Bridge/Gravity-Bridge/module/x/gravity/exported"
 	"github.com/Gravity-Bridge/Gravity-Bridge/module/x/gravity/keeper"
 	"github.com/Gravity-Bridge/Gravity-Bridge/module/x/gravity/types"
@@ -59,11 +57,6 @@ func (AppModuleBasic) ValidateGenesis(cdc codec.JSONCodec, _ client.TxEncodingCo
 	}
 
 	return data.ValidateBasic()
-}
-
-// RegisterRESTRoutes implements app module basic
-func (AppModuleBasic) RegisterRESTRoutes(ctx client.Context, rtr *mux.Router) {
-	rest.RegisterRoutes(ctx, rtr, types.StoreKey)
 }
 
 // GetQueryCmd implements app module basic

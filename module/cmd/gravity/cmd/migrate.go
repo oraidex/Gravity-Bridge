@@ -5,12 +5,11 @@ import (
 	"fmt"
 	"time"
 
-	v100 "github.com/cosmos/ibc-go/v4/modules/core/legacy/v100"
-	tmtypes "github.com/tendermint/tendermint/types"
+	tmtypes "github.com/cometbft/cometbft/types"
 
+	tmjson "github.com/cometbft/cometbft/libs/json"
 	"github.com/pkg/errors"
 	"github.com/spf13/cobra"
-	tmjson "github.com/tendermint/tendermint/libs/json"
 
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/client/flags"
@@ -60,11 +59,6 @@ $ %s ibc-migrate /path/to/genesis.json --chain-id=gravity-bridge-2 --genesis-tim
 			var initialState gentypes.AppMap
 			if err := json.Unmarshal(genDoc.AppState, &initialState); err != nil {
 				return errors.Wrap(err, "failed to JSON unmarshal initial genesis state")
-			}
-
-			newGenState, err := v100.MigrateGenesis(initialState, clientCtx, *genDoc, gravityMaxExpectedBlockDelay)
-			if err != nil {
-				return errors.Wrap(err, "failed to migrate ibc genesis state from v1 to v2")
 			}
 
 			genDoc.AppState, err = json.Marshal(newGenState)

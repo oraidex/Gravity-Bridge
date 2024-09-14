@@ -6,12 +6,12 @@ import (
 	"fmt"
 	"reflect"
 
+	"cosmossdk.io/store/prefix"
+	storetypes "cosmossdk.io/store/types"
 	v2 "github.com/Gravity-Bridge/Gravity-Bridge/module/x/gravity/migrations/v2"
 	"github.com/Gravity-Bridge/Gravity-Bridge/module/x/gravity/types"
 	"github.com/cosmos/cosmos-sdk/codec"
 	codectypes "github.com/cosmos/cosmos-sdk/codec/types"
-	"github.com/cosmos/cosmos-sdk/store/prefix"
-	storetypes "github.com/cosmos/cosmos-sdk/store/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 

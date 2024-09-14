@@ -9,9 +9,9 @@ import (
 	"strconv"
 	"strings"
 
+	_ "github.com/cosmos/cosmos-proto"
 	paramtypes "github.com/cosmos/cosmos-sdk/x/params/types"
-	_ "github.com/gogo/protobuf/gogoproto"
-	proto "github.com/gogo/protobuf/proto"
+	proto "github.com/cosmos/gogoproto/proto"
 
 	"github.com/Gravity-Bridge/Gravity-Bridge/module/x/gravity/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"

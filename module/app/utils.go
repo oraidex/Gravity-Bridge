@@ -7,11 +7,10 @@ import (
 	"os"
 	"time"
 
-	"github.com/tendermint/tendermint/libs/log"
-	dbm "github.com/tendermint/tm-db"
+	"github.com/cometbft/cometbft/libs/log"
+	dbm "github.com/cosmos/cosmos-db"
 
 	"github.com/cosmos/cosmos-sdk/codec"
-	"github.com/cosmos/cosmos-sdk/simapp/helpers"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/kv"
 	"github.com/cosmos/cosmos-sdk/types/module"
@@ -43,7 +42,7 @@ func SetupSimulation(dirPrefix, dbName string) (simtypes.Config, dbm.DB, string,
 	}
 
 	config := NewConfigFromFlags()
-	config.ChainID = helpers.SimAppChainID
+	config.ChainID = SimAppChainID
 
 	var logger log.Logger
 	if FlagVerboseValue {

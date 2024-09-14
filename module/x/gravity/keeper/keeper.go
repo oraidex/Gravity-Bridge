@@ -6,6 +6,7 @@ import (
 
 	gethcommon "github.com/ethereum/go-ethereum/common"
 
+	"github.com/cometbft/cometbft/libs/log"
 	"github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
@@ -17,14 +18,13 @@ import (
 	slashingkeeper "github.com/cosmos/cosmos-sdk/x/slashing/keeper"
 	stakingkeeper "github.com/cosmos/cosmos-sdk/x/staking/keeper"
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
-	ibctransferkeeper "github.com/cosmos/ibc-go/v4/modules/apps/transfer/keeper"
-	"github.com/tendermint/tendermint/libs/log"
+	ibctransferkeeper "github.com/cosmos/ibc-go/v8/modules/apps/transfer/keeper"
 
-	bech32ibckeeper "github.com/althea-net/bech32-ibc/x/bech32ibc/keeper"
+	bech32ibckeeper "github.com/Gravity-Bridge/Gravity-Bridge/module/x/bech32ibc/keeper"
 
+	"cosmossdk.io/store/prefix"
 	"github.com/Gravity-Bridge/Gravity-Bridge/module/x/gravity/types"
-	"github.com/cosmos/cosmos-sdk/store/prefix"
-	ibctransfertypes "github.com/cosmos/ibc-go/v4/modules/core/05-port/types"
+	ibctransfertypes "github.com/cosmos/ibc-go/v8/modules/core/05-port/types"
 )
 
 // Check that our expected keeper types are implemented
