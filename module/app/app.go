@@ -8,15 +8,16 @@ import (
 	"path/filepath"
 	"sync"
 
-	"github.com/gorilla/mux"
-	"github.com/rakyll/statik/fs"
-	"github.com/spf13/cast"
-
 	"cosmossdk.io/log"
 	abci "github.com/cometbft/cometbft/abci/types"
 	tmjson "github.com/cometbft/cometbft/libs/json"
 	tmos "github.com/cometbft/cometbft/libs/os"
 	dbm "github.com/cosmos/cosmos-db"
+	"github.com/cosmos/cosmos-sdk/server"
+	ibcconnectiontypes "github.com/cosmos/ibc-go/v8/modules/core/03-connection/types"
+	"github.com/gorilla/mux"
+	"github.com/rakyll/statik/fs"
+	"github.com/spf13/cast"
 
 	// Cosmos SDK
 	"cosmossdk.io/simapp"
@@ -65,7 +66,7 @@ import (
 	genutiltypes "github.com/cosmos/cosmos-sdk/x/genutil/types"
 	"github.com/cosmos/cosmos-sdk/x/gov"
 	govkeeper "github.com/cosmos/cosmos-sdk/x/gov/keeper"
-	govtypes "github.com/cosmos/cosmos-sdk/x/gov/types/v1beta1"
+	govtypes "github.com/cosmos/cosmos-sdk/x/gov/types"
 	"github.com/cosmos/cosmos-sdk/x/mint"
 	mintkeeper "github.com/cosmos/cosmos-sdk/x/mint/keeper"
 	minttypes "github.com/cosmos/cosmos-sdk/x/mint/types"
@@ -114,7 +115,6 @@ import (
 
 	"github.com/Gravity-Bridge/Gravity-Bridge/module/app/ante"
 	gravityparams "github.com/Gravity-Bridge/Gravity-Bridge/module/app/params"
-	"github.com/Gravity-Bridge/Gravity-Bridge/module/app/upgrades"
 	"github.com/Gravity-Bridge/Gravity-Bridge/module/app/upgrades/antares"
 	v2 "github.com/Gravity-Bridge/Gravity-Bridge/module/app/upgrades/v2"
 	"github.com/Gravity-Bridge/Gravity-Bridge/module/x/gravity"
@@ -837,8 +837,8 @@ func (app *Gravity) firstBeginBlocker(ctx sdk.Context) {
 }
 
 // EndBlocker application updates every end block
-func (app *Gravity) EndBlocker(ctx sdk.Context, req abci.RequestEndBlock) abci.ResponseEndBlock {
-	return app.mm.EndBlock(ctx, req)
+func (app *Gravity) EndBlocker(ctx sdk.Context) (sdk.EndBlock, error) {
+	return app.mm.EndBlock(ctx)
 }
 
 // InitChainer application update at chain initialization
@@ -903,21 +903,21 @@ func (app *Gravity) InterfaceRegistry() types.InterfaceRegistry {
 // GetKey returns the KVStoreKey for the provided store key.
 //
 // NOTE: This is solely to be used for testing purposes.
-func (app *Gravity) GetKey(storeKey string) *sdk.KVStoreKey {
+func (app *Gravity) GetKey(storeKey string) *storetypes.KVStoreKey {
 	return app.keys[storeKey]
 }
 
 // GetTKey returns the TransientStoreKey for the provided store key.
 //
 // NOTE: This is solely to be used for testing purposes.
-func (app *Gravity) GetTKey(storeKey string) *sdk.TransientStoreKey {
+func (app *Gravity) GetTKey(storeKey string) *storetypes.TransientStoreKey {
 	return app.tKeys[storeKey]
 }
 
 // GetMemKey returns the MemStoreKey for the provided mem key.
 //
 // NOTE: This is solely used for testing purposes.
-func (app *Gravity) GetMemKey(storeKey string) *sdk.MemoryStoreKey {
+func (app *Gravity) GetMemKey(storeKey string) *storetypes.MemoryStoreKey {
 	return app.memKeys[storeKey]
 }
 
@@ -963,7 +963,13 @@ func (app *Gravity) RegisterTxService(clientCtx client.Context) {
 
 // RegisterTendermintService implements the Application.RegisterTendermintService method.
 func (app *Gravity) RegisterTendermintService(clientCtx client.Context) {
-	cmtservice.RegisterTendermintService(app.BaseApp.GRPCQueryRouter(), clientCtx, app.interfaceRegistry)
+	cmtApp := server.NewCometABCIWrapper(app)
+	cmtservice.RegisterTendermintService(
+		clientCtx,
+		app.BaseApp.GRPCQueryRouter(),
+		app.interfaceRegistry,
+		cmtApp.Query,
+	)
 }
 
 func (app *Gravity) RegisterNodeService(clientCtx client.Context) {
@@ -1003,10 +1009,7 @@ func initParamsKeeper(appCodec codec.BinaryCodec, legacyAmino *codec.LegacyAmino
 
 // Registers handlers for all our upgrades
 func (app *Gravity) registerUpgradeHandlers() {
-	upgrades.RegisterUpgradeHandlers(
-		app.mm, app.configurator, app.accountKeeper, app.bankKeeper, app.bech32IbcKeeper, app.distrKeeper,
-		app.mintKeeper, app.stakingKeeper, app.upgradeKeeper, app.crisisKeeper, app.ibcTransferKeeper, app.gravityKeeper,
-	)
+
 }
 
 // Sets up the StoreLoader for new, deleted, or renamed modules

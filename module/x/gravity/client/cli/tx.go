@@ -7,6 +7,8 @@ import (
 	"strconv"
 	"strings"
 
+	errorsmod "cosmossdk.io/errors"
+	sdkmath "cosmossdk.io/math"
 	"github.com/spf13/cobra"
 
 	"github.com/cosmos/cosmos-sdk/client"
@@ -129,6 +131,10 @@ func CmdGovIbcMetadataProposal() *cobra.Command {
 				return errorsmod.Wrap(types.ErrInvalid, "This ibc hash does not seem to exist on Gravity, are you sure you have the right one?")
 			}
 
+			if err := proposal.ValidateBasic(); err != nil {
+				return errorsmod.Wrap(err, "Your proposal.json is not valid, please correct it")
+			}
+
 			proposalAny, err := codectypes.NewAnyWithValue(proposal)
 			if err != nil {
 				return errorsmod.Wrap(err, "invalid metadata or proposal details!")
@@ -140,9 +146,7 @@ func CmdGovIbcMetadataProposal() *cobra.Command {
 				InitialDeposit: initialDeposit,
 				Content:        proposalAny,
 			}
-			if err := msg.ValidateBasic(); err != nil {
-				return errorsmod.Wrap(err, "Your proposal.json is not valid, please correct it")
-			}
+
 			// Send it
 			return tx.GenerateOrBroadcastTxCLI(cliCtx, cmd.Flags(), &msg)
 		},
@@ -221,6 +225,10 @@ func CmdGovAirdropProposal() *cobra.Command {
 				Recipients:  byteEncodedRecipients,
 			}
 
+			if err := finalProposal.ValidateBasic(); err != nil {
+				return err
+			}
+
 			proposalAny, err := codectypes.NewAnyWithValue(finalProposal)
 			if err != nil {
 				return errorsmod.Wrap(err, "invalid metadata or proposal details!")
@@ -232,9 +240,7 @@ func CmdGovAirdropProposal() *cobra.Command {
 				InitialDeposit: initialDeposit,
 				Content:        proposalAny,
 			}
-			if err := msg.ValidateBasic(); err != nil {
-				return err
-			}
+
 			// Send it
 			return tx.GenerateOrBroadcastTxCLI(cliCtx, cmd.Flags(), &msg)
 		},
@@ -280,6 +286,10 @@ func CmdGovUnhaltBridgeProposal() *cobra.Command {
 				return errorsmod.Wrap(err, "proposal json file is not valid json")
 			}
 
+			if err := proposal.ValidateBasic(); err != nil {
+				return err
+			}
+
 			proposalAny, err := codectypes.NewAnyWithValue(proposal)
 			if err != nil {
 				return errorsmod.Wrap(err, "invalid metadata or proposal details!")
@@ -291,9 +301,7 @@ func CmdGovUnhaltBridgeProposal() *cobra.Command {
 				InitialDeposit: initialDeposit,
 				Content:        proposalAny,
 			}
-			if err := msg.ValidateBasic(); err != nil {
-				return err
-			}
+
 			// Send it
 			return tx.GenerateOrBroadcastTxCLI(cliCtx, cmd.Flags(), &msg)
 		},
@@ -335,6 +343,11 @@ func CmdAddEvmChainProposal() *cobra.Command {
 			bridgeEthAddress := args[4]
 
 			proposal := &types.AddEvmChainProposal{EvmChainName: evmChainName, EvmChainPrefix: evmChainPrefix, EvmChainNetVersion: evmChainNetVersion, GravityId: gravityId, BridgeEthereumAddress: bridgeEthAddress, Title: args[5], Description: args[7]}
+
+			if err := proposal.ValidateBasic(); err != nil {
+				return err
+			}
+
 			proposalAny, err := codectypes.NewAnyWithValue(proposal)
 			if err != nil {
 				return errorsmod.Wrap(err, "invalid metadata or proposal details!")
@@ -346,9 +359,7 @@ func CmdAddEvmChainProposal() *cobra.Command {
 				InitialDeposit: initialDeposit,
 				Content:        proposalAny,
 			}
-			if err := msg.ValidateBasic(); err != nil {
-				return err
-			}
+
 			// Send it
 			return tx.GenerateOrBroadcastTxCLI(cliCtx, cmd.Flags(), &msg)
 		},
@@ -382,6 +393,11 @@ func CmdRemoveEvmChainProposal() *cobra.Command {
 			evmChainPrefix := args[0]
 
 			proposal := &types.RemoveEvmChainProposal{EvmChainPrefix: evmChainPrefix, Title: args[2], Description: args[3]}
+
+			if err := proposal.ValidateBasic(); err != nil {
+				return err
+			}
+
 			proposalAny, err := codectypes.NewAnyWithValue(proposal)
 			if err != nil {
 				return errorsmod.Wrap(err, "invalid metadata or proposal details!")
@@ -393,9 +409,7 @@ func CmdRemoveEvmChainProposal() *cobra.Command {
 				InitialDeposit: initialDeposit,
 				Content:        proposalAny,
 			}
-			if err := msg.ValidateBasic(); err != nil {
-				return err
-			}
+
 			// Send it
 			return tx.GenerateOrBroadcastTxCLI(cliCtx, cmd.Flags(), &msg)
 		},
