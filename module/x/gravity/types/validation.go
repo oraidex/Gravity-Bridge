@@ -7,7 +7,8 @@ import (
 	"sort"
 	"strings"
 
-	sdk "github.com/cosmos/cosmos-sdk/types"
+	errorsmod "cosmossdk.io/errors"
+	sdkmath "cosmossdk.io/math"
 	"github.com/ethereum/go-ethereum/accounts/abi"
 	gethcommon "github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/crypto"
@@ -126,7 +127,7 @@ func (b InternalBridgeValidators) Sort() {
 // if the total on chain voting power increases by 1% due to inflation, we shouldn't have to generate a new validator
 // set, after all the validators retained their relative percentages during inflation and normalized Gravity bridge power
 // shows no difference.
-func (b InternalBridgeValidators) PowerDiff(c InternalBridgeValidators) sdk.Dec {
+func (b InternalBridgeValidators) PowerDiff(c InternalBridgeValidators) sdkmath.LegacyDec {
 	powers := map[string]int64{}
 	// loop over b and initialize the map with their powers
 	for _, bv := range b {
@@ -143,13 +144,13 @@ func (b InternalBridgeValidators) PowerDiff(c InternalBridgeValidators) sdk.Dec 
 		}
 	}
 
-	delta := sdk.NewDec(0)
+	delta := sdkmath.LegacyNewDec(0)
 	for _, v := range powers {
 		// NOTE: we care about the absolute value of the changes
-		delta = sdk.NewDec(v).Abs().Add(delta)
+		delta = sdkmath.LegacyNewDec(v).Abs().Add(delta)
 	}
 
-	return delta.Quo(sdk.NewDec(math.MaxUint32)).Abs()
+	return delta.Quo(sdkmath.LegacyNewDec(math.MaxUint32)).Abs()
 }
 
 // TotalPower returns the total power in the bridge validator set
@@ -201,7 +202,7 @@ func (b InternalBridgeValidators) ValidateBasic() error {
 //////////////////////////////////////
 
 // NewValset returns a new valset
-func NewValset(nonce, height uint64, members InternalBridgeValidators, rewardAmount sdk.Int, rewardToken EthAddress) (*Valset, error) {
+func NewValset(nonce, height uint64, members InternalBridgeValidators, rewardAmount sdkmath.Int, rewardToken EthAddress) (*Valset, error) {
 	if err := members.ValidateBasic(); err != nil {
 		return nil, errorsmod.Wrap(err, "invalid members")
 	}
@@ -283,7 +284,7 @@ func (v *Valset) WithoutEmptyMembers() *Valset {
 		Nonce:        v.Nonce,
 		Members:      make([]BridgeValidator, 0, len(v.Members)),
 		Height:       0,
-		RewardAmount: sdk.Int{},
+		RewardAmount: sdkmath.Int{},
 		RewardToken:  "",
 	}
 	for i := range v.Members {
@@ -369,8 +370,8 @@ func (v Valsets) ValidateBasic() error {
 }
 
 // GetFees returns the total fees contained within a given batch
-func (b OutgoingTxBatch) GetFees() sdk.Int {
-	sum := sdk.ZeroInt()
+func (b OutgoingTxBatch) GetFees() sdkmath.Int {
+	sum := sdkmath.ZeroInt()
 	for _, t := range b.Transactions {
 		sum = sum.Add(t.Erc20Fee.Amount)
 	}

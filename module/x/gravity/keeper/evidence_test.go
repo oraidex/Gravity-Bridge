@@ -27,7 +27,7 @@ func TestSubmitBadSignatureEvidenceBatchExists(t *testing.T) {
 		mySender, e1        = sdk.AccAddressFromBech32("gravity1ahx7f8wyertuus9r20284ej0asrs085ceqtfnm")
 		myReceiver          = "0xd041c41EA1bf0F006ADBb6d2c9ef9D425dE5eaD7"
 		myTokenContractAddr = "0x429881672B9AE42b8EbA0E26cD9C73711b891Ca5" // Pickle
-		token, e2           = types.NewInternalERC20Token(sdk.NewInt(99999), myTokenContractAddr)
+		token, e2           = types.NewInternalERC20Token(sdkmath.NewInt(99999), myTokenContractAddr)
 		allVouchers         = sdk.NewCoins(token.GravityCoin(EthChainPrefix))
 		evmChain            = input.GravityKeeper.GetEvmChainData(ctx, EthChainPrefix)
 	)
@@ -48,7 +48,7 @@ func TestSubmitBadSignatureEvidenceBatchExists(t *testing.T) {
 
 	// add some TX to the pool
 	for i, v := range []uint64{2, 3, 2, 1} {
-		amountToken, err := types.NewInternalERC20Token(sdk.NewInt(int64(i+100)), myTokenContractAddr)
+		amountToken, err := types.NewInternalERC20Token(sdkmath.NewInt(int64(i+100)), myTokenContractAddr)
 		require.NoError(t, err)
 		amount := amountToken.GravityCoin(evmChain.EvmChainPrefix)
 		feeToken, err := types.NewInternalERC20Token(sdk.NewIntFromUint64(v), myTokenContractAddr)

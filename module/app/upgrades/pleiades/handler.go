@@ -81,7 +81,7 @@ func GetPleiades2UpgradeHandler(
 // 	// This version was added to Juno by github user the-frey https://github.com/the-frey
 // 	ctx.Logger().Info("Pleiades Upgrade part 2: bumpMinValidatorCommissions(): Getting all the validators")
 // 	validators := stakingKeeper.GetAllValidators(ctx)
-// 	minCommissionRate := sdk.NewDecWithPrec(10, 2)
+// 	minCommissionRate := sdkmath.LegacyNewDecWithPrec(10, 2)
 // 	ctx.Logger().Info("Pleiades Upgrade part 2: bumpMinValidatorCommissions():", "minCommissionRate", minCommissionRate.String())
 // 	ctx.Logger().Info("Pleiades Upgrade part 2: bumpMinValidatorCommissions(): Iterating validators")
 // 	for _, v := range validators {

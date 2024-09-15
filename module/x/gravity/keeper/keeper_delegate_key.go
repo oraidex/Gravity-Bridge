@@ -3,6 +3,7 @@ package keeper
 import (
 	"time"
 
+	errorsmod "cosmossdk.io/errors"
 	codectypes "github.com/cosmos/cosmos-sdk/codec/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
@@ -46,8 +47,8 @@ func (k Keeper) GetOrchestratorValidator(ctx sdk.Context, orch sdk.AccAddress) (
 			},
 			Jailed:          false,
 			Status:          0,
-			Tokens:          sdk.Int{},
-			DelegatorShares: sdk.Dec{},
+			Tokens:          sdkmath.Int{},
+			DelegatorShares: sdkmath.LegacyDec{},
 			Description: stakingtypes.Description{
 				Moniker:         "",
 				Identity:        "",
@@ -59,13 +60,13 @@ func (k Keeper) GetOrchestratorValidator(ctx sdk.Context, orch sdk.AccAddress) (
 			UnbondingTime:   time.Time{},
 			Commission: stakingtypes.Commission{
 				CommissionRates: stakingtypes.CommissionRates{
-					Rate:          sdk.Dec{},
-					MaxRate:       sdk.Dec{},
-					MaxChangeRate: sdk.Dec{},
+					Rate:          sdkmath.LegacyDec{},
+					MaxRate:       sdkmath.LegacyDec{},
+					MaxChangeRate: sdkmath.LegacyDec{},
 				},
 				UpdateTime: time.Time{},
 			},
-			MinSelfDelegation: sdk.Int{},
+			MinSelfDelegation: sdkmath.Int{},
 		}, false
 	}
 	validator, found = k.StakingKeeper.GetValidator(ctx, valAddr)
@@ -81,8 +82,8 @@ func (k Keeper) GetOrchestratorValidator(ctx sdk.Context, orch sdk.AccAddress) (
 			},
 			Jailed:          false,
 			Status:          0,
-			Tokens:          sdk.Int{},
-			DelegatorShares: sdk.Dec{},
+			Tokens:          sdkmath.Int{},
+			DelegatorShares: sdkmath.LegacyDec{},
 			Description: stakingtypes.Description{
 				Moniker:         "",
 				Identity:        "",
@@ -94,13 +95,13 @@ func (k Keeper) GetOrchestratorValidator(ctx sdk.Context, orch sdk.AccAddress) (
 			UnbondingTime:   time.Time{},
 			Commission: stakingtypes.Commission{
 				CommissionRates: stakingtypes.CommissionRates{
-					Rate:          sdk.Dec{},
-					MaxRate:       sdk.Dec{},
-					MaxChangeRate: sdk.Dec{},
+					Rate:          sdkmath.LegacyDec{},
+					MaxRate:       sdkmath.LegacyDec{},
+					MaxChangeRate: sdkmath.LegacyDec{},
 				},
 				UpdateTime: time.Time{},
 			},
-			MinSelfDelegation: sdk.Int{},
+			MinSelfDelegation: sdkmath.Int{},
 		}, false
 	}
 
@@ -172,8 +173,8 @@ func (k Keeper) GetValidatorByEvmAddress(ctx sdk.Context, evmAddr types.EthAddre
 			},
 			Jailed:          false,
 			Status:          0,
-			Tokens:          sdk.Int{},
-			DelegatorShares: sdk.Dec{},
+			Tokens:          sdkmath.Int{},
+			DelegatorShares: sdkmath.LegacyDec{},
 			Description: stakingtypes.Description{
 				Moniker:         "",
 				Identity:        "",
@@ -185,13 +186,13 @@ func (k Keeper) GetValidatorByEvmAddress(ctx sdk.Context, evmAddr types.EthAddre
 			UnbondingTime:   time.Time{},
 			Commission: stakingtypes.Commission{
 				CommissionRates: stakingtypes.CommissionRates{
-					Rate:          sdk.Dec{},
-					MaxRate:       sdk.Dec{},
-					MaxChangeRate: sdk.Dec{},
+					Rate:          sdkmath.LegacyDec{},
+					MaxRate:       sdkmath.LegacyDec{},
+					MaxChangeRate: sdkmath.LegacyDec{},
 				},
 				UpdateTime: time.Time{},
 			},
-			MinSelfDelegation: sdk.Int{},
+			MinSelfDelegation: sdkmath.Int{},
 		}, false
 	}
 	validator, found = k.StakingKeeper.GetValidator(ctx, valAddr)
@@ -207,8 +208,8 @@ func (k Keeper) GetValidatorByEvmAddress(ctx sdk.Context, evmAddr types.EthAddre
 			},
 			Jailed:          false,
 			Status:          0,
-			Tokens:          sdk.Int{},
-			DelegatorShares: sdk.Dec{},
+			Tokens:          sdkmath.Int{},
+			DelegatorShares: sdkmath.LegacyDec{},
 			Description: stakingtypes.Description{
 				Moniker:         "",
 				Identity:        "",
@@ -220,13 +221,13 @@ func (k Keeper) GetValidatorByEvmAddress(ctx sdk.Context, evmAddr types.EthAddre
 			UnbondingTime:   time.Time{},
 			Commission: stakingtypes.Commission{
 				CommissionRates: stakingtypes.CommissionRates{
-					Rate:          sdk.Dec{},
-					MaxRate:       sdk.Dec{},
-					MaxChangeRate: sdk.Dec{},
+					Rate:          sdkmath.LegacyDec{},
+					MaxRate:       sdkmath.LegacyDec{},
+					MaxChangeRate: sdkmath.LegacyDec{},
 				},
 				UpdateTime: time.Time{},
 			},
-			MinSelfDelegation: sdk.Int{},
+			MinSelfDelegation: sdkmath.Int{},
 		}, false
 	}
 

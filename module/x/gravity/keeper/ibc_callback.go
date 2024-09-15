@@ -4,11 +4,14 @@ import (
 	"fmt"
 	"strings"
 
+	errorsmod "cosmossdk.io/errors"
+	sdkmath "cosmossdk.io/math"
 	"github.com/Gravity-Bridge/Gravity-Bridge/module/x/gravity/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
 	capabilitytypes "github.com/cosmos/ibc-go/modules/capability/types"
 	transfertypes "github.com/cosmos/ibc-go/v8/modules/apps/transfer/types"
+	clienttypes "github.com/cosmos/ibc-go/v8/modules/core/02-client/types"
 	channeltypes "github.com/cosmos/ibc-go/v8/modules/core/04-channel/types"
 
 	ibcexported "github.com/cosmos/ibc-go/v8/modules/core/exported"
@@ -27,7 +30,7 @@ func IsModuleAccount(acc authtypes.AccountI) bool {
 // prefix path from the destination chain to the denom.
 func GetReceivedCoin(srcPort, srcChannel, dstPort, dstChannel, rawDenom, rawAmt string) sdk.Coin {
 	// NOTE: Denom and amount are already validated
-	amount, _ := sdk.NewIntFromString(rawAmt)
+	amount, _ := sdkmath.NewIntFromString(rawAmt)
 
 	if transfertypes.ReceiverChainIsSource(srcPort, srcChannel, rawDenom) {
 		// remove prefix added by sender chain
@@ -131,11 +134,11 @@ func (k Keeper) OnRecvPacket(
 		return channeltypes.NewErrorAcknowledgement(errorsmod.Wrap(types.ErrInvalid, "destination address is invalid or blacklisted"))
 	}
 
-	batchFees := sdk.ZeroInt()
+	batchFees := sdkmath.ZeroInt()
 	params, err := k.GetParamsIfSet(ctx)
 	if err == nil {
 		// The params have been set, get the min send to eth fee
-		batchFees = sdk.NewInt(int64(params.MinChainFeeBasisPoints))
+		batchFees = sdkmath.NewInt(int64(params.MinChainFeeBasisPoints))
 	}
 
 	// finally add to outgoing pool and waiting for gbt to submit it via MsgRequestBatch
@@ -155,8 +158,13 @@ func (k Keeper) OnRecvPacket(
 }
 
 // SendPacket wraps IBC ChannelKeeper's SendPacket function
-func (k Keeper) SendPacket(ctx sdk.Context, chanCap *capabilitytypes.Capability, packet ibcexported.PacketI) error {
-	return k.ics4Wrapper.SendPacket(ctx, chanCap, packet)
+func (k Keeper) SendPacket(ctx sdk.Context,
+	chanCap *capabilitytypes.Capability,
+	sourcePort string, sourceChannel string,
+	timeoutHeight clienttypes.Height,
+	timeoutTimestamp uint64,
+	data []byte) (uint64, error) {
+	return k.ics4Wrapper.SendPacket(ctx, chanCap, sourcePort, sourceChannel, timeoutHeight, timeoutTimestamp, data)
 }
 
 // WriteAcknowledgement writes the packet execution acknowledgement to the state,

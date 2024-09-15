@@ -96,7 +96,7 @@ func createAttestations(t *testing.T, ctx sdk.Context, k Keeper, length int, evm
 			EventNonce:     nonce,
 			EthBlockHeight: 1,
 			TokenContract:  contract,
-			Amount:         sdk.NewInt(10000000000 + int64(i)),
+			Amount:         sdkmath.NewInt(10000000000 + int64(i)),
 			EthereumSender: sender,
 			CosmosReceiver: receiver,
 			Orchestrator:   orch,
@@ -168,7 +168,7 @@ func TestGetSetLastObservedValset(t *testing.T) {
 				EthereumAddress: "0x0000000000000003",
 			},
 		},
-		RewardAmount: sdk.NewInt(1000000000),
+		RewardAmount: sdkmath.NewInt(1000000000),
 		RewardToken:  "footoken",
 	}
 
@@ -237,11 +237,11 @@ func TestInvalidHeight(t *testing.T) {
 			DestAddress: receiver.String(),
 			Erc20Token: types.ERC20Token{
 				Contract: tokenContract,
-				Amount:   sdk.NewInt(1),
+				Amount:   sdkmath.NewInt(1),
 			},
 			Erc20Fee: types.ERC20Token{
 				Contract: tokenContract,
-				Amount:   sdk.NewInt(1),
+				Amount:   sdkmath.NewInt(1),
 			},
 		}},
 		TokenContract:      tokenContract,
@@ -321,7 +321,7 @@ func TestSendCoinToCosmosAccount(t *testing.T) {
 		EventNonce:     nonce,
 		EthBlockHeight: 1,
 		TokenContract:  "0xdafea492d9c6733ae3d56b7ed1adb60692c98bc5",
-		Amount:         sdk.NewInt(10000000000 + int64(1)),
+		Amount:         sdkmath.NewInt(10000000000 + int64(1)),
 		EthereumSender: "0x00000000000000000002",
 		CosmosReceiver: "0x993d06FC97F45f16e4805883b98a6c20BAb54964",
 		Orchestrator:   "0x00000000000000000004",
@@ -424,21 +424,21 @@ func TestExpectedSupplyChange(t *testing.T) {
 	transfers := []*types.InternalERC20Token{
 		{
 			Contract: TokenContracts[0],
-			Amount:   sdk.NewInt(1_000000),
+			Amount:   sdkmath.NewInt(1_000000),
 		},
 		{
 			Contract: TokenContracts[0],
-			Amount:   sdk.NewInt(2_000000),
+			Amount:   sdkmath.NewInt(2_000000),
 		},
 	}
 	fees := []*types.InternalERC20Token{
 		{
 			Contract: TokenContracts[0],
-			Amount:   sdk.NewInt(1_000000),
+			Amount:   sdkmath.NewInt(1_000000),
 		},
 		{
 			Contract: TokenContracts[0],
-			Amount:   sdk.NewInt(2_000000),
+			Amount:   sdkmath.NewInt(2_000000),
 		},
 	}
 	transfersTotal := types.InternalERC20Tokens(transfers).ToCoins(EthChainPrefix)
@@ -490,7 +490,7 @@ func TestExpectedSupplyChange(t *testing.T) {
 		EthBlockHeight: 123,
 		EvmChainPrefix: EthChainPrefix,
 		TokenContract:  TokenContractAddrs[0],
-		Amount:         sdk.NewInt(100),
+		Amount:         sdkmath.NewInt(100),
 		EthereumSender: EthAddrs[1].String(),
 		CosmosReceiver: OrchAddrs[1].String(),
 		Orchestrator:   OrchAddrs[1].String(),

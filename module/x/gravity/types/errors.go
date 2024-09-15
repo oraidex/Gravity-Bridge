@@ -1,5 +1,9 @@
 package types
 
+import (
+	errorsmod "cosmossdk.io/errors"
+)
+
 var (
 	ErrInternal                 = errorsmod.Register(ModuleName, 1, "internal")
 	ErrDuplicate                = errorsmod.Register(ModuleName, 2, "duplicate")

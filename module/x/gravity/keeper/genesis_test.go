@@ -74,7 +74,7 @@ func TestBatchAndTxImportExport(t *testing.T) {
 	tokens := make([]*types.InternalERC20Token, len(contracts))
 	vouchers := make([]*sdk.Coins, len(contracts))
 	for i, v := range contracts {
-		token, err := types.NewInternalERC20Token(sdk.NewInt(99999999), v.GetAddress().Hex())
+		token, err := types.NewInternalERC20Token(sdkmath.NewInt(99999999), v.GetAddress().Hex())
 		tokens[i] = token
 		allVouchers := sdk.NewCoins(token.GravityCoin(evmChain.EvmChainPrefix))
 		vouchers[i] = &allVouchers
@@ -105,9 +105,9 @@ func TestBatchAndTxImportExport(t *testing.T) {
 		sender := senders[i%len(senders)]
 		receiver := receivers[i%len(receivers)]
 		contract := contracts[i%len(contracts)]
-		amountToken, err := types.NewInternalERC20Token(sdk.NewInt(int64(amount)), contract.GetAddress().Hex())
+		amountToken, err := types.NewInternalERC20Token(sdkmath.NewInt(int64(amount)), contract.GetAddress().Hex())
 		require.NoError(t, err)
-		feeToken, err := types.NewInternalERC20Token(sdk.NewInt(int64(fee)), contract.GetAddress().Hex())
+		feeToken, err := types.NewInternalERC20Token(sdkmath.NewInt(int64(fee)), contract.GetAddress().Hex())
 		require.NoError(t, err)
 
 		// add transaction to the pool
@@ -162,7 +162,7 @@ func TestBatchAndTxImportExport(t *testing.T) {
 		foreignRcv, err := bech32.ConvertAndEncode(foreignHrp, *v)
 		require.NoError(t, err)
 		c := contracts[i%len(contracts)]
-		token, err := types.NewInternalERC20Token(sdk.NewInt(99999999), c.GetAddress().Hex())
+		token, err := types.NewInternalERC20Token(sdkmath.NewInt(99999999), c.GetAddress().Hex())
 		require.NoError(t, err)
 		coins := sdk.NewCoins(token.GravityCoin(evmChain.EvmChainPrefix))
 		// Mint the coins to be forwarded, since the gravity module should already hold the tokens

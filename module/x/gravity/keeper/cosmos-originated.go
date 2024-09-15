@@ -3,6 +3,7 @@ package keeper
 import (
 	"fmt"
 
+	errorsmod "cosmossdk.io/errors"
 	"cosmossdk.io/store/prefix"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
@@ -88,7 +89,7 @@ func (k Keeper) DenomToERC20Lookup(ctx sdk.Context, evmChainPrefix string, denom
 
 // RewardToERC20Lookup is a specialized function wrapping DenomToERC20Lookup designed to validate
 // the validator set reward any time we generate a validator set
-func (k Keeper) RewardToERC20Lookup(ctx sdk.Context, evmChainPrefix string, coin sdk.Coin) (*types.EthAddress, sdk.Int) {
+func (k Keeper) RewardToERC20Lookup(ctx sdk.Context, evmChainPrefix string, coin sdk.Coin) (*types.EthAddress, sdkmath.Int) {
 	if !coin.IsValid() || coin.IsZero() {
 		panic("Bad validator set relaying reward!")
 	} else {

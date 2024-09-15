@@ -60,7 +60,7 @@ func initializeTestingVars(t *testing.T) *testingVars {
 }
 
 func addDenomToERC20Relation(tv *testingVars) {
-	tv.input.BankKeeper.MintCoins(tv.ctx, banktypes.ModuleName, sdk.NewCoins(sdk.NewCoin(tv.denom, sdk.NewInt(1000000000000))))
+	tv.input.BankKeeper.MintCoins(tv.ctx, banktypes.ModuleName, sdk.NewCoins(sdk.NewCoin(tv.denom, sdkmath.NewInt(1000000000000))))
 	tv.input.BankKeeper.SetDenomMetaData(tv.ctx, banktypes.Metadata{
 		Description: "The native staking token of the Cosmos Gravity Bridge",
 		Name:        "Graviton",
@@ -119,17 +119,17 @@ func addDenomToERC20Relation(tv *testingVars) {
 
 func lockCoinsInModule(tv *testingVars) {
 	var (
-		userCosmosAddr, err           = sdk.AccAddressFromBech32("gravity1990z7dqsvh8gthw9pa5sn4wuy2xrsd80lcx6lv")
-		denom                         = "ugraviton"
-		startingCoinAmount  sdk.Int   = sdk.NewIntFromUint64(150)
-		sendAmount          sdk.Int   = sdk.NewIntFromUint64(50)
-		feeAmount           sdk.Int   = sdk.NewIntFromUint64(5)
-		chainFeeAmount      sdk.Int   = sdk.NewIntFromUint64(0)
-		startingCoins       sdk.Coins = sdk.Coins{sdk.NewCoin(denom, startingCoinAmount)}
-		sendingCoin         sdk.Coin  = sdk.NewCoin(denom, sendAmount)
-		feeCoin             sdk.Coin  = sdk.NewCoin(denom, feeAmount)
-		chainFeeCoin        sdk.Coin  = sdk.NewCoin(denom, chainFeeAmount)
-		ethDestination                = "0x3c9289da00b02dC623d0D8D907619890301D26d4"
+		userCosmosAddr, err             = sdk.AccAddressFromBech32("gravity1990z7dqsvh8gthw9pa5sn4wuy2xrsd80lcx6lv")
+		denom                           = "ugraviton"
+		startingCoinAmount  sdkmath.Int = sdk.NewIntFromUint64(150)
+		sendAmount          sdkmath.Int = sdk.NewIntFromUint64(50)
+		feeAmount           sdkmath.Int = sdk.NewIntFromUint64(5)
+		chainFeeAmount      sdkmath.Int = sdk.NewIntFromUint64(0)
+		startingCoins       sdk.Coins   = sdk.Coins{sdk.NewCoin(denom, startingCoinAmount)}
+		sendingCoin         sdk.Coin    = sdk.NewCoin(denom, sendAmount)
+		feeCoin             sdk.Coin    = sdk.NewCoin(denom, feeAmount)
+		chainFeeCoin        sdk.Coin    = sdk.NewCoin(denom, chainFeeAmount)
+		ethDestination                  = "0x3c9289da00b02dC623d0D8D907619890301D26d4"
 	)
 	assert.Nil(tv.t, err)
 
@@ -175,7 +175,7 @@ func acceptDepositEvent(tv *testingVars) {
 	require.NoError(tv.t, err)
 
 	myErc20 := types.ERC20Token{
-		Amount:   sdk.NewInt(12),
+		Amount:   sdkmath.NewInt(12),
 		Contract: tv.erc20,
 	}
 

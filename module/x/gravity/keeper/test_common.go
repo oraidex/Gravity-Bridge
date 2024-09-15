@@ -671,12 +671,12 @@ func CreateTestEnv(t *testing.T) TestInput {
 	TestingGravityParams.TargetBatchTimeout = 60001
 	TestingGravityParams.AverageBlockTime = 5000
 
-	TestingGravityParams.SlashFractionValset = sdk.NewDecWithPrec(1, 2)
-	TestingGravityParams.SlashFractionBatch = sdk.NewDecWithPrec(1, 2)
-	TestingGravityParams.SlashFractionLogicCall = sdk.Dec{}
+	TestingGravityParams.SlashFractionValset = sdkmath.LegacyNewDecWithPrec(1, 2)
+	TestingGravityParams.SlashFractionBatch = sdkmath.LegacyNewDecWithPrec(1, 2)
+	TestingGravityParams.SlashFractionLogicCall = sdkmath.LegacyDec{}
 	TestingGravityParams.UnbondSlashingValsetsWindow = 15
-	TestingGravityParams.SlashFractionBadEthSignature = sdk.NewDecWithPrec(1, 2)
-	TestingGravityParams.ValsetReward = sdk.Coin{Denom: "", Amount: sdk.ZeroInt()}
+	TestingGravityParams.SlashFractionBadEthSignature = sdkmath.LegacyNewDecWithPrec(1, 2)
+	TestingGravityParams.ValsetReward = sdk.Coin{Denom: "", Amount: sdkmath.ZeroInt()}
 
 	TestingGravityParams.EvmChainParams = []*types.EvmChainParam{
 		{
@@ -812,7 +812,7 @@ func MintVouchersFromAir(t *testing.T, ctx sdk.Context, k Keeper, emvChainPrefix
 	return coin
 }
 
-func NewTestMsgCreateValidator(address sdk.ValAddress, pubKey ccrypto.PubKey, amt sdk.Int) *stakingtypes.MsgCreateValidator {
+func NewTestMsgCreateValidator(address sdk.ValAddress, pubKey ccrypto.PubKey, amt sdkmath.Int) *stakingtypes.MsgCreateValidator {
 	commission := stakingtypes.NewCommissionRates(sdk.ZeroDec(), sdk.ZeroDec(), sdk.ZeroDec())
 	out, err := stakingtypes.NewMsgCreateValidator(
 		address, pubKey, sdk.NewCoin("stake", amt),
@@ -830,7 +830,7 @@ func NewTestMsgCreateValidator(address sdk.ValAddress, pubKey ccrypto.PubKey, am
 	return out
 }
 
-func NewTestMsgUnDelegateValidator(address sdk.ValAddress, amt sdk.Int) *stakingtypes.MsgUndelegate {
+func NewTestMsgUnDelegateValidator(address sdk.ValAddress, amt sdkmath.Int) *stakingtypes.MsgUndelegate {
 	msg := stakingtypes.NewMsgUndelegate(sdk.AccAddress(address), address, sdk.NewCoin("stake", amt))
 	return msg
 }

@@ -50,9 +50,9 @@ func ModuleBalanceInvariant(k Keeper) sdk.Invariant {
 
 			modAcc := k.accountKeeper.GetModuleAddress(types.ModuleName)
 			actualBals := k.bankKeeper.GetAllBalances(ctx, modAcc)
-			expectedBals := make(map[string]*sdk.Int, len(actualBals)) // Collect balances by contract
+			expectedBals := make(map[string]*sdkmath.Int, len(actualBals)) // Collect balances by contract
 			for _, v := range actualBals {
-				newInt := sdk.NewInt(0)
+				newInt := sdkmath.NewInt(0)
 				expectedBals[v.Denom] = &newInt
 			}
 			expectedBals = sumUnconfirmedBatchModuleBalances(ctx, evmChain.EvmChainPrefix, k, expectedBals)
@@ -96,9 +96,9 @@ func ModuleBalanceInvariant(k Keeper) sdk.Invariant {
 /////// MODULE BALANCE HELPERS
 
 // sumUnconfirmedBatchModuleBalances calculate the value the module should have stored due to unconfirmed batches
-func sumUnconfirmedBatchModuleBalances(ctx sdk.Context, evmChainPrefix string, k Keeper, expectedBals map[string]*sdk.Int) map[string]*sdk.Int {
+func sumUnconfirmedBatchModuleBalances(ctx sdk.Context, evmChainPrefix string, k Keeper, expectedBals map[string]*sdkmath.Int) map[string]*sdkmath.Int {
 	k.IterateOutgoingTxBatches(ctx, evmChainPrefix, func(_ []byte, batch types.InternalOutgoingTxBatch) bool {
-		batchTotal := sdk.NewInt(0)
+		batchTotal := sdkmath.NewInt(0)
 		// Collect the send amount + fee amount for each tx
 		for _, tx := range batch.Transactions {
 			newTotal := batchTotal.Add(tx.Erc20Token.Amount.Add(tx.Erc20Fee.Amount))
@@ -109,7 +109,7 @@ func sumUnconfirmedBatchModuleBalances(ctx sdk.Context, evmChainPrefix string, k
 		// Add the batch total to the contract counter
 		_, ok := expectedBals[denom]
 		if !ok {
-			zero := sdk.ZeroInt()
+			zero := sdkmath.ZeroInt()
 			expectedBals[denom] = &zero
 		}
 
@@ -122,7 +122,7 @@ func sumUnconfirmedBatchModuleBalances(ctx sdk.Context, evmChainPrefix string, k
 }
 
 // sumUnbatchedTxModuleBalances calculates the value the module should have stored due to unbatched txs
-func sumUnbatchedTxModuleBalances(ctx sdk.Context, evmChainPrefix string, k Keeper, expectedBals map[string]*sdk.Int) map[string]*sdk.Int {
+func sumUnbatchedTxModuleBalances(ctx sdk.Context, evmChainPrefix string, k Keeper, expectedBals map[string]*sdkmath.Int) map[string]*sdkmath.Int {
 	// It is also given the balance of all unbatched txs in the pool
 	k.filterAndIterateUnbatchedTransactions(ctx, types.AppendChainPrefix(types.OutgoingTXPoolKey, evmChainPrefix), func(_ []byte, tx *types.InternalOutgoingTransferTx) bool {
 		contract := tx.Erc20Token.Contract
@@ -132,7 +132,7 @@ func sumUnbatchedTxModuleBalances(ctx sdk.Context, evmChainPrefix string, k Keep
 		txTotal := tx.Erc20Token.Amount.Add(tx.Erc20Fee.Amount)
 		_, ok := expectedBals[denom]
 		if !ok {
-			zero := sdk.ZeroInt()
+			zero := sdkmath.ZeroInt()
 			expectedBals[denom] = &zero
 		}
 		*expectedBals[denom] = expectedBals[denom].Add(txTotal)
@@ -143,10 +143,10 @@ func sumUnbatchedTxModuleBalances(ctx sdk.Context, evmChainPrefix string, k Keep
 	return expectedBals
 }
 
-func sumPendingIbcAutoForwards(ctx sdk.Context, evmChainPrefix string, k Keeper, expectedBals map[string]*sdk.Int) map[string]*sdk.Int {
+func sumPendingIbcAutoForwards(ctx sdk.Context, evmChainPrefix string, k Keeper, expectedBals map[string]*sdkmath.Int) map[string]*sdkmath.Int {
 	for _, forward := range k.PendingIbcAutoForwards(ctx, evmChainPrefix, uint64(0)) {
 		if _, ok := expectedBals[forward.Token.Denom]; !ok {
-			zero := sdk.ZeroInt()
+			zero := sdkmath.ZeroInt()
 			expectedBals[forward.Token.Denom] = &zero
 		} else {
 			*expectedBals[forward.Token.Denom] = expectedBals[forward.Token.Denom].Add(forward.Token.Amount)
@@ -612,7 +612,7 @@ func CheckValsets(ctx sdk.Context, evmChainPrefix string, k Keeper) error {
 			err = fmt.Errorf("invalid valset updated claim in store for event nonce %d, valset nonce %d", claimVs.EventNonce, claimVs.ValsetNonce)
 			return true
 		}
-		if currIntBvs.PowerDiff(*claimIntBvs).GT(sdk.NewDecWithPrec(1, 4)) {
+		if currIntBvs.PowerDiff(*claimIntBvs).GT(sdkmath.LegacyNewDecWithPrec(1, 4)) {
 			err = fmt.Errorf("power difference discovered between stored valset %v and observed attestation valset %v", storedVs, claimVs)
 			return true
 		}

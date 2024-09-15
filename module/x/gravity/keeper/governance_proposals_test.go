@@ -31,7 +31,7 @@ func TestAirdropProposal(t *testing.T) {
 		byteEncodedRecipients = append(byteEncodedRecipients, v.Bytes()...)
 	}
 
-	extremelyLargeAmount := sdk.NewInt(1000000000000).Mul(sdk.NewInt(1000000000000))
+	extremelyLargeAmount := sdkmath.NewInt(1000000000000).Mul(sdkmath.NewInt(1000000000000))
 	require.False(t, extremelyLargeAmount.IsUint64())
 
 	goodAirdrop := types.AirdropProposal{

@@ -5,7 +5,6 @@ import (
 	"strings"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	govtypes "github.com/cosmos/cosmos-sdk/x/gov/types"
 )
 
 const (
@@ -28,7 +27,7 @@ func (p *UnhaltBridgeProposal) ProposalType() string {
 }
 
 func (p *UnhaltBridgeProposal) ValidateBasic() error {
-	err := govtypes.ValidateAbstract(p)
+	err := p.ValidateBasic()
 	if err != nil {
 		return err
 	}
@@ -56,7 +55,7 @@ func (p *AirdropProposal) ProposalType() string {
 }
 
 func (p *AirdropProposal) ValidateBasic() error {
-	err := govtypes.ValidateAbstract(p)
+	err := p.ValidateBasic()
 	if err != nil {
 		return err
 	}
@@ -101,7 +100,7 @@ func (p *IBCMetadataProposal) ProposalType() string {
 }
 
 func (p *IBCMetadataProposal) ValidateBasic() error {
-	err := govtypes.ValidateAbstract(p)
+	err := p.ValidateBasic()
 	if err != nil {
 		return err
 	}
@@ -141,7 +140,7 @@ func (p *AddEvmChainProposal) ProposalType() string {
 }
 
 func (p *AddEvmChainProposal) ValidateBasic() error {
-	err := govtypes.ValidateAbstract(p)
+	err := p.ValidateBasic()
 	if err != nil {
 		return err
 	}
@@ -175,7 +174,7 @@ func (p *RemoveEvmChainProposal) ProposalType() string {
 }
 
 func (p *RemoveEvmChainProposal) ValidateBasic() error {
-	err := govtypes.ValidateAbstract(p)
+	err := p.ValidateBasic()
 	if err != nil {
 		return err
 	}
@@ -202,7 +201,7 @@ func (p *MonitoredERC20TokensProposal) ProposalType() string {
 }
 
 func (p *MonitoredERC20TokensProposal) ValidateBasic() error {
-	err := govtypes.ValidateAbstract(p)
+	err := p.ValidateBasic()
 	if err != nil {
 		return err
 	}

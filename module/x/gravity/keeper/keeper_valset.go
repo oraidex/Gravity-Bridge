@@ -262,7 +262,7 @@ func (k Keeper) GetCurrentValset(ctx sdk.Context, evmChainPrefix string) (types.
 	// so that we have an array with extra capacity but the correct length depending
 	// on how many validators have keys set.
 	bridgeValidators := make([]*types.InternalBridgeValidator, 0, len(validators))
-	totalPower := sdk.NewInt(0)
+	totalPower := sdkmath.NewInt(0)
 	// TODO someone with in depth info on Cosmos staking should determine
 	// if this is doing what I think it's doing
 	for _, validator := range validators {
@@ -271,7 +271,7 @@ func (k Keeper) GetCurrentValset(ctx sdk.Context, evmChainPrefix string) (types.
 			return types.Valset{}, errorsmod.Wrap(err, types.ErrInvalidValAddress.Error())
 		}
 
-		p := sdk.NewInt(k.StakingKeeper.GetLastValidatorPower(ctx, val))
+		p := sdkmath.NewInt(k.StakingKeeper.GetLastValidatorPower(ctx, val))
 
 		if evmAddr, found := k.GetEvmAddressByValidator(ctx, val); found {
 			bv := types.BridgeValidator{Power: p.Uint64(), EthereumAddress: evmAddr.GetAddress().Hex()}
@@ -320,7 +320,7 @@ func (k Keeper) GetCurrentValset(ctx sdk.Context, evmChainPrefix string) (types.
 // result: (2^63 - 1) * 2^32 / (2^63 - 1) = 2^32 = 4294967296 [this is the multiplier value below, our max output]
 // Example: rawPower = max (2^63 - 1), totalValidatorPower = 1000 validators with the same power: 1000*(2^63 - 1)
 // result: (2^63 - 1) * 2^32 / (1000(2^63 - 1)) = 2^32 / 1000 = 4294967
-func normalizeValidatorPower(rawPower uint64, totalValidatorPower sdk.Int) uint64 {
+func normalizeValidatorPower(rawPower uint64, totalValidatorPower sdkmath.Int) uint64 {
 	// Compute rawPower * multiplier / quotient
 	// Set the upper limit to 2^32, which would happen if there is a single validator with all the power
 	multiplier := new(big.Int).SetUint64(4294967296)

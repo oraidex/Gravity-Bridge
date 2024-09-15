@@ -28,7 +28,7 @@ func TestModuleBalanceUnbatchedTxs(t *testing.T) {
 	receiver, err := types.NewEthAddress(myReceiver)
 	require.NoError(t, err)
 	// mint some voucher first
-	allVouchersToken, err := types.NewInternalERC20Token(sdk.NewInt(99999), myTokenContractAddr)
+	allVouchersToken, err := types.NewInternalERC20Token(sdkmath.NewInt(99999), myTokenContractAddr)
 	require.NoError(t, err)
 	allVouchers := sdk.Coins{allVouchersToken.GravityCoin(evmChain.EvmChainPrefix)}
 	err = input.BankKeeper.MintCoins(ctx, types.ModuleName, allVouchers)
@@ -44,7 +44,7 @@ func TestModuleBalanceUnbatchedTxs(t *testing.T) {
 
 	// Create some unbatched transactions
 	for i, v := range []uint64{2, 3, 2, 1} {
-		amountToken, err := types.NewInternalERC20Token(sdk.NewInt(int64(i+100)), myTokenContractAddr)
+		amountToken, err := types.NewInternalERC20Token(sdkmath.NewInt(int64(i+100)), myTokenContractAddr)
 		require.NoError(t, err)
 		amount := amountToken.GravityCoin(evmChain.EvmChainPrefix)
 		feeToken, err := types.NewInternalERC20Token(sdk.NewIntFromUint64(v), myTokenContractAddr)
@@ -68,7 +68,7 @@ func TestModuleBalanceUnbatchedTxs(t *testing.T) {
 	checkInvariant(t, ctx, input.GravityKeeper, true)
 
 	// Ensure an error is returned for a mismatched balance
-	oneVoucher, err := types.NewInternalERC20Token(sdk.NewInt(1), myTokenContractAddr)
+	oneVoucher, err := types.NewInternalERC20Token(sdkmath.NewInt(1), myTokenContractAddr)
 	require.NoError(t, err)
 	checkImbalancedModule(t, ctx, input.GravityKeeper, input.BankKeeper, mySender, sdk.NewCoins(oneVoucher.GravityCoin(evmChain.EvmChainPrefix)))
 }
@@ -94,13 +94,13 @@ func TestModuleBalanceBatchedTxs(t *testing.T) {
 	require.NoError(t, e4)
 	tokens := make([]*types.InternalERC20Token, 2)
 	var err error
-	tokens[0], err = types.NewInternalERC20Token(sdk.NewInt(150000000000000), myTokenContractAddr1.GetAddress().Hex())
+	tokens[0], err = types.NewInternalERC20Token(sdkmath.NewInt(150000000000000), myTokenContractAddr1.GetAddress().Hex())
 	require.NoError(t, err)
-	tokens[1], err = types.NewInternalERC20Token(sdk.NewInt(150000000000000), myTokenContractAddr2.GetAddress().Hex())
+	tokens[1], err = types.NewInternalERC20Token(sdkmath.NewInt(150000000000000), myTokenContractAddr2.GetAddress().Hex())
 	require.NoError(t, err)
-	voucher1, err := types.NewInternalERC20Token(sdk.NewInt(1), myTokenContractAddr1.GetAddress().Hex())
+	voucher1, err := types.NewInternalERC20Token(sdkmath.NewInt(1), myTokenContractAddr1.GetAddress().Hex())
 	require.NoError(t, err)
-	voucher2, err := types.NewInternalERC20Token(sdk.NewInt(1), myTokenContractAddr2.GetAddress().Hex())
+	voucher2, err := types.NewInternalERC20Token(sdkmath.NewInt(1), myTokenContractAddr2.GetAddress().Hex())
 	require.NoError(t, err)
 	voucherCoins := []sdk.Coins{
 		sdk.NewCoins(voucher1.GravityCoin(evmChain.EvmChainPrefix)),
@@ -127,7 +127,7 @@ func TestModuleBalanceBatchedTxs(t *testing.T) {
 	for _, tok := range tokens {
 		// add some TX to the pool
 		for i, v := range []uint64{2, 3, 2, 1, 2, 4, 5, 1} {
-			amountToken, err := types.NewInternalERC20Token(sdk.NewInt(int64(i+100)), tok.Contract.GetAddress().Hex())
+			amountToken, err := types.NewInternalERC20Token(sdkmath.NewInt(int64(i+100)), tok.Contract.GetAddress().Hex())
 			require.NoError(t, err)
 			amount := amountToken.GravityCoin(evmChain.EvmChainPrefix)
 			feeToken, err := types.NewInternalERC20Token(sdk.NewIntFromUint64(v), tok.Contract.GetAddress().Hex())

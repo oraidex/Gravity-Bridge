@@ -87,7 +87,7 @@ func Test_fetchAndStoreBridgeBalanceSnapshot(t *testing.T) {
 	var desiredSupplies sdk.Coins
 	for i, t := range tokens {
 		coinDenom := types.GravityDenom(EthChainPrefix, t)
-		amount := sdk.NewInt(int64(1_000000 * (i + 1)))
+		amount := sdkmath.NewInt(int64(1_000000 * (i + 1)))
 		coin := sdk.NewCoin(coinDenom, amount)
 		desiredSupplies = append(desiredSupplies, coin)
 	}

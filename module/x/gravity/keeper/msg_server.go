@@ -171,7 +171,7 @@ func (k msgServer) checkAndDeductSendToEthFees(ctx sdk.Context, sender sdk.AccAd
 		TruncateInt()
 
 	// Require that the minimum has been met
-	if minFee.GT(sdk.ZeroInt()) { // Ignore fees too low to collect
+	if minFee.GT(sdkmath.ZeroInt()) { // Ignore fees too low to collect
 		minFeeCoin := sdk.NewCoin(sendAmount.GetDenom(), minFee)
 		if chainFee.IsLT(minFeeCoin) {
 			err := errorsmod.Wrapf(

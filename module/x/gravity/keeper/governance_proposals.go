@@ -260,7 +260,7 @@ func (k Keeper) HandleAirdropProposal(ctx sdk.Context, p *types.AirdropProposal)
 	feePool := k.DistKeeper.GetFeePool(ctx)
 	feePoolAmount := feePool.CommunityPool.AmountOf(p.Denom)
 
-	airdropTotal := sdk.NewInt(0)
+	airdropTotal := sdkmath.NewInt(0)
 	for _, v := range p.Amounts {
 		airdropTotal = airdropTotal.Add(sdk.NewIntFromUint64(v))
 	}
@@ -298,7 +298,7 @@ func (k Keeper) HandleAirdropProposal(ctx sdk.Context, p *types.AirdropProposal)
 	}
 
 	// the total amount actually sent in dec coins
-	totalSent := sdk.NewDec(0)
+	totalSent := sdkmath.LegacyNewDec(0)
 	for i, addr := range parsedRecipients {
 		usersAmount := p.Amounts[i]
 		usersIntAmount := sdk.NewIntFromUint64(usersAmount)

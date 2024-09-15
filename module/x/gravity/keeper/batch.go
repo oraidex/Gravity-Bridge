@@ -128,7 +128,7 @@ func (k Keeper) OutgoingTxBatchExecuted(ctx sdk.Context, tokenContract types.Eth
 	contract := b.TokenContract
 	// Burn tokens if they're evm chain originated
 	if isCosmosOriginated, _ := k.ERC20ToDenomLookup(ctx, claim.EvmChainPrefix, contract); !isCosmosOriginated {
-		totalToBurn := sdk.NewInt(0)
+		totalToBurn := sdkmath.NewInt(0)
 		for _, tx := range b.Transactions {
 			totalToBurn = totalToBurn.Add(tx.Erc20Token.Amount.Add(tx.Erc20Fee.Amount))
 		}

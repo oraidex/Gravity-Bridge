@@ -6,6 +6,7 @@ import (
 	mrand "math/rand"
 	"testing"
 
+	sdkmath "cosmossdk.io/math"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	gethcommon "github.com/ethereum/go-ethereum/common"
 	"github.com/stretchr/testify/assert"
@@ -30,7 +31,7 @@ func TestValsetConfirmHash(t *testing.T) {
 		members[i] = ibv
 	}
 
-	v, err := NewValset(0, 0, members, sdk.NewInt(0), ZeroAddress())
+	v, err := NewValset(0, 0, members, sdkmath.NewInt(0), ZeroAddress())
 	require.NoError(t, err)
 
 	// normally we would load the GravityID from the store, but for this test we use
@@ -47,7 +48,7 @@ func TestValsetCheckpointGold1(t *testing.T) {
 		EthereumAddress: "0xc783df8a850f42e7F7e57013759C285caa701eB6",
 	}}.ToInternal()
 	require.NoError(t, err)
-	src, err := NewValset(0, 0, *bridgeValidators, sdk.NewInt(0), ZeroAddress())
+	src, err := NewValset(0, 0, *bridgeValidators, sdkmath.NewInt(0), ZeroAddress())
 	require.NoError(t, err)
 
 	// normally we would load the GravityID from the store, but for this test we use
@@ -63,7 +64,7 @@ func TestValsetPowerDiff(t *testing.T) {
 	specs := map[string]struct {
 		start BridgeValidators
 		diff  BridgeValidators
-		exp   sdk.Dec
+		exp   sdkmath.LegacyDec
 	}{
 		"no diff": {
 			start: BridgeValidators{
@@ -76,7 +77,7 @@ func TestValsetPowerDiff(t *testing.T) {
 				{Power: 2, EthereumAddress: "0x8E91960d704Df3fF24ECAb78AB9df1B5D9144140"},
 				{Power: 3, EthereumAddress: "0xF14879a175A2F1cEFC7c616f35b6d9c2b0Fd8326"},
 			},
-			exp: sdk.NewDecWithPrec(0, 1),
+			exp: sdkmath.LegacyNewDecWithPrec(0, 1),
 		},
 		"one": {
 			start: BridgeValidators{
@@ -89,7 +90,7 @@ func TestValsetPowerDiff(t *testing.T) {
 				{Power: 858993459, EthereumAddress: "0x8E91960d704Df3fF24ECAb78AB9df1B5D9144140"},
 				{Power: 2576980377, EthereumAddress: "0xF14879a175A2F1cEFC7c616f35b6d9c2b0Fd8326"},
 			},
-			exp: sdk.NewDecWithPrec(2, 1),
+			exp: sdkmath.LegacyNewDecWithPrec(2, 1),
 		},
 		"real world": {
 			start: BridgeValidators{

@@ -125,7 +125,7 @@ func CmdGovIbcMetadataProposal() *cobra.Command {
 			if err != nil {
 				return errorsmod.Wrap(types.ErrInternal, "Failed to get supply data?")
 			}
-			if supply.GetAmount().Amount.Equal(sdk.ZeroInt()) {
+			if supply.GetAmount().Amount.Equal(sdkmath.ZeroInt()) {
 				return errorsmod.Wrap(types.ErrInvalid, "This ibc hash does not seem to exist on Gravity, are you sure you have the right one?")
 			}
 

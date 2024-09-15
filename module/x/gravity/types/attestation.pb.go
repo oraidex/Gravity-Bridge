@@ -6,7 +6,7 @@ package types
 import (
 	fmt "fmt"
 	types "github.com/cosmos/cosmos-sdk/codec/types"
-	github_com_cosmos_cosmos_sdk_types "github.com/cosmos/cosmos-sdk/types"
+	sdkmath "cosmossdk.io/math"	
 	_ "github.com/cosmos/cosmos-proto"
 	proto "github.com/cosmos/gogoproto/proto"
 	io "io"
@@ -160,7 +160,7 @@ func (m *Attestation) GetClaim() *types.Any {
 // (note: developers should look up the token symbol using the address on ETH to display for UI)
 type ERC20Token struct {
 	Contract string                                 `protobuf:"bytes,1,opt,name=contract,proto3" json:"contract,omitempty"`
-	Amount   github_com_cosmos_cosmos_sdk_types.Int `protobuf:"bytes,2,opt,name=amount,proto3,customtype=github.com/cosmos/cosmos-sdk/types.Int" json:"amount"`
+	Amount   sdkmath.Int `protobuf:"bytes,2,opt,name=amount,proto3,customtype=github.com/cosmos/cosmos-sdk/types.Int" json:"amount"`
 }
 
 func (m *ERC20Token) Reset()         { *m = ERC20Token{} }

@@ -60,7 +60,7 @@ func TestOnRecvPacket(t *testing.T) {
 	}
 
 	require.NoError(t, input.BankKeeper.MintCoins(input.Context, types.ModuleName, sdk.NewCoins(
-		sdk.NewCoin(ibcDenom, sdk.NewInt(1000)), // some IBC coin with a registered token pair
+		sdk.NewCoin(ibcDenom, sdkmath.NewInt(1000)), // some IBC coin with a registered token pair
 	)))
 
 	testCases := []struct {
@@ -90,11 +90,11 @@ func TestOnRecvPacket(t *testing.T) {
 						DestAddress: ethDestAddr,
 						Erc20Token: types.ERC20Token{
 							Contract: tokenContractAddr,
-							Amount:   sdk.NewInt(100),
+							Amount:   sdkmath.NewInt(100),
 						},
 						Erc20Fee: types.ERC20Token{
 							Contract: tokenContractAddr,
-							Amount:   sdk.NewInt(int64(params.MinChainFeeBasisPoints)),
+							Amount:   sdkmath.NewInt(int64(params.MinChainFeeBasisPoints)),
 						},
 					},
 				},
@@ -134,7 +134,7 @@ func TestOnRecvPacket(t *testing.T) {
 			input.Context,
 			types.ModuleName,
 			gravityAddr,
-			sdk.NewCoins(sdk.NewCoin(ibcDenom, sdk.NewInt(102))))
+			sdk.NewCoins(sdk.NewCoin(ibcDenom, sdkmath.NewInt(102))))
 		ack := input.GravityKeeper.OnRecvPacket(ctx, packet, expAck)
 
 		// Check acknowledgement

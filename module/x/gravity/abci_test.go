@@ -24,7 +24,7 @@ import (
 )
 
 func TestDec(t *testing.T) {
-	require.Equal(t, sdk.NewDecWithPrec(5, 2).String(), "0.050000000000000000")
+	require.Equal(t, sdkmath.LegacyNewDecWithPrec(5, 2).String(), "0.050000000000000000")
 }
 
 func TestValsetCreationIfNotAvailable(t *testing.T) {
@@ -520,7 +520,7 @@ func TestBatchTimeout(t *testing.T) {
 		mySender, e1        = sdk.AccAddressFromBech32("gravity1ahx7f8wyertuus9r20284ej0asrs085ceqtfnm")
 		myReceiver          = "0xd041c41EA1bf0F006ADBb6d2c9ef9D425dE5eaD7"
 		myTokenContractAddr = "0x429881672B9AE42b8EbA0E26cD9C73711b891Ca5" // Pickle
-		token, e2           = types.NewInternalERC20Token(sdk.NewInt(99999), myTokenContractAddr)
+		token, e2           = types.NewInternalERC20Token(sdkmath.NewInt(99999), myTokenContractAddr)
 		allVouchers         = sdk.NewCoins(token.GravityCoin(evmChain.EvmChainPrefix))
 	)
 	require.NoError(t, e1)
@@ -543,7 +543,7 @@ func TestBatchTimeout(t *testing.T) {
 
 	// add some TX to the pool
 	for i, v := range []uint64{4, 3, 3, 4, 5, 6} {
-		amountToken, err := types.NewInternalERC20Token(sdk.NewInt(int64(i+100)), myTokenContractAddr)
+		amountToken, err := types.NewInternalERC20Token(sdkmath.NewInt(int64(i+100)), myTokenContractAddr)
 		require.NoError(t, err)
 		amount := amountToken.GravityCoin(evmChain.EvmChainPrefix)
 		feeToken, err := types.NewInternalERC20Token(sdk.NewIntFromUint64(v), myTokenContractAddr)

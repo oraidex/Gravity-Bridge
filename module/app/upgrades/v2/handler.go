@@ -119,7 +119,7 @@ func fixDistributionPoolBalance(
 
 	ctx.Logger().Info("Mercury Upgrade: fixDistributionPoolBalance(): Summing validator outstanding rewards")
 	// Collect the current validator outstanding rewards
-	var sumRewards sdk.DecCoins
+	var sumRewards sdkmath.LegacyDecCoins
 	distrKeeper.IterateValidatorOutstandingRewards(ctx, func(_ sdk.ValAddress, rewards distrtypes.ValidatorOutstandingRewards) (stop bool) {
 		sumRewards = sumRewards.Add(rewards.Rewards...)
 		return false
@@ -206,7 +206,7 @@ func bumpMinValidatorCommissions(stakingKeeper *stakingkeeper.Keeper, ctx sdk.Co
 	// hard code this because we don't want
 	// a) a fork or
 	// b) immediate reaction with additional gov props
-	minCommissionRate := sdk.NewDecWithPrec(5, 2)
+	minCommissionRate := sdkmath.LegacyNewDecWithPrec(5, 2)
 	ctx.Logger().Info("Mercury Upgrade: bumpMinValidatorCommissions():", "minCommissionRate", minCommissionRate.String())
 	ctx.Logger().Info("Mercury Upgrade: bumpMinValidatorCommissions(): Iterating validators")
 	for _, v := range validators {

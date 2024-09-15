@@ -332,7 +332,7 @@ func (a AttestationHandler) handleValsetUpdated(ctx sdk.Context, claim types.Msg
 	// is valid then some reward was issued by this validator set
 	// and we need to either add to the total tokens for a Cosmos native
 	// token, or burn non cosmos native tokens
-	if claim.RewardAmount.GT(sdk.ZeroInt()) && claim.RewardToken != types.ZeroAddressString {
+	if claim.RewardAmount.GT(sdkmath.ZeroInt()) && claim.RewardToken != types.ZeroAddressString {
 		// Check if coin is Cosmos-originated asset and get denom
 		isCosmosOriginated, denom := a.keeper.ERC20ToDenomLookup(ctx, claim.EvmChainPrefix, *rewardAddress)
 		if isCosmosOriginated {
@@ -395,7 +395,7 @@ func (a AttestationHandler) assertNothingSent(ctx sdk.Context, moduleAddr sdk.Ac
 
 // assertSentAmount performs a runtime assertion that the actual sent amount of `denom` equals the MsgSendToCosmos
 // claim's amount to send
-func (a AttestationHandler) assertSentAmount(ctx sdk.Context, moduleAddr sdk.AccAddress, preSendBalance sdk.Coin, denom string, amount sdk.Int) {
+func (a AttestationHandler) assertSentAmount(ctx sdk.Context, moduleAddr sdk.AccAddress, preSendBalance sdk.Coin, denom string, amount sdkmath.Int) {
 	postSendBalance := a.keeper.bankKeeper.GetBalance(ctx, moduleAddr, denom)
 	if !preSendBalance.Sub(postSendBalance).Amount.Equal(amount) {
 		panic(fmt.Sprintf(

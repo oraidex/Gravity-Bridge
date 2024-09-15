@@ -31,11 +31,11 @@ func TestOutgoingTxBatchCheckpointGold1(t *testing.T) {
 				Sender:      senderAddr.String(),
 				DestAddress: destAddress.GetAddress().Hex(),
 				Erc20Token: ERC20Token{
-					Amount:   sdk.NewInt(0x1),
+					Amount:   sdkmath.NewInt(0x1),
 					Contract: erc20Address.GetAddress().Hex(),
 				},
 				Erc20Fee: ERC20Token{
-					Amount:   sdk.NewInt(0x1),
+					Amount:   sdkmath.NewInt(0x1),
 					Contract: erc20Address.GetAddress().Hex(),
 				},
 			},

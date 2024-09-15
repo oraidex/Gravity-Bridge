@@ -93,8 +93,8 @@ func (k Keeper) TryAttestation(ctx sdk.Context, att *types.Attestation) {
 		// Sum the current powers of all validators who have voted and see if it passes the current threshold
 		// TODO: The different integer types and math here needs a careful review
 		totalPower := k.StakingKeeper.GetLastTotalPower(ctx)
-		requiredPower := types.AttestationVotesPowerThreshold.Mul(totalPower).Quo(sdk.NewInt(100))
-		attestationPower := sdk.NewInt(0)
+		requiredPower := types.AttestationVotesPowerThreshold.Mul(totalPower).Quo(sdkmath.NewInt(100))
+		attestationPower := sdkmath.NewInt(0)
 		for _, validator := range att.Votes {
 			val, err := sdk.ValAddressFromBech32(validator)
 			if err != nil {
@@ -102,7 +102,7 @@ func (k Keeper) TryAttestation(ctx sdk.Context, att *types.Attestation) {
 			}
 			validatorPower := k.StakingKeeper.GetLastValidatorPower(ctx, val)
 			// Add it to the attestation power's sum
-			attestationPower = attestationPower.Add(sdk.NewInt(validatorPower))
+			attestationPower = attestationPower.Add(sdkmath.NewInt(validatorPower))
 			// If the power of all the validators that have voted on the attestation is higher or equal to the threshold,
 			// process the attestation, set Observed to true, and break
 			if attestationPower.GTE(requiredPower) {
@@ -393,7 +393,7 @@ func (k Keeper) GetLastObservedValset(ctx sdk.Context, evmChainPrefix string) *t
 		Nonce:        0,
 		Members:      []types.BridgeValidator{},
 		Height:       0,
-		RewardAmount: sdk.Int{},
+		RewardAmount: sdkmath.Int{},
 		RewardToken:  "",
 	}
 	k.cdc.MustUnmarshal(bytes, &valset)
@@ -511,7 +511,7 @@ func (k Keeper) ExpectedSupplyChange(ctx sdk.Context, ethClaim types.EthereumCla
 	// Valset Updated
 	case types.CLAIM_TYPE_VALSET_UPDATED:
 		var claim *types.MsgValsetUpdatedClaim = (ethClaim).(*types.MsgValsetUpdatedClaim)
-		if claim.RewardAmount.GT(sdk.ZeroInt()) && claim.RewardToken != types.ZeroAddressString {
+		if claim.RewardAmount.GT(sdkmath.ZeroInt()) && claim.RewardToken != types.ZeroAddressString {
 			rewardAddress, err := types.NewEthAddress(claim.RewardToken)
 			if err != nil {
 				return nil, errorsmod.Wrap(err, "invalid reward token on claim")

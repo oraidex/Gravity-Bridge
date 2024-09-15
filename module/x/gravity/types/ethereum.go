@@ -6,6 +6,8 @@ import (
 	"fmt"
 	"strings"
 
+	errorsmod "cosmossdk.io/errors"
+	sdkmath "cosmossdk.io/math"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	gethcommon "github.com/ethereum/go-ethereum/common"
 	"golang.org/x/exp/slices"
@@ -139,11 +141,11 @@ func (eas EthAddresses) ToMonitoredERC20Addresses() MonitoredERC20Addresses {
 
 // NewERC20Token returns a new instance of an ERC20
 func NewERC20Token(amount uint64, contract string) ERC20Token {
-	return ERC20Token{Amount: sdk.NewIntFromUint64(amount), Contract: contract}
+	return ERC20Token{Amount: sdkmath.NewIntFromUint64(amount), Contract: contract}
 }
 
 // NewSDKIntERC20Token returns a new instance of an ERC20, accepting a sdk.Int
-func NewSDKIntERC20Token(amount sdk.Int, contract string) ERC20Token {
+func NewSDKIntERC20Token(amount sdkmath.Int, contract string) ERC20Token {
 	return ERC20Token{Amount: amount, Contract: contract}
 }
 
@@ -154,12 +156,12 @@ func (e ERC20Token) ToInternal() (*InternalERC20Token, error) {
 
 // InternalERC20Token contains validated fields, used for all internal computation
 type InternalERC20Token struct {
-	Amount   sdk.Int
+	Amount   sdkmath.Int
 	Contract EthAddress
 }
 
 // NewInternalERC20Token creates an InternalERC20Token, performing validation and returning any errors
-func NewInternalERC20Token(amount sdk.Int, contract string) (*InternalERC20Token, error) {
+func NewInternalERC20Token(amount sdkmath.Int, contract string) (*InternalERC20Token, error) {
 	ethAddress, err := NewEthAddress(contract)
 	if err != nil { // ethAddress could be nil, must return here
 		return nil, errorsmod.Wrap(err, "invalid contract")
@@ -305,7 +307,7 @@ func (i InternalERC20Tokens) AddSorted(o InternalERC20Tokens) InternalERC20Token
 
 	var result InternalERC20Tokens
 	for ctr, list := range unique {
-		ctrTotal := &InternalERC20Token{Contract: ctr, Amount: sdk.NewInt(0)}
+		ctrTotal := &InternalERC20Token{Contract: ctr, Amount: sdkmath.NewInt(0)}
 		for _, token := range list {
 			var err error
 			ctrTotal, err = ctrTotal.Add(token)
