@@ -26,17 +26,17 @@ func (k Keeper) BuildOutgoingTxBatch(
 	contract types.EthAddress,
 	maxElements uint) (*types.InternalOutgoingTxBatch, error) {
 	if maxElements == 0 {
-		return nil, sdkerrors.Wrap(types.ErrInvalid, "max elements value")
+		return nil, errorsmod.Wrap(types.ErrInvalid, "max elements value")
 	}
 	params := k.GetParams(ctx)
 	evmChainParam := params.GetEvmChain(evmChainPrefix)
 
 	if evmChainParam == nil {
-		return nil, sdkerrors.Wrap(types.ErrEmpty, "EvmChainParams not found for prefix "+evmChainPrefix)
+		return nil, errorsmod.Wrap(types.ErrEmpty, "EvmChainParams not found for prefix "+evmChainPrefix)
 	}
 
 	if !evmChainParam.BridgeActive {
-		return nil, sdkerrors.Wrap(types.ErrInvalid, "bridge paused")
+		return nil, errorsmod.Wrap(types.ErrInvalid, "bridge paused")
 	}
 
 	lastBatch := k.GetLastOutgoingBatchByTokenType(ctx, evmChainPrefix, contract)
@@ -48,12 +48,12 @@ func (k Keeper) BuildOutgoingTxBatch(
 		// fees a hypothetical batch would have if created
 		currentFees := k.GetBatchFeeByTokenType(ctx, evmChainPrefix, contract, maxElements)
 		if currentFees == nil {
-			return nil, sdkerrors.Wrap(types.ErrInvalid, "error getting fees from tx pool")
+			return nil, errorsmod.Wrap(types.ErrInvalid, "error getting fees from tx pool")
 		}
 
 		lastFees := lastBatch.ToExternal().GetFees()
 		if lastFees.GT(currentFees.TotalFees) {
-			return nil, sdkerrors.Wrap(types.ErrInvalid, "new batch would not be more profitable")
+			return nil, errorsmod.Wrap(types.ErrInvalid, "new batch would not be more profitable")
 		}
 	}
 
@@ -61,13 +61,13 @@ func (k Keeper) BuildOutgoingTxBatch(
 	if err != nil {
 		return nil, err
 	} else if len(selectedTxs) == 0 {
-		return nil, sdkerrors.Wrap(types.ErrInvalid, "no transactions of this type to batch")
+		return nil, errorsmod.Wrap(types.ErrInvalid, "no transactions of this type to batch")
 	}
 
 	nextID := k.autoIncrementID(ctx, types.AppendChainPrefix(types.KeyLastOutgoingBatchID, evmChainPrefix))
 	batch, err := types.NewInternalOutgingTxBatch(nextID, k.getBatchTimeoutHeight(ctx, evmChainPrefix), selectedTxs, contract, 0)
 	if err != nil {
-		panic(sdkerrors.Wrap(err, "unable to create batch"))
+		panic(errorsmod.Wrap(err, "unable to create batch"))
 	}
 	// set the current block height when storing the batch
 	batch.CosmosBlockCreated = uint64(ctx.BlockHeight())
@@ -135,7 +135,7 @@ func (k Keeper) OutgoingTxBatchExecuted(ctx sdk.Context, tokenContract types.Eth
 		// burn vouchers to send them back to evm chain
 		erc20, err := types.NewInternalERC20Token(totalToBurn, contract.GetAddress().Hex())
 		if err != nil {
-			panic(sdkerrors.Wrapf(err, "invalid ERC20 address in executed batch"))
+			panic(errorsmod.Wrapf(err, "invalid ERC20 address in executed batch"))
 		}
 		burnVouchers := sdk.NewCoins(erc20.GravityCoin(claim.EvmChainPrefix))
 		if err := k.bankKeeper.BurnCoins(ctx, types.ModuleName, burnVouchers); err != nil {
@@ -168,13 +168,13 @@ func (k Keeper) OutgoingTxBatchExecuted(ctx sdk.Context, tokenContract types.Eth
 // so no mutation of a batch in state can ever be valid
 func (k Keeper) StoreBatch(ctx sdk.Context, evmChainPrefix string, batch types.InternalOutgoingTxBatch) {
 	if err := batch.ValidateBasic(); err != nil {
-		panic(sdkerrors.Wrap(err, "attempted to store invalid batch"))
+		panic(errorsmod.Wrap(err, "attempted to store invalid batch"))
 	}
 	externalBatch := batch.ToExternal()
 	store := ctx.KVStore(k.storeKey)
 	key := types.GetOutgoingTxBatchKey(evmChainPrefix, batch.TokenContract, batch.BatchNonce)
 	if store.Has(key) {
-		panic(sdkerrors.Wrap(sdkerrors.ErrInvalidRequest, "Should never overwrite batch!"))
+		panic(errorsmod.Wrap(sdkerrors.ErrInvalidRequest, "Should never overwrite batch!"))
 	}
 	store.Set(key, k.cdc.MustMarshal(&externalBatch))
 }
@@ -182,7 +182,7 @@ func (k Keeper) StoreBatch(ctx sdk.Context, evmChainPrefix string, batch types.I
 // DeleteBatch deletes an outgoing transaction batch
 func (k Keeper) DeleteBatch(ctx sdk.Context, evmChainPrefix string, batch types.InternalOutgoingTxBatch) {
 	if err := batch.ValidateBasic(); err != nil {
-		panic(sdkerrors.Wrap(err, "attempted to delete invalid batch"))
+		panic(errorsmod.Wrap(err, "attempted to delete invalid batch"))
 	}
 	store := ctx.KVStore(k.storeKey)
 	store.Delete(types.GetOutgoingTxBatchKey(evmChainPrefix, batch.TokenContract, batch.BatchNonce))
@@ -246,7 +246,7 @@ func (k Keeper) GetOutgoingTxBatch(ctx sdk.Context, evmChainPrefix string, token
 	}
 	ret, err := b.ToInternal()
 	if err != nil {
-		panic(sdkerrors.Wrap(err, "found invalid batch in store"))
+		panic(errorsmod.Wrap(err, "found invalid batch in store"))
 	}
 	return ret
 }
@@ -260,7 +260,7 @@ func (k Keeper) CancelOutgoingTxBatch(ctx sdk.Context, evmChainPrefix string, to
 	for _, tx := range batch.Transactions {
 		err := k.addUnbatchedTX(ctx, evmChainPrefix, tx)
 		if err != nil {
-			panic(sdkerrors.Wrapf(err, "unable to add batched transaction back into pool %v", tx))
+			panic(errorsmod.Wrapf(err, "unable to add batched transaction back into pool %v", tx))
 		}
 	}
 
@@ -289,7 +289,7 @@ func (k Keeper) IterateOutgoingTxBatches(ctx sdk.Context, evmChainPrefix string,
 		k.cdc.MustUnmarshal(iter.Value(), &batch)
 		intBatch, err := batch.ToInternal()
 		if err != nil || intBatch == nil {
-			panic(sdkerrors.Wrap(err, "found invalid batch in store"))
+			panic(errorsmod.Wrap(err, "found invalid batch in store"))
 		}
 		// cb returns true to stop early
 		if cb(iter.Key(), *intBatch) {

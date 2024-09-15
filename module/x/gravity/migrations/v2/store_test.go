@@ -14,7 +14,6 @@ import (
 	codectypes "github.com/cosmos/cosmos-sdk/codec/types"
 	"github.com/cosmos/cosmos-sdk/testutil"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 	gethcommon "github.com/ethereum/go-ethereum/common"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -36,7 +35,7 @@ func oldGetERC20ToDenomKey(erc20 string) string {
 
 func oldEthAddressByValidatorKey(validator sdk.ValAddress) string {
 	if err := sdk.VerifyAddressFormat(validator); err != nil {
-		panic(sdkerrors.Wrap(err, "invalid validator address"))
+		panic(errorsmod.Wrap(err, "invalid validator address"))
 	}
 	return v1.EthAddressByValidatorKey + string(validator.Bytes())
 }

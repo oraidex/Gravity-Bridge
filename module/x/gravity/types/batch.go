@@ -7,7 +7,6 @@ import (
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
-	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 	"github.com/ethereum/go-ethereum/accounts/abi"
 	gethcommon "github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/crypto"
@@ -35,19 +34,19 @@ func NewInternalOutgoingTransferTx(
 ) (*InternalOutgoingTransferTx, error) {
 	send, err := sdk.AccAddressFromBech32(sender)
 	if err != nil {
-		return nil, sdkerrors.Wrap(err, "invalid sender")
+		return nil, errorsmod.Wrap(err, "invalid sender")
 	}
 	dest, err := NewEthAddress(destAddress)
 	if err != nil {
-		return nil, sdkerrors.Wrap(err, "invalid evm destination")
+		return nil, errorsmod.Wrap(err, "invalid evm destination")
 	}
 	token, err := erc20Token.ToInternal()
 	if err != nil {
-		return nil, sdkerrors.Wrap(err, "invalid Erc20Token")
+		return nil, errorsmod.Wrap(err, "invalid Erc20Token")
 	}
 	fee, err := erc20Fee.ToInternal()
 	if err != nil {
-		return nil, sdkerrors.Wrap(err, "invalid Erc20Fee")
+		return nil, errorsmod.Wrap(err, "invalid Erc20Fee")
 	}
 
 	return &InternalOutgoingTransferTx{
@@ -74,15 +73,15 @@ func (i InternalOutgoingTransferTx) ValidateBasic() error {
 	//TODO: Validate cosmos sender?
 	err := i.DestAddress.ValidateBasic()
 	if err != nil {
-		return sdkerrors.Wrap(err, "invalid DestAddress")
+		return errorsmod.Wrap(err, "invalid DestAddress")
 	}
 	err = i.Erc20Token.ValidateBasic()
 	if err != nil {
-		return sdkerrors.Wrap(err, "invalid Erc20Token")
+		return errorsmod.Wrap(err, "invalid Erc20Token")
 	}
 	err = i.Erc20Fee.ValidateBasic()
 	if err != nil {
-		return sdkerrors.Wrap(err, "invalid Erc20Fee")
+		return errorsmod.Wrap(err, "invalid Erc20Fee")
 	}
 	return nil
 }
@@ -122,13 +121,13 @@ func NewInternalOutgingTxBatch(
 func NewInternalOutgingTxBatchFromExternalBatch(batch OutgoingTxBatch) (*InternalOutgoingTxBatch, error) {
 	contractAddr, err := NewEthAddress(batch.TokenContract)
 	if err != nil {
-		return nil, sdkerrors.Wrap(err, "invalid evm address")
+		return nil, errorsmod.Wrap(err, "invalid evm address")
 	}
 	txs := make([]*InternalOutgoingTransferTx, len(batch.Transactions))
 	for i, tx := range batch.Transactions {
 		intTx, err := tx.ToInternal()
 		if err != nil {
-			return nil, sdkerrors.Wrapf(err, "invalid transaction in batch: %v", tx)
+			return nil, errorsmod.Wrapf(err, "invalid transaction in batch: %v", tx)
 		}
 		txs[i] = intTx
 	}
@@ -183,12 +182,12 @@ func (i *InternalOutgoingTxBatches) ToExternalArray() []OutgoingTxBatch {
 
 func (i *InternalOutgoingTxBatch) ValidateBasic() error {
 	if err := i.TokenContract.ValidateBasic(); err != nil {
-		return sdkerrors.Wrap(err, "invalid eth address")
+		return errorsmod.Wrap(err, "invalid eth address")
 	}
 
 	for i, tx := range i.Transactions {
 		if err := tx.ValidateBasic(); err != nil {
-			return sdkerrors.Wrapf(err, "transaction %d is invalid", i)
+			return errorsmod.Wrapf(err, "transaction %d is invalid", i)
 		}
 	}
 	return nil
@@ -198,7 +197,7 @@ func (i *InternalOutgoingTxBatch) ValidateBasic() error {
 func (o OutgoingTxBatch) GetCheckpoint(gravityIDstring string) []byte {
 	i, err := o.ToInternal()
 	if err != nil {
-		panic(sdkerrors.Wrap(err, "invalid OutgoingTxBatch"))
+		panic(errorsmod.Wrap(err, "invalid OutgoingTxBatch"))
 	}
 	return i.GetCheckpoint(gravityIDstring)
 }
@@ -280,18 +279,18 @@ func (c OutgoingLogicCall) ValidateBasic() error {
 	for _, t := range c.Transfers {
 		_, err := t.ToInternal() // ToInternal calls ValidateBasic for us
 		if err != nil {
-			return sdkerrors.Wrapf(ErrInvalidLogicCall, "invalid transfer in logic call: %v", err)
+			return errorsmod.Wrapf(ErrInvalidLogicCall, "invalid transfer in logic call: %v", err)
 		}
 	}
 	for _, t := range c.Fees {
 		_, err := t.ToInternal() // ToInternal calls ValidateBasic for us
 		if err != nil {
-			return sdkerrors.Wrapf(ErrInvalidLogicCall, "invalid fee in logic call: %v", err)
+			return errorsmod.Wrapf(ErrInvalidLogicCall, "invalid fee in logic call: %v", err)
 		}
 	}
 	_, err := NewEthAddress(c.LogicContractAddress)
 	if err != nil {
-		return sdkerrors.Wrapf(ErrInvalidLogicCall, "invalid logic call logic contract address: %v", err)
+		return errorsmod.Wrapf(ErrInvalidLogicCall, "invalid logic call logic contract address: %v", err)
 	}
 
 	return nil

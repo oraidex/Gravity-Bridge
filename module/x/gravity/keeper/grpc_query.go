@@ -52,7 +52,7 @@ func (k Keeper) ValsetConfirm(
 	req *types.QueryValsetConfirmRequest) (*types.QueryValsetConfirmResponse, error) {
 	addr, err := sdk.AccAddressFromBech32(req.Address)
 	if err != nil {
-		return nil, sdkerrors.Wrap(sdkerrors.ErrInvalidRequest, "address invalid")
+		return nil, errorsmod.Wrap(sdkerrors.ErrInvalidRequest, "address invalid")
 	}
 	return &types.QueryValsetConfirmResponse{Confirm: k.GetValsetConfirm(sdk.UnwrapSDKContext(c), req.EvmChainPrefix, req.Nonce, addr)}, nil
 }
@@ -89,7 +89,7 @@ func (k Keeper) LastPendingValsetRequestByAddr(
 	req *types.QueryLastPendingValsetRequestByAddrRequest) (*types.QueryLastPendingValsetRequestByAddrResponse, error) {
 	addr, err := sdk.AccAddressFromBech32(req.Address)
 	if err != nil {
-		return nil, sdkerrors.Wrap(sdkerrors.ErrInvalidRequest, "address invalid")
+		return nil, errorsmod.Wrap(sdkerrors.ErrInvalidRequest, "address invalid")
 	}
 
 	var pendingValsetReq []types.Valset
@@ -127,7 +127,7 @@ func (k Keeper) LastPendingBatchRequestByAddr(
 ) (*types.QueryLastPendingBatchRequestByAddrResponse, error) {
 	addr, err := sdk.AccAddressFromBech32(req.Address)
 	if err != nil {
-		return nil, sdkerrors.Wrap(sdkerrors.ErrInvalidRequest, "address invalid")
+		return nil, errorsmod.Wrap(sdkerrors.ErrInvalidRequest, "address invalid")
 	}
 
 	var pendingBatchReq types.InternalOutgoingTxBatches
@@ -158,7 +158,7 @@ func (k Keeper) LastPendingLogicCallByAddr(
 	req *types.QueryLastPendingLogicCallByAddrRequest) (*types.QueryLastPendingLogicCallByAddrResponse, error) {
 	addr, err := sdk.AccAddressFromBech32(req.Address)
 	if err != nil {
-		return nil, sdkerrors.Wrap(sdkerrors.ErrInvalidRequest, "address invalid")
+		return nil, errorsmod.Wrap(sdkerrors.ErrInvalidRequest, "address invalid")
 	}
 
 	var pendingLogicReq []types.OutgoingLogicCall
@@ -214,12 +214,12 @@ func (k Keeper) BatchRequestByNonce(
 ) (*types.QueryBatchRequestByNonceResponse, error) {
 	addr, err := types.NewEthAddress(req.ContractAddress)
 	if err != nil {
-		return nil, sdkerrors.Wrap(sdkerrors.ErrUnknownRequest, err.Error())
+		return nil, errorsmod.Wrap(sdkerrors.ErrUnknownRequest, err.Error())
 	}
 
 	foundBatch := k.GetOutgoingTxBatch(sdk.UnwrapSDKContext(c), req.EvmChainPrefix, *addr, req.Nonce)
 	if foundBatch == nil {
-		return nil, sdkerrors.Wrap(sdkerrors.ErrUnknownRequest, "cannot find tx batch")
+		return nil, errorsmod.Wrap(sdkerrors.ErrUnknownRequest, "cannot find tx batch")
 	}
 
 	return &types.QueryBatchRequestByNonceResponse{Batch: foundBatch.ToExternal()}, nil
@@ -233,7 +233,7 @@ func (k Keeper) BatchConfirms(
 	var confirms []types.MsgConfirmBatch
 	contract, err := types.NewEthAddress(req.ContractAddress)
 	if err != nil {
-		return nil, sdkerrors.Wrap(err, "invalid contract address in request")
+		return nil, errorsmod.Wrap(err, "invalid contract address in request")
 	}
 	k.IterateBatchConfirmByNonceAndTokenContract(sdk.UnwrapSDKContext(c), req.EvmChainPrefix,
 		req.Nonce, *contract, func(_ []byte, c types.MsgConfirmBatch) bool {
@@ -261,14 +261,14 @@ func (k Keeper) LastEventNonceByAddr(
 	var ret types.QueryLastEventNonceByAddrResponse
 	addr, err := sdk.AccAddressFromBech32(req.Address)
 	if err != nil {
-		return nil, sdkerrors.Wrap(sdkerrors.ErrInvalidAddress, req.Address)
+		return nil, errorsmod.Wrap(sdkerrors.ErrInvalidAddress, req.Address)
 	}
 	validator, found := k.GetOrchestratorValidator(ctx, addr)
 	if !found {
-		return nil, sdkerrors.Wrap(types.ErrUnknown, "address")
+		return nil, errorsmod.Wrap(types.ErrUnknown, "address")
 	}
 	if err := sdk.VerifyAddressFormat(validator.GetOperator()); err != nil {
-		return nil, sdkerrors.Wrap(err, "invalid validator address")
+		return nil, errorsmod.Wrap(err, "invalid validator address")
 	}
 	lastEventNonce := k.GetLastEventNonceByValidator(ctx, req.EvmChainPrefix, validator.GetOperator())
 	ret.EventNonce = lastEventNonce
@@ -282,7 +282,7 @@ func (k Keeper) DenomToERC20(
 	ctx := sdk.UnwrapSDKContext(c)
 	cosmosOriginated, erc20, err := k.DenomToERC20Lookup(ctx, req.EvmChainPrefix, req.Denom)
 	if err != nil {
-		return nil, sdkerrors.Wrapf(err, "invalid denom (%v) queried", req.Denom)
+		return nil, errorsmod.Wrapf(err, "invalid denom (%v) queried", req.Denom)
 	}
 	var ret types.QueryDenomToERC20Response
 	ret.Erc20 = erc20.GetAddress().Hex()
@@ -298,7 +298,7 @@ func (k Keeper) ERC20ToDenom(
 	ctx := sdk.UnwrapSDKContext(c)
 	ethAddr, err := types.NewEthAddress(req.Erc20)
 	if err != nil {
-		return nil, sdkerrors.Wrapf(err, "invalid Erc20 in request: %s", req.Erc20)
+		return nil, errorsmod.Wrapf(err, "invalid Erc20 in request: %s", req.Erc20)
 	}
 	cosmosOriginated, name := k.ERC20ToDenomLookup(ctx, req.EvmChainPrefix, *ethAddr)
 	var ret types.QueryERC20ToDenomResponse
@@ -404,7 +404,7 @@ func (k Keeper) GetAttestations(
 	iterator(ctx, req.EvmChainPrefix, reverse, func(_ []byte, att types.Attestation) (abort bool) {
 		claim, err := k.UnpackAttestationClaim(&att)
 		if err != nil {
-			iterErr = sdkerrors.Wrap(sdkerrors.ErrUnpackAny, "failed to unmarshal Ethereum claim")
+			iterErr = errorsmod.Wrap(sdkerrors.ErrUnpackAny, "failed to unmarshal Ethereum claim")
 			return true
 		}
 
@@ -501,7 +501,7 @@ func (k Keeper) GetDelegateKeyByValidator(
 		}
 	}
 
-	return nil, sdkerrors.Wrap(types.ErrInvalid, "No validator")
+	return nil, errorsmod.Wrap(types.ErrInvalid, "No validator")
 }
 
 func (k Keeper) GetDelegateKeyByOrchestrator(
@@ -524,7 +524,7 @@ func (k Keeper) GetDelegateKeyByOrchestrator(
 		}
 
 	}
-	return nil, sdkerrors.Wrap(types.ErrInvalid, "No validator")
+	return nil, errorsmod.Wrap(types.ErrInvalid, "No validator")
 }
 
 func (k Keeper) GetDelegateKeyByEth(
@@ -533,7 +533,7 @@ func (k Keeper) GetDelegateKeyByEth(
 	ctx := sdk.UnwrapSDKContext(c)
 	keys := k.GetDelegateKeys(ctx)
 	if err := types.ValidateEthAddress(req.EthAddress); err != nil {
-		return nil, sdkerrors.Wrap(err, "invalid eth address")
+		return nil, errorsmod.Wrap(err, "invalid eth address")
 	}
 	for _, key := range keys {
 		if req.EthAddress == key.EthAddress {
@@ -544,7 +544,7 @@ func (k Keeper) GetDelegateKeyByEth(
 		}
 	}
 
-	return nil, sdkerrors.Wrap(types.ErrInvalid, "No validator")
+	return nil, errorsmod.Wrap(types.ErrInvalid, "No validator")
 }
 
 func (k Keeper) GetPendingSendToEth(
@@ -637,7 +637,7 @@ func (k Keeper) GetBridgeBalanceSnapshotByEventNonce(
 	snapshotBz := store.Get(key)
 	var snapshot types.BridgeBalanceSnapshot
 	if err := k.cdc.Unmarshal(snapshotBz, &snapshot); err != nil {
-		return nil, sdkerrors.Wrapf(err, "unable to fetch snapshot with nonce %v", nonce)
+		return nil, errorsmod.Wrapf(err, "unable to fetch snapshot with nonce %v", nonce)
 	}
 
 	return &types.QueryBridgeBalanceSnapshotByEventNonceResponse{Snapshot: &snapshot}, nil

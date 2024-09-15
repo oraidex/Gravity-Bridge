@@ -6,7 +6,6 @@ import (
 	"github.com/Gravity-Bridge/Gravity-Bridge/module/x/gravity/keeper"
 	"github.com/Gravity-Bridge/Gravity-Bridge/module/x/gravity/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 )
 
@@ -81,11 +80,11 @@ func createValsets(ctx sdk.Context, k keeper.Keeper, evmChainPrefix string) {
 		}
 		intCurrMembers, err := types.BridgeValidators(vs.Members).ToInternal()
 		if err != nil {
-			panic(sdkerrors.Wrap(err, "invalid current valset members"))
+			panic(errorsmod.Wrap(err, "invalid current valset members"))
 		}
 		intLatestMembers, err := types.BridgeValidators(latestValset.Members).ToInternal()
 		if err != nil {
-			panic(sdkerrors.Wrap(err, "invalid latest valset members"))
+			panic(errorsmod.Wrap(err, "invalid latest valset members"))
 		}
 
 		significantPowerDiff = intCurrMembers.PowerDiff(*intLatestMembers).GT(sdk.NewDecWithPrec(5, 2))

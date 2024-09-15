@@ -9,7 +9,6 @@ import (
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/bech32"
-	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 
 	bech32ibckeeper "github.com/Gravity-Bridge/Gravity-Bridge/module/x/bech32ibc/keeper"
 )
@@ -75,11 +74,11 @@ func GetPrefixFromBech32(bech32str string) (string, error) {
 func GetNativePrefixedAccAddressString(ctx sdk.Context, bech32IbcKeeper bech32ibckeeper.Keeper, foreignStr string) (string, error) {
 	prefix, err := GetPrefixFromBech32(foreignStr)
 	if err != nil {
-		return "", sdkerrors.Wrap(err, "invalid bech32 string")
+		return "", errorsmod.Wrap(err, "invalid bech32 string")
 	}
 	nativePrefix, err := bech32IbcKeeper.GetNativeHrp(ctx)
 	if err != nil {
-		panic(sdkerrors.Wrap(err, "bech32ibc NativePrefix has not been registered!"))
+		panic(errorsmod.Wrap(err, "bech32ibc NativePrefix has not been registered!"))
 	}
 	if prefix == nativePrefix {
 		return foreignStr, nil

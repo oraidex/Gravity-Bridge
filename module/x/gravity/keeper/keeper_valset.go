@@ -8,7 +8,6 @@ import (
 
 	"cosmossdk.io/store/prefix"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 
 	"github.com/Gravity-Bridge/Gravity-Bridge/module/x/gravity/types"
 )
@@ -269,7 +268,7 @@ func (k Keeper) GetCurrentValset(ctx sdk.Context, evmChainPrefix string) (types.
 	for _, validator := range validators {
 		val := validator.GetOperator()
 		if err := sdk.VerifyAddressFormat(val); err != nil {
-			return types.Valset{}, sdkerrors.Wrap(err, types.ErrInvalidValAddress.Error())
+			return types.Valset{}, errorsmod.Wrap(err, types.ErrInvalidValAddress.Error())
 		}
 
 		p := sdk.NewInt(k.StakingKeeper.GetLastValidatorPower(ctx, val))
@@ -278,7 +277,7 @@ func (k Keeper) GetCurrentValset(ctx sdk.Context, evmChainPrefix string) (types.
 			bv := types.BridgeValidator{Power: p.Uint64(), EthereumAddress: evmAddr.GetAddress().Hex()}
 			ibv, err := types.NewInternalBridgeValidator(bv)
 			if err != nil {
-				return types.Valset{}, sdkerrors.Wrapf(err, types.ErrInvalidEthAddress.Error(), val)
+				return types.Valset{}, errorsmod.Wrapf(err, types.ErrInvalidEthAddress.Error(), val)
 			}
 			bridgeValidators = append(bridgeValidators, ibv)
 			totalPower = totalPower.Add(p)
@@ -310,7 +309,7 @@ func (k Keeper) GetCurrentValset(ctx sdk.Context, evmChainPrefix string) (types.
 
 	valset, err := types.NewValset(valsetNonce, uint64(ctx.BlockHeight()), bridgeValidators, rewardAmount, *rewardToken)
 	if err != nil {
-		return types.Valset{}, (sdkerrors.Wrap(err, types.ErrInvalidValset.Error()))
+		return types.Valset{}, (errorsmod.Wrap(err, types.ErrInvalidValset.Error()))
 	}
 	return *valset, nil
 }

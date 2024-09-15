@@ -6,7 +6,6 @@ import (
 	gravitykeeper "github.com/Gravity-Bridge/Gravity-Bridge/module/x/gravity/keeper"
 	"github.com/Gravity-Bridge/Gravity-Bridge/module/x/gravity/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 	"github.com/cosmos/cosmos-sdk/types/module"
 	crisiskeeper "github.com/cosmos/cosmos-sdk/x/crisis/keeper"
 )
@@ -37,7 +36,7 @@ func GetPleiadesUpgradeHandler(
 		// just in case the new version uses default native hrp which is osmo
 		err := bech32ibckeeper.SetNativeHrp(ctx, sdk.GetConfig().GetBech32AccountAddrPrefix())
 		if err != nil {
-			panic(sdkerrors.Wrap(err, "Pleiades Upgrade: Unable to upgrade, bech32ibc module not initialized properly"))
+			panic(errorsmod.Wrap(err, "Pleiades Upgrade: Unable to upgrade, bech32ibc module not initialized properly"))
 		}
 
 		ctx.Logger().Info("Pleiades Upgrade: Running any configured module migrations")

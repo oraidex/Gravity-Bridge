@@ -6,7 +6,6 @@ import (
 
 	"github.com/Gravity-Bridge/Gravity-Bridge/module/x/gravity/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
 	capabilitytypes "github.com/cosmos/ibc-go/modules/capability/types"
 	transfertypes "github.com/cosmos/ibc-go/v8/modules/apps/transfer/types"
@@ -129,7 +128,7 @@ func (k Keeper) OnRecvPacket(
 	}
 
 	if k.InvalidSendToEthAddress(ctx, evmChainPrefix, *dest, *erc20) {
-		return channeltypes.NewErrorAcknowledgement(sdkerrors.Wrap(types.ErrInvalid, "destination address is invalid or blacklisted"))
+		return channeltypes.NewErrorAcknowledgement(errorsmod.Wrap(types.ErrInvalid, "destination address is invalid or blacklisted"))
 	}
 
 	batchFees := sdk.ZeroInt()

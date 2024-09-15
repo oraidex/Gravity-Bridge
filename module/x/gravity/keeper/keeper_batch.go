@@ -2,7 +2,6 @@ package keeper
 
 import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 
 	"cosmossdk.io/store/prefix"
 	"github.com/Gravity-Bridge/Gravity-Bridge/module/x/gravity/types"
@@ -40,11 +39,11 @@ func (k Keeper) SetBatchConfirm(ctx sdk.Context, batch *types.MsgConfirmBatch) [
 	store := ctx.KVStore(k.storeKey)
 	acc, err := sdk.AccAddressFromBech32(batch.Orchestrator)
 	if err != nil {
-		panic(sdkerrors.Wrap(err, "invalid Orchestrator address"))
+		panic(errorsmod.Wrap(err, "invalid Orchestrator address"))
 	}
 	contract, err := types.NewEthAddress(batch.TokenContract)
 	if err != nil {
-		panic(sdkerrors.Wrap(err, "invalid TokenContract"))
+		panic(errorsmod.Wrap(err, "invalid TokenContract"))
 	}
 	key := types.GetBatchConfirmKey(batch.EvmChainPrefix, *contract, batch.Nonce, acc)
 	store.Set(key, k.cdc.MustMarshal(batch))

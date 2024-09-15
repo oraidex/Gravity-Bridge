@@ -3,8 +3,6 @@ package keeper
 import (
 	"time"
 
-	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
-
 	codectypes "github.com/cosmos/cosmos-sdk/codec/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
@@ -19,10 +17,10 @@ import (
 // SetOrchestratorValidator sets the Orchestrator key for a given validator
 func (k Keeper) SetOrchestratorValidator(ctx sdk.Context, val sdk.ValAddress, orch sdk.AccAddress) {
 	if err := sdk.VerifyAddressFormat(val); err != nil {
-		panic(sdkerrors.Wrap(err, "invalid val address"))
+		panic(errorsmod.Wrap(err, "invalid val address"))
 	}
 	if err := sdk.VerifyAddressFormat(orch); err != nil {
-		panic(sdkerrors.Wrap(err, "invalid orch address"))
+		panic(errorsmod.Wrap(err, "invalid orch address"))
 	}
 	store := ctx.KVStore(k.storeKey)
 	store.Set(types.GetOrchestratorAddressKey(orch), val.Bytes())
@@ -133,7 +131,7 @@ func (k Keeper) GetOrchestratorValidatorAddr(ctx sdk.Context, orch sdk.AccAddres
 // SetEthAddress sets the evm address for a given validator
 func (k Keeper) SetEvmAddressForValidator(ctx sdk.Context, validator sdk.ValAddress, evmAddr types.EthAddress) {
 	if err := sdk.VerifyAddressFormat(validator); err != nil {
-		panic(sdkerrors.Wrap(err, "invalid validator address"))
+		panic(errorsmod.Wrap(err, "invalid validator address"))
 	}
 	store := ctx.KVStore(k.storeKey)
 	store.Set(types.GetEthAddressByValidatorKey(validator), evmAddr.GetAddress().Bytes())
@@ -143,7 +141,7 @@ func (k Keeper) SetEvmAddressForValidator(ctx sdk.Context, validator sdk.ValAddr
 // GetEvmAddressByValidator returns the evm address for a given gravity validator
 func (k Keeper) GetEvmAddressByValidator(ctx sdk.Context, validator sdk.ValAddress) (evmAddress *types.EthAddress, found bool) {
 	if err := sdk.VerifyAddressFormat(validator); err != nil {
-		panic(sdkerrors.Wrap(err, "invalid validator address"))
+		panic(errorsmod.Wrap(err, "invalid validator address"))
 	}
 	store := ctx.KVStore(k.storeKey)
 	evmAddr := store.Get(types.GetEthAddressByValidatorKey(validator))

@@ -8,7 +8,6 @@ import (
 	storetypes "cosmossdk.io/store/types"
 	codectypes "github.com/cosmos/cosmos-sdk/codec/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 
 	"cosmossdk.io/store/prefix"
 	"github.com/Gravity-Bridge/Gravity-Bridge/module/x/gravity/types"
@@ -26,7 +25,7 @@ func (k Keeper) Attest(
 	}
 	valAddr := val.GetOperator()
 	if err := sdk.VerifyAddressFormat(valAddr); err != nil {
-		return nil, sdkerrors.Wrap(err, "invalid orchestrator validator address")
+		return nil, errorsmod.Wrap(err, "invalid orchestrator validator address")
 	}
 	// Check that the nonce of this event is exactly one higher than the last nonce stored by this validator.
 	// We check the event nonce in processAttestation as well,
@@ -42,7 +41,7 @@ func (k Keeper) Attest(
 	// Tries to get an attestation with the same eventNonce and claim as the claim that was submitted.
 	hash, err := claim.ClaimHash()
 	if err != nil {
-		return nil, sdkerrors.Wrap(err, "unable to compute claim hash")
+		return nil, errorsmod.Wrap(err, "unable to compute claim hash")
 	}
 	att := k.GetAttestation(ctx, claim.GetEvmChainPrefix(), claim.GetEventNonce(), hash)
 
@@ -168,7 +167,7 @@ func (k Keeper) processAttestation(ctx sdk.Context, att *types.Attestation, clai
 func (k Keeper) emitObservedEvent(ctx sdk.Context, att *types.Attestation, claim types.EthereumClaim) {
 	hash, err := claim.ClaimHash()
 	if err != nil {
-		panic(sdkerrors.Wrap(err, "unable to compute claim hash"))
+		panic(errorsmod.Wrap(err, "unable to compute claim hash"))
 	}
 
 	err = ctx.EventManager().EmitTypedEvent(
@@ -213,7 +212,7 @@ func (k Keeper) DeleteAttestation(ctx sdk.Context, att types.Attestation) {
 	}
 	hash, err := claim.ClaimHash()
 	if err != nil {
-		panic(sdkerrors.Wrap(err, "unable to compute claim hash"))
+		panic(errorsmod.Wrap(err, "unable to compute claim hash"))
 	}
 	store := ctx.KVStore(k.storeKey)
 
@@ -423,7 +422,7 @@ func (k Keeper) setLastObservedEventNonce(ctx sdk.Context, evmChainPrefix string
 // GetLastEventNonceByValidator returns the latest event nonce for a given validator
 func (k Keeper) GetLastEventNonceByValidator(ctx sdk.Context, evmChainPrefix string, validator sdk.ValAddress) uint64 {
 	if err := sdk.VerifyAddressFormat(validator); err != nil {
-		panic(sdkerrors.Wrap(err, "invalid validator address"))
+		panic(errorsmod.Wrap(err, "invalid validator address"))
 	}
 	store := ctx.KVStore(k.storeKey)
 	bytes := store.Get(types.GetLastEventNonceByValidatorKey(evmChainPrefix, validator))
@@ -446,7 +445,7 @@ func (k Keeper) GetLastEventNonceByValidator(ctx sdk.Context, evmChainPrefix str
 // setLastEventNonceByValidator sets the latest event nonce for a give validator
 func (k Keeper) SetLastEventNonceByValidator(ctx sdk.Context, evmChainPrefix string, validator sdk.ValAddress, nonce uint64) {
 	if err := sdk.VerifyAddressFormat(validator); err != nil {
-		panic(sdkerrors.Wrap(err, "invalid validator address"))
+		panic(errorsmod.Wrap(err, "invalid validator address"))
 	}
 	store := ctx.KVStore(k.storeKey)
 	store.Set(types.GetLastEventNonceByValidatorKey(evmChainPrefix, validator), types.UInt64Bytes(nonce))
@@ -515,12 +514,12 @@ func (k Keeper) ExpectedSupplyChange(ctx sdk.Context, ethClaim types.EthereumCla
 		if claim.RewardAmount.GT(sdk.ZeroInt()) && claim.RewardToken != types.ZeroAddressString {
 			rewardAddress, err := types.NewEthAddress(claim.RewardToken)
 			if err != nil {
-				return nil, sdkerrors.Wrap(err, "invalid reward token on claim")
+				return nil, errorsmod.Wrap(err, "invalid reward token on claim")
 			}
 			// Check if coin is Cosmos-originated asset and get denom
 			isCosmosOriginated, denom := k.ERC20ToDenomLookup(ctx, claim.EvmChainPrefix, *rewardAddress)
 			if !isCosmosOriginated {
-				err := sdkerrors.Wrapf(err, "valset updated claim contains invalid reward token (%v)", rewardAddress)
+				err := errorsmod.Wrapf(err, "valset updated claim contains invalid reward token (%v)", rewardAddress)
 				return nil, err
 			}
 
@@ -530,7 +529,7 @@ func (k Keeper) ExpectedSupplyChange(ctx sdk.Context, ethClaim types.EthereumCla
 		}
 	// Error case
 	case types.CLAIM_TYPE_UNSPECIFIED:
-		return nil, sdkerrors.Wrap(types.ErrInvalidClaim, "claim type unspecified")
+		return nil, errorsmod.Wrap(types.ErrInvalidClaim, "claim type unspecified")
 
 	// Logic Call Executed
 	case types.CLAIM_TYPE_LOGIC_CALL_EXECUTED:

@@ -6,7 +6,6 @@ import (
 	"fmt"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 
 	"cosmossdk.io/store/prefix"
 	"github.com/Gravity-Bridge/Gravity-Bridge/module/x/gravity/types"
@@ -20,14 +19,14 @@ func (k Keeper) CheckBadSignatureEvidence(
 	err := k.cdc.UnpackAny(msg.Subject, &subject)
 
 	if err != nil {
-		return sdkerrors.Wrap(types.ErrInvalid, fmt.Sprintf("Invalid Any encoded evidence %s", err))
+		return errorsmod.Wrap(types.ErrInvalid, fmt.Sprintf("Invalid Any encoded evidence %s", err))
 	}
 
 	switch subject := subject.(type) {
 	case *types.OutgoingTxBatch, *types.Valset, *types.OutgoingLogicCall:
 		return k.checkBadSignatureEvidenceInternal(ctx, msg.EvmChainPrefix, subject, msg.Signature)
 	default:
-		return sdkerrors.Wrap(types.ErrInvalid, fmt.Sprintf("Bad signature must be over a batch, valset, or logic call got %s", subject))
+		return errorsmod.Wrap(types.ErrInvalid, fmt.Sprintf("Bad signature must be over a batch, valset, or logic call got %s", subject))
 	}
 }
 
@@ -39,7 +38,7 @@ func (k Keeper) checkBadSignatureEvidenceInternal(ctx sdk.Context, evmChainPrefi
 	// Try to find the checkpoint in the archives. If it exists, we don't slash because
 	// this is not a bad signature
 	if k.GetPastEthSignatureCheckpoint(ctx, evmChainPrefix, checkpoint) {
-		return sdkerrors.Wrap(types.ErrInvalid, "Checkpoint exists, cannot slash")
+		return errorsmod.Wrap(types.ErrInvalid, "Checkpoint exists, cannot slash")
 	}
 
 	// Decode Eth signature to bytes
@@ -50,25 +49,25 @@ func (k Keeper) checkBadSignatureEvidenceInternal(ctx sdk.Context, evmChainPrefi
 	}
 	sigBytes, err := hex.DecodeString(signature)
 	if err != nil {
-		return sdkerrors.Wrap(types.ErrInvalid, fmt.Sprintf("signature decoding %s", signature))
+		return errorsmod.Wrap(types.ErrInvalid, fmt.Sprintf("signature decoding %s", signature))
 	}
 
 	// Get eth address of the offending validator using the checkpoint and the signature
 	evmAddress, err := types.EthAddressFromSignature(checkpoint, sigBytes)
 	if err != nil {
-		return sdkerrors.Wrap(types.ErrInvalid, fmt.Sprintf("signature to eth address failed with checkpoint %s and signature %s", hex.EncodeToString(checkpoint), signature))
+		return errorsmod.Wrap(types.ErrInvalid, fmt.Sprintf("signature to eth address failed with checkpoint %s and signature %s", hex.EncodeToString(checkpoint), signature))
 	}
 
 	// Find the offending validator by eth address
 	val, found := k.GetValidatorByEvmAddress(ctx, *evmAddress)
 	if !found {
-		return sdkerrors.Wrap(types.ErrInvalid, fmt.Sprintf("Did not find validator for eth address %s from signature %s with checkpoint %s and GravityID %s", evmAddress.GetAddress().Hex(), signature, hex.EncodeToString(checkpoint), gravityID))
+		return errorsmod.Wrap(types.ErrInvalid, fmt.Sprintf("Did not find validator for eth address %s from signature %s with checkpoint %s and GravityID %s", evmAddress.GetAddress().Hex(), signature, hex.EncodeToString(checkpoint), gravityID))
 	}
 
 	// Slash the offending validator
 	cons, err := val.GetConsAddr()
 	if err != nil {
-		return sdkerrors.Wrap(err, "Could not get consensus key address for validator")
+		return errorsmod.Wrap(err, "Could not get consensus key address for validator")
 	}
 
 	params := k.GetParams(ctx)

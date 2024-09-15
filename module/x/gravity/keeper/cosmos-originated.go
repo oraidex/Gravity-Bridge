@@ -5,7 +5,6 @@ import (
 
 	"cosmossdk.io/store/prefix"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 
 	"github.com/Gravity-Bridge/Gravity-Bridge/module/x/gravity/types"
 )
@@ -74,7 +73,7 @@ func (k Keeper) DenomToERC20Lookup(ctx sdk.Context, evmChainPrefix string, denom
 		// Look up ERC20 contract in index and error if it's not in there.
 		originatedErc20Address, exists := k.GetCosmosOriginatedERC20(ctx, evmChainPrefix, denom)
 		if !exists {
-			return false, nil, sdkerrors.Wrap(
+			return false, nil, errorsmod.Wrap(
 				types.ErrInvalid,
 				fmt.Sprintf("denom not a gravity voucher coin: %s, and also not in cosmos-originated ERC20 index", err),
 			)

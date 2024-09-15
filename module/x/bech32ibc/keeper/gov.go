@@ -3,10 +3,9 @@ package keeper
 import (
 	"fmt"
 
-	sdk "github.com/cosmos/cosmos-sdk/types"
-	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
-
+	errorsmod "cosmossdk.io/errors"
 	"github.com/Gravity-Bridge/Gravity-Bridge/module/x/bech32ibc/types"
+	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 
 func (k Keeper) HandleUpdateHrpIbcChannelProposal(ctx sdk.Context, p *types.UpdateHrpIbcChannelProposal) error {
@@ -18,7 +17,7 @@ func (k Keeper) HandleUpdateHrpIbcChannelProposal(ctx sdk.Context, p *types.Upda
 	_, found := k.channelKeeper.GetChannel(ctx, k.tk.GetPort(ctx), p.SourceChannel)
 
 	if !found {
-		return sdkerrors.Wrap(types.ErrInvalidIBCData, fmt.Sprintf("channel not found: %s", p.SourceChannel))
+		return errorsmod.Wrap(types.ErrInvalidIBCData, fmt.Sprintf("channel not found: %s", p.SourceChannel))
 	}
 
 	return k.setHrpIbcRecord(ctx, types.HrpIbcRecord{

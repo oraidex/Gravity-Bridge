@@ -7,7 +7,6 @@ import (
 	"strings"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 	paramtypes "github.com/cosmos/cosmos-sdk/x/params/types"
 )
 
@@ -105,7 +104,7 @@ var (
 // calling their validation functions
 func (s GenesisState) ValidateBasic() error {
 	if err := s.Params.ValidateBasic(); err != nil {
-		return sdkerrors.Wrap(err, "params")
+		return errorsmod.Wrap(err, "params")
 	}
 	return nil
 }
@@ -183,25 +182,25 @@ func (p *Params) GetEvmChain(evmChainPrefix string) *EvmChainParam {
 // ValidateBasic checks that the parameters have valid values.
 func (p *EvmChainParam) ValidateBasic() error {
 	if err := validateGravityID(p.GravityId); err != nil {
-		return sdkerrors.Wrap(err, "gravity id")
+		return errorsmod.Wrap(err, "gravity id")
 	}
 	if err := validateContractHash(p.ContractSourceHash); err != nil {
-		return sdkerrors.Wrap(err, "contract hash")
+		return errorsmod.Wrap(err, "contract hash")
 	}
 	if err := validateBridgeContractAddress(p.BridgeEthereumAddress); err != nil {
-		return sdkerrors.Wrap(err, "bridge contract address")
+		return errorsmod.Wrap(err, "bridge contract address")
 	}
 	if err := validateBridgeChainID(p.BridgeChainId); err != nil {
-		return sdkerrors.Wrap(err, "bridge chain id")
+		return errorsmod.Wrap(err, "bridge chain id")
 	}
 	if err := validateAverageEthereumBlockTime(p.AverageEthereumBlockTime); err != nil {
-		return sdkerrors.Wrap(err, "Ethereum block time")
+		return errorsmod.Wrap(err, "Ethereum block time")
 	}
 	if err := validateBridgeActive(p.BridgeActive); err != nil {
-		return sdkerrors.Wrap(err, "bridge active parameter")
+		return errorsmod.Wrap(err, "bridge active parameter")
 	}
 	if err := validateEthereumBlacklistAddresses(p.EthereumBlacklist); err != nil {
-		return sdkerrors.Wrap(err, "ethereum blacklist parameter")
+		return errorsmod.Wrap(err, "ethereum blacklist parameter")
 	}
 	return nil
 }
@@ -217,42 +216,42 @@ func (p *Params) ValidateBasic() error {
 	}
 
 	if err := validateTargetBatchTimeout(p.TargetBatchTimeout); err != nil {
-		return sdkerrors.Wrap(err, "Batch timeout")
+		return errorsmod.Wrap(err, "Batch timeout")
 	}
 	if err := validateAverageBlockTime(p.AverageBlockTime); err != nil {
-		return sdkerrors.Wrap(err, "Block time")
+		return errorsmod.Wrap(err, "Block time")
 	}
 
 	if err := validateSignedValsetsWindow(p.SignedValsetsWindow); err != nil {
-		return sdkerrors.Wrap(err, "signed blocks window valsets")
+		return errorsmod.Wrap(err, "signed blocks window valsets")
 	}
 	if err := validateSignedBatchesWindow(p.SignedBatchesWindow); err != nil {
-		return sdkerrors.Wrap(err, "signed blocks window batches")
+		return errorsmod.Wrap(err, "signed blocks window batches")
 	}
 	if err := validateSignedLogicCallsWindow(p.SignedLogicCallsWindow); err != nil {
-		return sdkerrors.Wrap(err, "signed blocks window logic calls")
+		return errorsmod.Wrap(err, "signed blocks window logic calls")
 	}
 	if err := validateSlashFractionValset(p.SlashFractionValset); err != nil {
-		return sdkerrors.Wrap(err, "slash fraction valset")
+		return errorsmod.Wrap(err, "slash fraction valset")
 	}
 	if err := validateSlashFractionBatch(p.SlashFractionBatch); err != nil {
-		return sdkerrors.Wrap(err, "slash fraction batch")
+		return errorsmod.Wrap(err, "slash fraction batch")
 	}
 	if err := validateSlashFractionLogicCall(p.SlashFractionLogicCall); err != nil {
-		return sdkerrors.Wrap(err, "slash fraction logic call")
+		return errorsmod.Wrap(err, "slash fraction logic call")
 	}
 	if err := validateSlashFractionBadEthSignature(p.SlashFractionBadEthSignature); err != nil {
-		return sdkerrors.Wrap(err, "slash fraction BadEthSignature")
+		return errorsmod.Wrap(err, "slash fraction BadEthSignature")
 	}
 	if err := validateUnbondSlashingValsetsWindow(p.UnbondSlashingValsetsWindow); err != nil {
-		return sdkerrors.Wrap(err, "unbond Slashing valset window")
+		return errorsmod.Wrap(err, "unbond Slashing valset window")
 	}
 	if err := validateValsetRewardAmount(p.ValsetReward); err != nil {
-		return sdkerrors.Wrap(err, "ValsetReward amount")
+		return errorsmod.Wrap(err, "ValsetReward amount")
 	}
 
 	if err := validateMinChainFeeBasisPoints(p.MinChainFeeBasisPoints); err != nil {
-		return sdkerrors.Wrap(err, "min chain fee basis points parameter")
+		return errorsmod.Wrap(err, "min chain fee basis points parameter")
 	}
 	return nil
 }

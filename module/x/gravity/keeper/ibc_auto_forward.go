@@ -33,13 +33,13 @@ func (k Keeper) ValidatePendingIbcAutoForward(ctx sdk.Context, evmChainPrefix st
 
 	latestEventNonce := k.GetLastObservedEventNonce(ctx, evmChainPrefix)
 	if forward.EventNonce > latestEventNonce {
-		return sdkerrors.Wrap(types.ErrInvalid, "EventNonce must be <= latest observed event nonce")
+		return errorsmod.Wrap(types.ErrInvalid, "EventNonce must be <= latest observed event nonce")
 	}
 
 	modAcc := k.accountKeeper.GetModuleAccount(ctx, types.ModuleName).GetAddress()
 	modBal := k.bankKeeper.GetBalance(ctx, modAcc, forward.Token.Denom)
 	if modBal.IsLT(*forward.Token) {
-		return sdkerrors.Wrapf(
+		return errorsmod.Wrapf(
 			sdkerrors.ErrInsufficientFunds, "Gravity Module account does not have enough funds (%s) for a forward of %s",
 			modBal.String(), forward.Token.String(),
 		)
@@ -110,7 +110,7 @@ func (k Keeper) addPendingIbcAutoForward(ctx sdk.Context, forward types.PendingI
 	key := types.GetPendingIbcAutoForwardKey(evmChainPrefix, forward.EventNonce)
 
 	if store.Has(key) {
-		return sdkerrors.Wrapf(types.ErrDuplicate,
+		return errorsmod.Wrapf(types.ErrDuplicate,
 			"Pending IBC Auto-Forward Queue already has an entry with nonce %v", forward.EventNonce,
 		)
 	}
@@ -137,7 +137,7 @@ func (k Keeper) deletePendingIbcAutoForward(ctx sdk.Context, evmChainPrefix stri
 	store := ctx.KVStore(k.storeKey)
 	key := types.GetPendingIbcAutoForwardKey(evmChainPrefix, eventNonce)
 	if !store.Has(key) {
-		return sdkerrors.Wrapf(types.ErrInvalid, "No PendingIbcAutoForward with nonce %v in the store", eventNonce)
+		return errorsmod.Wrapf(types.ErrInvalid, "No PendingIbcAutoForward with nonce %v in the store", eventNonce)
 	}
 	store.Delete(key)
 	return nil
@@ -150,7 +150,7 @@ func (k Keeper) ProcessPendingIbcAutoForwards(ctx sdk.Context, evmChainPrefix st
 	for i := uint64(0); i < forwardsToClear; i++ {
 		stop, err := k.ProcessNextPendingIbcAutoForward(ctx, evmChainPrefix)
 		if err != nil {
-			return sdkerrors.Wrapf(err, "unable to process Pending IBC Auto-Forward number %v", i)
+			return errorsmod.Wrapf(err, "unable to process Pending IBC Auto-Forward number %v", i)
 		}
 		if stop {
 			break

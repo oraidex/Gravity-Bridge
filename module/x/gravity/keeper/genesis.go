@@ -4,7 +4,6 @@ import (
 	"fmt"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 
 	"github.com/Gravity-Bridge/Gravity-Bridge/module/x/gravity/types"
 )
@@ -31,7 +30,7 @@ func initBridgeDataFromGenesis(ctx sdk.Context, k Keeper, data types.EvmChainDat
 		// TODO: block height?
 		intBatch, err := batch.ToInternal()
 		if err != nil {
-			panic(sdkerrors.Wrapf(err, "unable to make batch internal: %v", batch))
+			panic(errorsmod.Wrapf(err, "unable to make batch internal: %v", batch))
 		}
 		k.StoreBatch(ctx, evmChainPrefix, *intBatch)
 	}
@@ -57,7 +56,7 @@ func initBridgeDataFromGenesis(ctx sdk.Context, k Keeper, data types.EvmChainDat
 	for _, tx := range data.UnbatchedTransfers {
 		intTx, err := tx.ToInternal()
 		if err != nil {
-			panic(sdkerrors.Wrapf(err, "invalid unbatched tx: %v", tx))
+			panic(errorsmod.Wrapf(err, "invalid unbatched tx: %v", tx))
 		}
 		if err := k.addUnbatchedTX(ctx, evmChainPrefix, intTx); err != nil {
 			panic(err)
