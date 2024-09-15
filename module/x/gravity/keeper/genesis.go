@@ -3,9 +3,9 @@ package keeper
 import (
 	"fmt"
 
-	sdk "github.com/cosmos/cosmos-sdk/types"
-
+	errorsmod "cosmossdk.io/errors"
 	"github.com/Gravity-Bridge/Gravity-Bridge/module/x/gravity/types"
+	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 
 func initBridgeDataFromGenesis(ctx sdk.Context, k Keeper, data types.EvmChainData) {

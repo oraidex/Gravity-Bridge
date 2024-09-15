@@ -6,6 +6,8 @@ import (
 	"sort"
 	"strconv"
 
+	errorsmod "cosmossdk.io/errors"
+	sdkmath "cosmossdk.io/math"
 	"cosmossdk.io/store/prefix"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
@@ -253,7 +255,10 @@ func (k Keeper) IterateValsetBySlashedValsetNonce(ctx sdk.Context, evmChainPrefi
 // you should call this function, evaluate if you want to save this new valset, and discard
 // it or save
 func (k Keeper) GetCurrentValset(ctx sdk.Context, evmChainPrefix string) (types.Valset, error) {
-	validators := k.StakingKeeper.GetBondedValidatorsByPower(ctx)
+	validators, err := k.StakingKeeper.GetBondedValidatorsByPower(ctx)
+	if err != nil {
+		return types.Valset{}, err
+	}
 	if len(validators) == 0 {
 		// nolint: exhaustruct
 		return types.Valset{}, types.ErrNoValidators
@@ -267,13 +272,21 @@ func (k Keeper) GetCurrentValset(ctx sdk.Context, evmChainPrefix string) (types.
 	// if this is doing what I think it's doing
 	for _, validator := range validators {
 		val := validator.GetOperator()
-		if err := sdk.VerifyAddressFormat(val); err != nil {
+		valBz, err := k.StakingKeeper.ValidatorAddressCodec().StringToBytes(val)
+		if err != nil {
+			panic(err)
+		}
+		if err := sdk.VerifyAddressFormat(valBz); err != nil {
 			return types.Valset{}, errorsmod.Wrap(err, types.ErrInvalidValAddress.Error())
 		}
 
-		p := sdkmath.NewInt(k.StakingKeeper.GetLastValidatorPower(ctx, val))
+		power, err := k.StakingKeeper.GetLastValidatorPower(ctx, valBz)
+		if err != nil {
+			return types.Valset{}, err
+		}
+		p := sdkmath.NewInt(power)
 
-		if evmAddr, found := k.GetEvmAddressByValidator(ctx, val); found {
+		if evmAddr, found := k.GetEvmAddressByValidator(ctx, valBz); found {
 			bv := types.BridgeValidator{Power: p.Uint64(), EthereumAddress: evmAddr.GetAddress().Hex()}
 			ibv, err := types.NewInternalBridgeValidator(bv)
 			if err != nil {
@@ -291,14 +304,14 @@ func (k Keeper) GetCurrentValset(ctx sdk.Context, evmChainPrefix string) (types.
 	// get the reward from the params store
 	reward := k.GetParams(ctx).ValsetReward
 	var rewardToken *types.EthAddress
-	var rewardAmount sdk.Int
+	var rewardAmount sdkmath.Int
 	if !reward.IsValid() || reward.IsZero() {
 		// the case where a validator has 'no reward'. The 'no reward' value is interpreted as having a zero
 		// address for the ERC20 token and a zero value for the reward amount. Since we store a coin with the
 		// params, a coin with a blank denom and/or zero amount is interpreted in this way.
 		za := types.ZeroAddress()
 		rewardToken = &za
-		rewardAmount = sdk.NewIntFromUint64(0)
+		rewardAmount = sdkmath.NewIntFromUint64(0)
 
 	} else {
 		rewardToken, rewardAmount = k.RewardToERC20Lookup(ctx, evmChainPrefix, reward)

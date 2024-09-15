@@ -1,6 +1,7 @@
 package types
 
 import (
+	context "context"
 	"time"
 
 	sdkmath "cosmossdk.io/math"
@@ -14,19 +15,19 @@ import (
 
 // StakingKeeper defines the expected staking keeper methods
 type StakingKeeper interface {
-	GetBondedValidatorsByPower(ctx sdk.Context) []stakingtypes.Validator
-	GetLastValidatorPower(ctx sdk.Context, operator sdk.ValAddress) int64
-	GetLastTotalPower(ctx sdk.Context) (power sdkmath.Int)
-	IterateValidators(sdk.Context, func(index int64, validator stakingtypes.ValidatorI) (stop bool))
-	ValidatorQueueIterator(ctx sdk.Context, endTime time.Time, endHeight int64) storetypes.Iterator
-	GetParams(ctx sdk.Context) stakingtypes.Params
-	GetValidator(ctx sdk.Context, addr sdk.ValAddress) (validator stakingtypes.Validator, found bool)
-	IterateBondedValidatorsByPower(sdk.Context, func(index int64, validator stakingtypes.ValidatorI) (stop bool))
-	IterateLastValidators(sdk.Context, func(index int64, validator stakingtypes.ValidatorI) (stop bool))
-	Validator(sdk.Context, sdk.ValAddress) stakingtypes.ValidatorI
-	ValidatorByConsAddr(sdk.Context, sdk.ConsAddress) stakingtypes.ValidatorI
-	Slash(sdk.Context, sdk.ConsAddress, int64, int64, sdkmath.LegacyDec, stakingtypes.Infraction)
-	Jail(sdk.Context, sdk.ConsAddress)
+	GetBondedValidatorsByPower(ctx context.Context) ([]stakingtypes.Validator, error)
+	GetLastValidatorPower(ctx context.Context, operator sdk.ValAddress) (int64, error)
+	GetLastTotalPower(ctx context.Context) (power sdkmath.Int, err error)
+	IterateValidators(context.Context, func(index int64, validator stakingtypes.ValidatorI) (stop bool)) error
+	ValidatorQueueIterator(ctx context.Context, endTime time.Time, endHeight int64) (storetypes.Iterator, error)
+	GetParams(ctx context.Context) (stakingtypes.Params, error)
+	GetValidator(ctx context.Context, addr sdk.ValAddress) (validator stakingtypes.Validator, err error)
+	IterateBondedValidatorsByPower(context.Context, func(index int64, validator stakingtypes.ValidatorI) (stop bool)) error
+	IterateLastValidators(context.Context, func(index int64, validator stakingtypes.ValidatorI) (stop bool)) error
+	Validator(context.Context, sdk.ValAddress) (stakingtypes.ValidatorI, error)
+	ValidatorByConsAddr(context.Context, sdk.ConsAddress) (stakingtypes.ValidatorI, error)
+	Slash(context.Context, sdk.ConsAddress, int64, int64, sdkmath.LegacyDec) (sdkmath.Int, error)
+	Jail(context.Context, sdk.ConsAddress) error
 }
 
 // BankKeeper defines the expected bank keeper methods
@@ -41,11 +42,11 @@ type BankKeeper interface {
 }
 
 type SlashingKeeper interface {
-	GetValidatorSigningInfo(ctx sdk.Context, address sdk.ConsAddress) (info slashingtypes.ValidatorSigningInfo, found bool)
+	GetValidatorSigningInfo(ctx context.Context, address sdk.ConsAddress) (info slashingtypes.ValidatorSigningInfo, err error)
 }
 
 type DistributionKeeper interface {
-	FundCommunityPool(ctx sdk.Context, amount sdk.Coins, sender sdk.AccAddress) error
-	GetFeePool(ctx sdk.Context) (feePool types.FeePool)
-	SetFeePool(ctx sdk.Context, feePool types.FeePool)
+	FundCommunityPool(ctx context.Context, amount sdk.Coins, sender sdk.AccAddress) error
+	GetFeePool(ctx context.Context) (feePool types.FeePool)
+	SetFeePool(ctx context.Context, feePool types.FeePool)
 }

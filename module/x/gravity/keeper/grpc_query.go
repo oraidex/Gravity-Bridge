@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"strings"
 
+	errorsmod "cosmossdk.io/errors"
 	storetypes "cosmossdk.io/store/types"
 	v1 "github.com/Gravity-Bridge/Gravity-Bridge/module/x/gravity/migrations/v1"
 	codectypes "github.com/cosmos/cosmos-sdk/codec/types"
@@ -267,10 +268,14 @@ func (k Keeper) LastEventNonceByAddr(
 	if !found {
 		return nil, errorsmod.Wrap(types.ErrUnknown, "address")
 	}
-	if err := sdk.VerifyAddressFormat(validator.GetOperator()); err != nil {
+	valBz, err := k.StakingKeeper.ValidatorAddressCodec().StringToBytes(validator.GetOperator())
+	if err != nil {
+		panic(err)
+	}
+	if err := sdk.VerifyAddressFormat(valBz); err != nil {
 		return nil, errorsmod.Wrap(err, "invalid validator address")
 	}
-	lastEventNonce := k.GetLastEventNonceByValidator(ctx, req.EvmChainPrefix, validator.GetOperator())
+	lastEventNonce := k.GetLastEventNonceByValidator(ctx, req.EvmChainPrefix, valBz)
 	ret.EventNonce = lastEventNonce
 	return &ret, nil
 }

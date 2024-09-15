@@ -4,11 +4,11 @@ import (
 	"time"
 
 	errorsmod "cosmossdk.io/errors"
+	sdkmath "cosmossdk.io/math"
+	"github.com/Gravity-Bridge/Gravity-Bridge/module/x/gravity/types"
 	codectypes "github.com/cosmos/cosmos-sdk/codec/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
-
-	"github.com/Gravity-Bridge/Gravity-Bridge/module/x/gravity/types"
 )
 
 ///////////////////////////
@@ -69,8 +69,8 @@ func (k Keeper) GetOrchestratorValidator(ctx sdk.Context, orch sdk.AccAddress) (
 			MinSelfDelegation: sdkmath.Int{},
 		}, false
 	}
-	validator, found = k.StakingKeeper.GetValidator(ctx, valAddr)
-	if !found {
+	validator, err := k.StakingKeeper.GetValidator(ctx, valAddr)
+	if err != nil {
 		return stakingtypes.Validator{
 			OperatorAddress: "",
 			ConsensusPubkey: &codectypes.Any{
@@ -195,8 +195,8 @@ func (k Keeper) GetValidatorByEvmAddress(ctx sdk.Context, evmAddr types.EthAddre
 			MinSelfDelegation: sdkmath.Int{},
 		}, false
 	}
-	validator, found = k.StakingKeeper.GetValidator(ctx, valAddr)
-	if !found {
+	validator, err := k.StakingKeeper.GetValidator(ctx, valAddr)
+	if err != nil {
 		return stakingtypes.Validator{
 			OperatorAddress: "",
 			ConsensusPubkey: &codectypes.Any{

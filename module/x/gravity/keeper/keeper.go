@@ -20,9 +20,10 @@ import (
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 	ibctransferkeeper "github.com/cosmos/ibc-go/v8/modules/apps/transfer/keeper"
 
-	bech32ibckeeper "github.com/Gravity-Bridge/Gravity-Bridge/module/x/bech32ibc/keeper"
-
+	errorsmod "cosmossdk.io/errors"
 	"cosmossdk.io/store/prefix"
+	storetypes "cosmossdk.io/store/types"
+	bech32ibckeeper "github.com/Gravity-Bridge/Gravity-Bridge/module/x/bech32ibc/keeper"
 	"github.com/Gravity-Bridge/Gravity-Bridge/module/x/gravity/types"
 	ibctransfertypes "github.com/cosmos/ibc-go/v8/modules/core/05-port/types"
 )
@@ -35,7 +36,7 @@ var _ types.DistributionKeeper = (*distrkeeper.Keeper)(nil)
 // Keeper maintains the link to storage and exposes getter/setter methods for the various parts of the state machine
 type Keeper struct {
 	// NOTE: If you add anything to this struct, add a nil check to ValidateMembers below!
-	storeKey   sdk.StoreKey // Unexposed key to access store from sdk.Context
+	storeKey   storetypes.StoreKey // Unexposed key to access store from sdk.Context
 	paramSpace paramtypes.Subspace
 
 	// NOTE: If you add anything to this struct, add a nil check to ValidateMembers below!
@@ -81,7 +82,7 @@ func (k Keeper) ValidateMembers() {
 
 // NewKeeper returns a new instance of the gravity keeper
 func NewKeeper(
-	storeKey sdk.StoreKey,
+	storeKey storetypes.StoreKey,
 	paramSpace paramtypes.Subspace,
 	cdc codec.BinaryCodec,
 	bankKeeper *bankkeeper.BaseKeeper,
@@ -133,10 +134,12 @@ func (k Keeper) SendToCommunityPool(ctx sdk.Context, coins sdk.Coins) error {
 	if err := k.bankKeeper.SendCoinsFromModuleToModule(ctx, types.ModuleName, distrtypes.ModuleName, coins); err != nil {
 		return errorsmod.Wrap(err, "transfer to community pool failed")
 	}
-	feePool := k.DistKeeper.GetFeePool(ctx)
+	feePool, err := k.DistKeeper.FeePool.Get(ctx)
+	if err != nil {
+		return err
+	}
 	feePool.CommunityPool = feePool.CommunityPool.Add(sdk.NewDecCoinsFromCoins(coins...)...)
-	k.DistKeeper.SetFeePool(ctx, feePool)
-	return nil
+	return k.DistKeeper.FeePool.Set(ctx, feePool)
 }
 
 /////////////////////////////

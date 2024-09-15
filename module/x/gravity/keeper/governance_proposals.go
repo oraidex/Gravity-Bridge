@@ -4,12 +4,16 @@ import (
 	"fmt"
 	"strings"
 
+	errorsmod "cosmossdk.io/errors"
+	sdkmath "cosmossdk.io/math"
 	v3 "github.com/Gravity-Bridge/Gravity-Bridge/module/x/gravity/migrations/v3"
 	"github.com/Gravity-Bridge/Gravity-Bridge/module/x/gravity/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
+
 	disttypes "github.com/cosmos/cosmos-sdk/x/distribution/types"
-	govtypes "github.com/cosmos/cosmos-sdk/x/gov/types"
+
+	govtypes "github.com/cosmos/cosmos-sdk/x/gov/types/v1beta1"
 )
 
 // this file contains code related to custom governance proposals
@@ -25,37 +29,33 @@ func RegisterProposalTypes() {
 	metadata := "gravity/IBCMetadata"
 	if !govtypes.IsValidProposalType(strings.TrimPrefix(metadata, prefix)) {
 		govtypes.RegisterProposalType(types.ProposalTypeIBCMetadata)
-		// nolint: exhaustruct
-		govtypes.RegisterProposalTypeCodec(&types.IBCMetadataProposal{}, metadata)
 	}
 	unhalt := "gravity/UnhaltBridge"
 	if !govtypes.IsValidProposalType(strings.TrimPrefix(unhalt, prefix)) {
 		govtypes.RegisterProposalType(types.ProposalTypeUnhaltBridge)
-		// nolint: exhaustruct
-		govtypes.RegisterProposalTypeCodec(&types.UnhaltBridgeProposal{}, unhalt)
+
 	}
 	airdrop := "gravity/Airdrop"
 	if !govtypes.IsValidProposalType(strings.TrimPrefix(airdrop, prefix)) {
 		govtypes.RegisterProposalType(types.ProposalTypeAirdrop)
-		// nolint: exhaustruct
-		govtypes.RegisterProposalTypeCodec(&types.AirdropProposal{}, airdrop)
+
 	}
 	addEvmChain := "gravity/AddEvmChain"
 	if !govtypes.IsValidProposalType(strings.TrimPrefix(addEvmChain, prefix)) {
 		govtypes.RegisterProposalType(types.ProposalTypeAddEvmChain)
-		govtypes.RegisterProposalTypeCodec(&types.AddEvmChainProposal{}, addEvmChain)
+
 	}
 
 	removeEvmChain := "gravity/RemoveEvmChain"
 	if !govtypes.IsValidProposalType(strings.TrimPrefix(removeEvmChain, prefix)) {
 		govtypes.RegisterProposalType(types.ProposalTypeRemoveEvmChain)
-		govtypes.RegisterProposalTypeCodec(&types.RemoveEvmChainProposal{}, removeEvmChain)
+
 	}
 
 	monitoredERC20Tokens := "gravity/MonitoredERC20Tokens"
 	if !govtypes.IsValidProposalType(strings.TrimPrefix(monitoredERC20Tokens, prefix)) {
 		govtypes.RegisterProposalType(types.ProposalTypeMonitoredERC20Tokens)
-		govtypes.RegisterProposalTypeCodec(&types.MonitoredERC20TokensProposal{}, monitoredERC20Tokens)
+
 	}
 }
 
@@ -207,8 +207,12 @@ func pruneAttestationsAfterNonce(ctx sdk.Context, evmChainPrefix string, k Keepe
 	attmap, keys := k.GetAttestationMapping(ctx, evmChainPrefix)
 
 	// Discover all affected validators whose LastEventNonce must be reset to nonceCutoff
+	power, err := k.StakingKeeper.GetBondedValidatorsByPower(ctx)
+	if err != nil {
+		panic(err)
+	}
 
-	numValidators := len(k.StakingKeeper.GetBondedValidatorsByPower(ctx))
+	numValidators := len(power)
 	// void and setMember are necessary for sets to work
 	type void struct{}
 	var setMember void
@@ -257,12 +261,15 @@ func (k Keeper) HandleAirdropProposal(ctx sdk.Context, p *types.AirdropProposal)
 		return errorsmod.Wrap(types.ErrInvalid, "Invalid airdrop denom")
 	}
 
-	feePool := k.DistKeeper.GetFeePool(ctx)
+	feePool, err := k.DistKeeper.FeePool.Get(ctx)
+	if err != nil {
+		panic(err)
+	}
 	feePoolAmount := feePool.CommunityPool.AmountOf(p.Denom)
 
 	airdropTotal := sdkmath.NewInt(0)
 	for _, v := range p.Amounts {
-		airdropTotal = airdropTotal.Add(sdk.NewIntFromUint64(v))
+		airdropTotal = airdropTotal.Add(sdkmath.NewIntFromUint64(v))
 	}
 
 	totalRequiredDecCoin := sdk.NewDecCoinFromCoin(sdk.NewCoin(p.Denom, airdropTotal))
@@ -301,8 +308,8 @@ func (k Keeper) HandleAirdropProposal(ctx sdk.Context, p *types.AirdropProposal)
 	totalSent := sdkmath.LegacyNewDec(0)
 	for i, addr := range parsedRecipients {
 		usersAmount := p.Amounts[i]
-		usersIntAmount := sdk.NewIntFromUint64(usersAmount)
-		usersDecAmount := sdk.NewDecFromInt(usersIntAmount)
+		usersIntAmount := sdkmath.NewIntFromUint64(usersAmount)
+		usersDecAmount := sdkmath.LegacyNewDecFromInt(usersIntAmount)
 		err := k.bankKeeper.SendCoinsFromModuleToAccount(ctx, disttypes.ModuleName, addr, sdk.NewCoins(sdk.NewCoin(p.Denom, usersIntAmount)))
 		// if there is no error we add to the total actually sent
 		if err == nil {
@@ -327,7 +334,10 @@ func (k Keeper) HandleAirdropProposal(ctx sdk.Context, p *types.AirdropProposal)
 		return errorsmod.Wrap(types.ErrInvalid, "internal error!")
 	}
 	feePool.CommunityPool = newCoins
-	k.DistKeeper.SetFeePool(ctx, feePool)
+	err = k.DistKeeper.FeePool.Set(ctx, feePool)
+	if err != nil {
+		return err
+	}
 
 	endingSupply := k.bankKeeper.GetSupply(ctx, p.Denom)
 	if !startingSupply.Equal(endingSupply) {

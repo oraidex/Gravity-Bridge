@@ -5,6 +5,8 @@ import (
 	"encoding/hex"
 	"fmt"
 
+	errorsmod "cosmossdk.io/errors"
+	sdkmath "cosmossdk.io/math"
 	codectypes "github.com/cosmos/cosmos-sdk/codec/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
@@ -51,7 +53,7 @@ func (k msgServer) SetOrchestratorAddress(c context.Context, msg *types.MsgSetOr
 	_, foundExistingEthAddress := k.GetEvmAddressByValidator(ctx, val)
 
 	// ensure that the validator exists
-	if k.Keeper.StakingKeeper.Validator(ctx, val) == nil {
+	if _, err := k.Keeper.StakingKeeper.Validator(ctx, val); err != nil {
 		return nil, errorsmod.Wrap(stakingtypes.ErrNoValidatorFound, val.String())
 	}
 
@@ -165,7 +167,7 @@ func (k msgServer) checkAndDeductSendToEthFees(ctx sdk.Context, sender sdk.AccAd
 		// The params have been set, get the min send to eth fee
 		minFeeBasisPoints = int64(params.MinChainFeeBasisPoints)
 	}
-	minFee := sdk.NewDecFromInt(sendAmount.Amount).
+	minFee := sdkmath.LegacyNewDecFromInt(sendAmount.Amount).
 		QuoInt64(int64(BasisPointDivisor)).
 		MulInt64(minFeeBasisPoints).
 		TruncateInt()
@@ -324,8 +326,12 @@ func (k msgServer) checkOrchestratorValidatorInSet(ctx sdk.Context, orchestrator
 	}
 
 	// return an error if the validator isn't in the active set
-	val := k.StakingKeeper.Validator(ctx, validator.GetOperator())
-	if val == nil || !val.IsBonded() {
+	valBz, err := k.StakingKeeper.ValidatorAddressCodec().StringToBytes(validator.GetOperator())
+	if err != nil {
+		panic(err)
+	}
+	val, err := k.StakingKeeper.Validator(ctx, valBz)
+	if val == nil || !val.IsBonded() || err != nil {
 		return errorsmod.Wrap(sdkerrors.ErrorInvalidSigner, "validator not in active set")
 	}
 
@@ -377,11 +383,16 @@ func (k msgServer) confirmHandlerCommon(ctx sdk.Context, ethAddress string, orch
 		return errorsmod.Wrap(types.ErrInvalid, "validator is unbonded")
 	}
 
-	if err := sdk.VerifyAddressFormat(validator.GetOperator()); err != nil {
+	valBz, err := k.StakingKeeper.ValidatorAddressCodec().StringToBytes(validator.GetOperator())
+	if err != nil {
+		panic(err)
+	}
+
+	if err := sdk.VerifyAddressFormat(valBz); err != nil {
 		return errorsmod.Wrapf(err, "discovered invalid validator address for orchestrator %v", orchestrator)
 	}
 
-	ethAddressFromStore, found := k.GetEvmAddressByValidator(ctx, validator.GetOperator())
+	ethAddressFromStore, found := k.GetEvmAddressByValidator(ctx, valBz)
 	if !found {
 		return errorsmod.Wrap(types.ErrEmpty, "no eth address set for validator")
 	}

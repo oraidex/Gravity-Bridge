@@ -5,9 +5,9 @@ import (
 	"sort"
 	"strings"
 
-	sdk "github.com/cosmos/cosmos-sdk/types"
-
+	sdkmath "cosmossdk.io/math"
 	"github.com/Gravity-Bridge/Gravity-Bridge/module/x/gravity/types"
+	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 
 /*	Gravity Module Invariants

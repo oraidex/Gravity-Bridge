@@ -5,6 +5,7 @@ import (
 	"encoding/hex"
 	"fmt"
 
+	errorsmod "cosmossdk.io/errors"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
 	"cosmossdk.io/store/prefix"
@@ -73,7 +74,7 @@ func (k Keeper) checkBadSignatureEvidenceInternal(ctx sdk.Context, evmChainPrefi
 	params := k.GetParams(ctx)
 	if !val.IsJailed() {
 		k.StakingKeeper.Jail(ctx, cons)
-		k.StakingKeeper.Slash(ctx, cons, ctx.BlockHeight(), val.ConsensusPower(sdk.DefaultPowerReduction), params.SlashFractionBadEthSignature, 0)
+		k.StakingKeeper.Slash(ctx, cons, ctx.BlockHeight(), val.ConsensusPower(sdk.DefaultPowerReduction), params.SlashFractionBadEthSignature)
 	}
 
 	return nil
