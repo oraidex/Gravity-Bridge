@@ -5,7 +5,9 @@ import (
 	"log"
 	"time"
 
-	tmproto "github.com/cometbft/cometbft/proto/tendermint/types"
+	errorsmod "cosmossdk.io/errors"
+	storetypes "cosmossdk.io/store/types"
+	cmtproto "github.com/cometbft/cometbft/proto/tendermint/types"
 	"github.com/cometbft/cometbft/proto/tendermint/version"
 	servertypes "github.com/cosmos/cosmos-sdk/server/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -17,10 +19,10 @@ import (
 // ExportAppStateAndValidators exports the state of the application for a genesis
 // file.
 func (app *Gravity) ExportAppStateAndValidators(
-	forZeroHeight bool, jailWhiteList []string,
+	forZeroHeight bool, jailWhiteList []string, modulesToExport []string,
 ) (servertypes.ExportedApp, error) {
 
-	ctx := app.NewContext(true, tmproto.Header{
+	ctx := app.NewContextLegacy(true, cmtproto.Header{
 		Version: version.Consensus{
 			Block: 0,
 			App:   0,
@@ -28,9 +30,9 @@ func (app *Gravity) ExportAppStateAndValidators(
 		ChainID: "",
 		Height:  app.LastBlockHeight(),
 		Time:    time.Time{},
-		LastBlockId: tmproto.BlockID{
+		LastBlockId: cmtproto.BlockID{
 			Hash: []byte{},
-			PartSetHeader: tmproto.PartSetHeader{
+			PartSetHeader: cmtproto.PartSetHeader{
 				Total: 0,
 				Hash:  []byte{},
 			},
@@ -52,13 +54,16 @@ func (app *Gravity) ExportAppStateAndValidators(
 		app.prepForZeroHeightGenesis(ctx, jailWhiteList)
 	}
 
-	genState := app.mm.ExportGenesis(ctx, app.appCodec)
+	genState, err := app.mm.ExportGenesisForModules(ctx, app.appCodec, modulesToExport)
+	if err != nil {
+		return servertypes.ExportedApp{}, err
+	}
 	appState, err := json.MarshalIndent(genState, "", "  ")
 	if err != nil {
 		return servertypes.ExportedApp{}, err
 	}
 
-	validators, err := staking.WriteValidators(ctx, *app.stakingKeeper)
+	validators, err := staking.WriteValidators(ctx, app.stakingKeeper)
 	return servertypes.ExportedApp{
 		AppState:        appState,
 		Validators:      validators,
@@ -95,7 +100,11 @@ func (app *Gravity) prepForZeroHeightGenesis(ctx sdk.Context, jailWhiteList []st
 
 	// withdraw all validator commission
 	app.stakingKeeper.IterateValidators(ctx, func(_ int64, val stakingtypes.ValidatorI) (stop bool) {
-		_, err := app.distrKeeper.WithdrawValidatorCommission(ctx, val.GetOperator())
+		valBz, err := app.stakingKeeper.ValidatorAddressCodec().StringToBytes(val.GetOperator())
+		if err != nil {
+			panic(err)
+		}
+		_, err = app.distrKeeper.WithdrawValidatorCommission(ctx, valBz)
 		if err != nil {
 			log.Fatal(err)
 		}
@@ -103,7 +112,10 @@ func (app *Gravity) prepForZeroHeightGenesis(ctx sdk.Context, jailWhiteList []st
 	})
 
 	// withdraw all delegator rewards
-	dels := app.stakingKeeper.GetAllDelegations(ctx)
+	dels, err := app.stakingKeeper.GetAllDelegations(ctx)
+	if err != nil {
+		panic(err)
+	}
 	for _, delegation := range dels {
 		valAddr, err := sdk.ValAddressFromBech32(delegation.ValidatorAddress)
 		if err != nil {
@@ -132,13 +144,20 @@ func (app *Gravity) prepForZeroHeightGenesis(ctx sdk.Context, jailWhiteList []st
 
 	// reinitialize all validators
 	app.stakingKeeper.IterateValidators(ctx, func(_ int64, val stakingtypes.ValidatorI) (stop bool) {
+		valBz, err := app.stakingKeeper.ValidatorAddressCodec().StringToBytes(val.GetOperator())
+		if err != nil {
+			panic(err)
+		}
 		// donate any unwithdrawn outstanding reward fraction tokens to the community pool
-		scraps := app.distrKeeper.GetValidatorOutstandingRewardsCoins(ctx, val.GetOperator())
+		scraps, err := app.distrKeeper.GetValidatorOutstandingRewardsCoins(ctx, valBz)
+		if err != nil {
+			panic(err)
+		}
 		feePool := app.distrKeeper.GetFeePool(ctx)
 		feePool.CommunityPool = feePool.CommunityPool.Add(scraps...)
 		app.distrKeeper.SetFeePool(ctx, feePool)
 
-		app.distrKeeper.Hooks().AfterValidatorCreated(ctx, val.GetOperator())
+		app.distrKeeper.Hooks().AfterValidatorCreated(ctx, valBz)
 		return false
 	})
 
@@ -182,7 +201,7 @@ func (app *Gravity) prepForZeroHeightGenesis(ctx sdk.Context, jailWhiteList []st
 	// Iterate through validators by power descending, reset bond heights, and
 	// update bond intra-tx counters.
 	store := ctx.KVStore(app.keys[stakingtypes.StoreKey])
-	iter := sdk.KVStoreReversePrefixIterator(store, stakingtypes.ValidatorsKey)
+	iter := storetypes.KVStoreReversePrefixIterator(store, stakingtypes.ValidatorsKey)
 	counter := int16(0)
 
 	for ; iter.Valid(); iter.Next() {
@@ -190,8 +209,8 @@ func (app *Gravity) prepForZeroHeightGenesis(ctx sdk.Context, jailWhiteList []st
 		if err := sdk.VerifyAddressFormat(addr); err != nil {
 			panic(errorsmod.Wrapf(err, "invalid validator found in store %v", addr))
 		}
-		validator, found := app.stakingKeeper.GetValidator(ctx, addr)
-		if !found {
+		validator, err := app.stakingKeeper.GetValidator(ctx, addr)
+		if err != nil {
 			panic("expected validator, not found")
 		}
 
@@ -206,7 +225,7 @@ func (app *Gravity) prepForZeroHeightGenesis(ctx sdk.Context, jailWhiteList []st
 
 	iter.Close()
 
-	_, err := app.stakingKeeper.ApplyAndReturnValidatorSetUpdates(ctx)
+	_, err = app.stakingKeeper.ApplyAndReturnValidatorSetUpdates(ctx)
 	if err != nil {
 		log.Fatal(err)
 	}

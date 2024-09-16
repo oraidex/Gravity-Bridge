@@ -57,21 +57,21 @@ func TestAddGenesisAccountCmd(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			home := t.TempDir()
 			logger := log.NewNopLogger()
-			cfg, err := genutiltest.CreateDefaultTendermintConfig(home)
+			cfg, err := genutiltest.CreateDefaultCometConfig(home)
 			require.NoError(t, err)
 
-			appCodec := simapp.MakeTestEncodingConfig()
-			err = genutiltest.ExecInitCmd(testMbm, home, appCodec.Marshaler)
+			appCodec := simapp.NewTestNetworkFixture().EncodingConfig.Codec
+			err = genutiltest.ExecInitCmd(testMbm, home, appCodec)
 			require.NoError(t, err)
 
 			serverCtx := server.NewContext(viper.New(), cfg, logger)
-			clientCtx := client.Context{}.WithCodec(appCodec.Marshaler).WithHomeDir(home)
+			clientCtx := client.Context{}.WithCodec(appCodec).WithHomeDir(home)
 
 			ctx := context.Background()
 			ctx = context.WithValue(ctx, client.ClientContextKey, &clientCtx)
 			ctx = context.WithValue(ctx, server.ServerContextKey, serverCtx)
 
-			cmd := simcmd.AddGenesisAccountCmd(home)
+			cmd := simcmd.NewRootCmd()
 			cmd.SetArgs([]string{
 				tc.addr,
 				tc.denom,
