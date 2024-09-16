@@ -36,13 +36,13 @@ func TestCosmosOriginated(t *testing.T) {
 }
 
 type testingVars struct {
-	erc20 string
-	denom string
-	input keeper.TestInput
-	ctx   sdk.Context
-	h     sdk.Handler
-	t     *testing.T
-	evm   types.EvmChain
+	erc20     string
+	denom     string
+	input     keeper.TestInput
+	ctx       sdk.Context
+	msgServer types.MsgServer
+	t         *testing.T
+	evm       types.EvmChain
 }
 
 func initializeTestingVars(t *testing.T) *testingVars {
@@ -55,7 +55,7 @@ func initializeTestingVars(t *testing.T) *testingVars {
 
 	tv.input, tv.ctx = keeper.SetupFiveValChain(t)
 	tv.evm = *tv.input.GravityKeeper.GetEvmChainData(tv.ctx, keeper.EthChainPrefix)
-	tv.h = NewHandler(tv.input.GravityKeeper)
+	tv.msgServer = keeper.NewMsgServerImpl(tv.input.GravityKeeper)
 
 	return &tv
 }
@@ -92,7 +92,7 @@ func addDenomToERC20Relation(tv *testingVars) {
 			Orchestrator:   v.String(),
 			EvmChainPrefix: tv.evm.EvmChainPrefix,
 		}
-		_, err := tv.h(tv.ctx, &ethClaim)
+		_, err := tv.msgServer.ERC20DeployedClaim(tv.ctx, &ethClaim)
 		require.NoError(tv.t, err)
 
 		// check if attestations persisted
@@ -152,7 +152,7 @@ func lockCoinsInModule(tv *testingVars) {
 		EvmChainPrefix: tv.evm.EvmChainPrefix,
 	}
 
-	_, err = tv.h(tv.ctx, msg)
+	_, err = tv.msgServer.SendToEth(tv.ctx, msg)
 	require.NoError(tv.t, err)
 
 	// Check that user balance has gone down
@@ -193,7 +193,7 @@ func acceptDepositEvent(tv *testingVars) {
 			EvmChainPrefix: tv.evm.EvmChainPrefix,
 		}
 
-		_, err := tv.h(tv.ctx, &ethClaim)
+		_, err := tv.msgServer.SendToCosmosClaim(tv.ctx, &ethClaim)
 		require.NoError(tv.t, err)
 		EndBlocker(tv.ctx, tv.input.GravityKeeper)
 
@@ -257,7 +257,7 @@ func addIbcDenomToERC20Relation(tv *testingVars) {
 			Orchestrator:   v.String(),
 			EvmChainPrefix: tv.evm.EvmChainPrefix,
 		}
-		_, err := tv.h(tv.ctx, &ethClaim)
+		_, err := tv.msgServer.ERC20DeployedClaim(tv.ctx, &ethClaim)
 		require.NoError(tv.t, err)
 
 		// check if attestations persisted

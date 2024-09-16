@@ -6,10 +6,10 @@ import (
 	"testing"
 
 	"cosmossdk.io/log"
+	"github.com/Gravity-Bridge/Gravity-Bridge/module/app"
 	"github.com/spf13/viper"
 	"github.com/stretchr/testify/require"
 
-	"cosmossdk.io/simapp"
 	simcmd "cosmossdk.io/simapp/simd/cmd"
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/client/flags"
@@ -60,7 +60,8 @@ func TestAddGenesisAccountCmd(t *testing.T) {
 			cfg, err := genutiltest.CreateDefaultCometConfig(home)
 			require.NoError(t, err)
 
-			appCodec := simapp.NewTestNetworkFixture().EncodingConfig.Codec
+			appCodec := app.MakeEncodingConfig().Marshaler
+
 			err = genutiltest.ExecInitCmd(testMbm, home, appCodec)
 			require.NoError(t, err)
 

@@ -915,7 +915,7 @@ func TestGetFees(t *testing.T) {
 
 	type batchFeesTuple struct {
 		batch        types.OutgoingTxBatch
-		expectedFees sdk.Int
+		expectedFees sdkmath.Int
 	}
 
 	batches := []batchFeesTuple{
