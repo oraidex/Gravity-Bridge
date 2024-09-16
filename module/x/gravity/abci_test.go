@@ -6,6 +6,7 @@ import (
 	"testing"
 	"time"
 
+	sdkmath "cosmossdk.io/math"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"golang.org/x/exp/slices"
@@ -86,7 +87,7 @@ func TestValsetSlashing_ValsetCreated_Before_ValidatorBonded(t *testing.T) {
 	EndBlocker(ctx, pk)
 
 	// ensure that the  validator who is bonded after valset is created is not slashed
-	val := input.StakingKeeper.Validator(ctx, keeper.ValAddrs[0])
+	val, _ := input.StakingKeeper.Validator(ctx, keeper.ValAddrs[0])
 	require.False(t, val.IsJailed())
 }
 
@@ -174,7 +175,7 @@ func TestNonValidatorValsetConfirm(t *testing.T) {
 	sh := staking.NewHandler(input.StakingKeeper)
 	_, err = sh(
 		input.Context,
-		keeper.NewTestMsgCreateValidator(valAddr, consPubKey, sdk.NewIntFromUint64(1)),
+		keeper.NewTestMsgCreateValidator(valAddr, consPubKey, sdkmath.NewIntFromUint64(1)),
 	)
 	require.NoError(t, err)
 	// Run the staking endblocker to ensure valset is correct in state
@@ -219,7 +220,7 @@ func TestNonValidatorValsetConfirm(t *testing.T) {
 	// Now remove all the stake
 	_, err = sh(
 		input.Context,
-		keeper.NewTestMsgUnDelegateValidator(valAddr, sdk.NewIntFromUint64(1)),
+		keeper.NewTestMsgUnDelegateValidator(valAddr, sdkmath.NewIntFromUint64(1)),
 	)
 	require.NoError(t, err)
 
@@ -331,7 +332,7 @@ func TestNonValidatorBatchConfirm(t *testing.T) {
 	sh := staking.NewHandler(input.StakingKeeper)
 	_, err = sh(
 		input.Context,
-		keeper.NewTestMsgCreateValidator(valAddr, consPubKey, sdk.NewIntFromUint64(1)),
+		keeper.NewTestMsgCreateValidator(valAddr, consPubKey, sdkmath.NewIntFromUint64(1)),
 	)
 	require.NoError(t, err)
 	// Run the staking endblocker to ensure valset is correct in state
@@ -387,7 +388,7 @@ func TestNonValidatorBatchConfirm(t *testing.T) {
 	// Now remove all the stake
 	_, err = sh(
 		input.Context,
-		keeper.NewTestMsgUnDelegateValidator(valAddr, sdk.NewIntFromUint64(1)),
+		keeper.NewTestMsgUnDelegateValidator(valAddr, sdkmath.NewIntFromUint64(1)),
 	)
 	require.NoError(t, err)
 
@@ -546,7 +547,7 @@ func TestBatchTimeout(t *testing.T) {
 		amountToken, err := types.NewInternalERC20Token(sdkmath.NewInt(int64(i+100)), myTokenContractAddr)
 		require.NoError(t, err)
 		amount := amountToken.GravityCoin(evmChain.EvmChainPrefix)
-		feeToken, err := types.NewInternalERC20Token(sdk.NewIntFromUint64(v), myTokenContractAddr)
+		feeToken, err := types.NewInternalERC20Token(sdkmath.NewIntFromUint64(v), myTokenContractAddr)
 		require.NoError(t, err)
 		fee := feeToken.GravityCoin(evmChain.EvmChainPrefix)
 
@@ -687,7 +688,7 @@ func TestSnapshotPruning(t *testing.T) {
 
 	var balances []*types.ERC20Token
 	for _, t := range tokens {
-		bal := types.ERC20Token{Contract: t.GetAddress().String(), Amount: sdk.OneInt()}
+		bal := types.ERC20Token{Contract: t.GetAddress().String(), Amount: sdkmath.OneInt()}
 		balances = append(balances, &bal)
 	}
 	slices.SortFunc(balances, func(a, b *types.ERC20Token) int {

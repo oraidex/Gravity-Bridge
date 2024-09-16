@@ -6,9 +6,7 @@ import (
 	"strings"
 
 	errorsmod "cosmossdk.io/errors"
-	storetypes "cosmossdk.io/store/types"
-	v1 "github.com/Gravity-Bridge/Gravity-Bridge/module/x/gravity/migrations/v1"
-	codectypes "github.com/cosmos/cosmos-sdk/codec/types"
+
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 
@@ -319,34 +317,9 @@ func (k Keeper) GetLastObservedEthBlock(
 	req *types.QueryLastObservedEthBlockRequest,
 ) (*types.QueryLastObservedEthBlockResponse, error) {
 	ctx := sdk.UnwrapSDKContext(c)
-
-	// Use the old locator pre-Mercury, when the keys changed to hashed strings
-	var ethHeight types.LastObservedEthereumBlockHeight
-	if req.UseV1Key {
-		ethHeight = k.GetOldLastObservedEthereumBlockHeight(ctx)
-	} else {
-		ethHeight = k.GetLastObservedEvmChainBlockHeight(ctx, req.EvmChainPrefix)
-	}
+	ethHeight := k.GetLastObservedEvmChainBlockHeight(ctx, req.EvmChainPrefix)
 
 	return &types.QueryLastObservedEthBlockResponse{Block: ethHeight.EthereumBlockHeight}, nil
-}
-
-func (k Keeper) GetOldLastObservedEthereumBlockHeight(ctx sdk.Context) types.LastObservedEthereumBlockHeight {
-	store := ctx.KVStore(k.storeKey)
-	bytes := store.Get([]byte(v1.LastObservedEthereumBlockHeightKey))
-
-	if len(bytes) == 0 {
-		return types.LastObservedEthereumBlockHeight{
-			CosmosBlockHeight:   0,
-			EthereumBlockHeight: 0,
-		}
-	}
-	height := types.LastObservedEthereumBlockHeight{
-		CosmosBlockHeight:   0,
-		EthereumBlockHeight: 0,
-	}
-	k.cdc.MustUnmarshal(bytes, &height)
-	return height
 }
 
 // GetLastObservedEthNonce queries the LastObservedEventNonce
@@ -356,25 +329,9 @@ func (k Keeper) GetLastObservedEthNonce(
 ) (*types.QueryLastObservedEthNonceResponse, error) {
 	ctx := sdk.UnwrapSDKContext(c)
 
-	// Use the old locator pre-Mercury, when the keys changed to hashed strings
-	var nonce uint64
-	if req.UseV1Key {
-		nonce = k.GetOldLastObservedEventNonce(ctx)
-	} else {
-		nonce = k.GetLastObservedEventNonce(ctx, req.EvmChainPrefix)
-	}
+	nonce := k.GetLastObservedEventNonce(ctx, req.EvmChainPrefix)
 
 	return &types.QueryLastObservedEthNonceResponse{Nonce: nonce}, nil
-}
-
-func (k Keeper) GetOldLastObservedEventNonce(ctx sdk.Context) uint64 {
-	store := ctx.KVStore(k.storeKey)
-	bytes := store.Get([]byte(v1.LastObservedEventNonceKey))
-
-	if len(bytes) == 0 {
-		return 0
-	}
-	return types.UInt64FromBytesUnsafe(bytes)
 }
 
 // GetAttestations queries the attestation map
@@ -383,14 +340,6 @@ func (k Keeper) GetAttestations(
 	req *types.QueryAttestationsRequest,
 ) (*types.QueryAttestationsResponse, error) {
 	ctx := sdk.UnwrapSDKContext(c)
-
-	// Use the old iterator pre-Mercury, when the keys changed to hashed strings
-	var iterator func(ctx sdk.Context, evmChainPrefix string, reverse bool, cb func([]byte, types.Attestation) bool)
-	if req.UseV1Key {
-		iterator = k.IterateOldAttestations
-	} else {
-		iterator = k.IterateAttestations
-	}
 
 	limit := req.Limit
 	if limit == 0 || limit > QUERY_ATTESTATIONS_LIMIT {
@@ -406,7 +355,7 @@ func (k Keeper) GetAttestations(
 	reverse := strings.EqualFold(req.OrderBy, "desc")
 	filter := req.Height > 0 || req.Nonce > 0 || req.ClaimType != ""
 
-	iterator(ctx, req.EvmChainPrefix, reverse, func(_ []byte, att types.Attestation) (abort bool) {
+	k.IterateAttestations(ctx, req.EvmChainPrefix, reverse, func(_ []byte, att types.Attestation) (abort bool) {
 		claim, err := k.UnpackAttestationClaim(&att)
 		if err != nil {
 			iterErr = errorsmod.Wrap(sdkerrors.ErrUnpackAny, "failed to unmarshal Ethereum claim")
@@ -448,42 +397,6 @@ func (k Keeper) GetAttestations(
 	}
 
 	return &types.QueryAttestationsResponse{Attestations: attestations}, nil
-}
-
-// This is the pre-Mercury Attestation iterator, which used an old prefix
-// _evmChainPrefix is just for migration
-func (k Keeper) IterateOldAttestations(ctx sdk.Context, _evmChainPrefix string, reverse bool, cb func([]byte, types.Attestation) bool) {
-	store := ctx.KVStore(k.storeKey)
-	prefix := v1.OracleAttestationKey
-
-	var iter storetypes.Iterator
-	if reverse {
-		iter = store.ReverseIterator(prefixRange([]byte(prefix)))
-	} else {
-		iter = store.Iterator(prefixRange([]byte(prefix)))
-	}
-	defer iter.Close()
-
-	for ; iter.Valid(); iter.Next() {
-		att := types.Attestation{
-			Observed: false,
-			Votes:    []string{},
-			Height:   0,
-			Claim: &codectypes.Any{
-				TypeUrl:              "",
-				Value:                []byte{},
-				XXX_NoUnkeyedLiteral: struct{}{},
-				XXX_unrecognized:     []byte{},
-				XXX_sizecache:        0,
-			},
-		}
-		k.cdc.MustUnmarshal(iter.Value(), &att)
-
-		// cb returns true to stop early
-		if cb(iter.Key(), att) {
-			return
-		}
-	}
 }
 
 func (k Keeper) GetDelegateKeyByValidator(

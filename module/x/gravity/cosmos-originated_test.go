@@ -3,6 +3,7 @@ package gravity
 import (
 	"testing"
 
+	sdkmath "cosmossdk.io/math"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -121,10 +122,10 @@ func lockCoinsInModule(tv *testingVars) {
 	var (
 		userCosmosAddr, err             = sdk.AccAddressFromBech32("gravity1990z7dqsvh8gthw9pa5sn4wuy2xrsd80lcx6lv")
 		denom                           = "ugraviton"
-		startingCoinAmount  sdkmath.Int = sdk.NewIntFromUint64(150)
-		sendAmount          sdkmath.Int = sdk.NewIntFromUint64(50)
-		feeAmount           sdkmath.Int = sdk.NewIntFromUint64(5)
-		chainFeeAmount      sdkmath.Int = sdk.NewIntFromUint64(0)
+		startingCoinAmount  sdkmath.Int = sdkmath.NewIntFromUint64(150)
+		sendAmount          sdkmath.Int = sdkmath.NewIntFromUint64(50)
+		feeAmount           sdkmath.Int = sdkmath.NewIntFromUint64(5)
+		chainFeeAmount      sdkmath.Int = sdkmath.NewIntFromUint64(0)
 		startingCoins       sdk.Coins   = sdk.Coins{sdk.NewCoin(denom, startingCoinAmount)}
 		sendingCoin         sdk.Coin    = sdk.NewCoin(denom, sendAmount)
 		feeCoin             sdk.Coin    = sdk.NewCoin(denom, feeAmount)
@@ -211,7 +212,7 @@ func acceptDepositEvent(tv *testingVars) {
 	// Check that gravity balance has gone down
 	gravityAddr := tv.input.AccountKeeper.GetModuleAddress(types.ModuleName)
 	assert.Equal(tv.t,
-		sdk.Coins{sdk.NewCoin(tv.denom, sdk.NewIntFromUint64(55).Sub(myErc20.Amount))},
+		sdk.Coins{sdk.NewCoin(tv.denom, sdkmath.NewIntFromUint64(55).Sub(myErc20.Amount))},
 		tv.input.BankKeeper.GetAllBalances(tv.ctx, gravityAddr),
 	)
 }

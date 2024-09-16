@@ -5,6 +5,7 @@ import (
 	"testing"
 	"time"
 
+	sdkmath "cosmossdk.io/math"
 	"github.com/Gravity-Bridge/Gravity-Bridge/module/x/gravity/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	bankkeeper "github.com/cosmos/cosmos-sdk/x/bank/keeper"
@@ -47,7 +48,7 @@ func TestModuleBalanceUnbatchedTxs(t *testing.T) {
 		amountToken, err := types.NewInternalERC20Token(sdkmath.NewInt(int64(i+100)), myTokenContractAddr)
 		require.NoError(t, err)
 		amount := amountToken.GravityCoin(evmChain.EvmChainPrefix)
-		feeToken, err := types.NewInternalERC20Token(sdk.NewIntFromUint64(v), myTokenContractAddr)
+		feeToken, err := types.NewInternalERC20Token(sdkmath.NewIntFromUint64(v), myTokenContractAddr)
 		require.NoError(t, err)
 		fee := feeToken.GravityCoin(evmChain.EvmChainPrefix)
 
@@ -130,7 +131,7 @@ func TestModuleBalanceBatchedTxs(t *testing.T) {
 			amountToken, err := types.NewInternalERC20Token(sdkmath.NewInt(int64(i+100)), tok.Contract.GetAddress().Hex())
 			require.NoError(t, err)
 			amount := amountToken.GravityCoin(evmChain.EvmChainPrefix)
-			feeToken, err := types.NewInternalERC20Token(sdk.NewIntFromUint64(v), tok.Contract.GetAddress().Hex())
+			feeToken, err := types.NewInternalERC20Token(sdkmath.NewIntFromUint64(v), tok.Contract.GetAddress().Hex())
 			require.NoError(t, err)
 			fee := feeToken.GravityCoin(evmChain.EvmChainPrefix)
 

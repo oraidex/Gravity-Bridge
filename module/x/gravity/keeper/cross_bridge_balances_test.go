@@ -5,6 +5,7 @@ import (
 	"strings"
 	"testing"
 
+	sdkmath "cosmossdk.io/math"
 	"github.com/stretchr/testify/require"
 	"golang.org/x/exp/slices"
 
@@ -23,7 +24,7 @@ func TestGetBridgeBalanceSnapshots(t *testing.T) {
 
 	var balances []*types.ERC20Token
 	for _, t := range tokens {
-		bal := types.ERC20Token{Contract: t.GetAddress().String(), Amount: sdk.OneInt()}
+		bal := types.ERC20Token{Contract: t.GetAddress().String(), Amount: sdkmath.OneInt()}
 		balances = append(balances, &bal)
 	}
 	// The balances which

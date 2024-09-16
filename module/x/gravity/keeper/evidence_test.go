@@ -7,6 +7,7 @@ import (
 
 	"bytes"
 
+	sdkmath "cosmossdk.io/math"
 	"github.com/Gravity-Bridge/Gravity-Bridge/module/x/gravity/types"
 	codectypes "github.com/cosmos/cosmos-sdk/codec/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -51,7 +52,7 @@ func TestSubmitBadSignatureEvidenceBatchExists(t *testing.T) {
 		amountToken, err := types.NewInternalERC20Token(sdkmath.NewInt(int64(i+100)), myTokenContractAddr)
 		require.NoError(t, err)
 		amount := amountToken.GravityCoin(evmChain.EvmChainPrefix)
-		feeToken, err := types.NewInternalERC20Token(sdk.NewIntFromUint64(v), myTokenContractAddr)
+		feeToken, err := types.NewInternalERC20Token(sdkmath.NewIntFromUint64(v), myTokenContractAddr)
 		require.NoError(t, err)
 		fee := feeToken.GravityCoin(evmChain.EvmChainPrefix)
 
@@ -175,6 +176,6 @@ func TestSubmitBadSignatureEvidenceSlash(t *testing.T) {
 	err = input.GravityKeeper.CheckBadSignatureEvidence(ctx, &msg)
 	require.NoError(t, err)
 
-	val := input.StakingKeeper.Validator(ctx, ValAddrs[0])
+	val, _ := input.StakingKeeper.Validator(ctx, ValAddrs[0])
 	require.True(t, val.IsJailed())
 }

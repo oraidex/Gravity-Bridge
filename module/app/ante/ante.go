@@ -1,6 +1,7 @@
 package ante
 
 import (
+	errorsmod "cosmossdk.io/errors"
 	feegrantkeeper "cosmossdk.io/x/feegrant/keeper"
 	"github.com/Gravity-Bridge/Gravity-Bridge/module/x/gravity/keeper"
 	"github.com/cosmos/cosmos-sdk/codec"
@@ -35,7 +36,7 @@ func NewAnteHandler(
 	}
 
 	// Create additional AnteDecorators to chain together
-	ibcAnteDecorator := ibcante.NewAnteDecorator(ibcKeeper)
+	ibcAnteDecorator := ibcante.NewRedundantRelayDecorator(ibcKeeper)
 	minCommissionDecorator := NewMinCommissionDecorator(cdc)
 
 	addlDecorators := []sdk.AnteDecorator{ibcAnteDecorator, minCommissionDecorator}

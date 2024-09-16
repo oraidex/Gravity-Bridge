@@ -6,7 +6,6 @@ import (
 
 	errorsmod "cosmossdk.io/errors"
 	sdkmath "cosmossdk.io/math"
-	v3 "github.com/Gravity-Bridge/Gravity-Bridge/module/x/gravity/migrations/v3"
 	"github.com/Gravity-Bridge/Gravity-Bridge/module/x/gravity/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
@@ -190,7 +189,7 @@ func (k Keeper) HandleRemoveEvmChainProposal(ctx sdk.Context, p *types.RemoveEvm
 
 	params.EvmChainParams = evmChainParams
 	k.SetParams(ctx, params)
-	return v3.RemoveEvmChainFromStore(ctx, k.storeKey, k.cdc, p.EvmChainPrefix)
+	return RemoveEvmChainFromStore(ctx, k.storeKey, k.cdc, p.EvmChainPrefix)
 }
 
 // Iterate over all attestations currently being voted on in order of nonce

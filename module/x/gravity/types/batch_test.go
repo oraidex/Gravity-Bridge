@@ -4,6 +4,7 @@ import (
 	"encoding/hex"
 	"testing"
 
+	sdkmath "cosmossdk.io/math"
 	_ "github.com/Gravity-Bridge/Gravity-Bridge/module/config"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/stretchr/testify/assert"
@@ -13,7 +14,7 @@ import (
 // TestOutgoingTxBatchCheckpointGold1 tests an outgoing tx batch checkpoint
 // nolint: exhaustruct
 func TestOutgoingTxBatchCheckpointGold1(t *testing.T) {
-	senderAddr, err := sdk.AccAddressFromHex("527FBEE652609AB150F0AEE9D61A2F76CFC4A73E")
+	senderAddr, err := sdk.AccAddressFromHexUnsafe("527FBEE652609AB150F0AEE9D61A2F76CFC4A73E")
 	require.NoError(t, err)
 	var (
 		erc20Addr = "0x835973768750b3ED2D5c3EF5AdcD5eDb44d12aD4"
@@ -63,7 +64,7 @@ func TestOutgoingLogicCallCheckpointGold1(t *testing.T) {
 
 	token := []ERC20Token{{
 		Contract: "0xC26eFfa98B8A2632141562Ae7E34953Cfe5B4888",
-		Amount:   sdk.NewIntFromUint64(1),
+		Amount:   sdkmath.NewIntFromUint64(1),
 	}}
 	call := OutgoingLogicCall{
 		Transfers:            token,

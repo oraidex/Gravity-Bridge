@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"testing"
 
+	sdkmath "cosmossdk.io/math"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/stretchr/testify/require"
@@ -526,7 +527,7 @@ func TestExpectedSupplyChange(t *testing.T) {
 		EthBlockHeight: 1011,
 		EvmChainPrefix: EthChainPrefix,
 		Members:        []types.BridgeValidator{},
-		RewardAmount:   sdk.NewIntFromUint64(123),
+		RewardAmount:   sdkmath.NewIntFromUint64(123),
 		RewardToken:    TokenContractAddrs[2],
 		Orchestrator:   OrchAddrs[0].String(),
 	}

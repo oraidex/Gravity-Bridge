@@ -113,7 +113,7 @@ func TestValsetPowerDiff(t *testing.T) {
 				{Power: 291759231, EthereumAddress: "0xF14879a175A2F1cEFC7c616f35b6d9c2b0Fd8326"},
 				{Power: 6785098, EthereumAddress: "0x37A0603dA2ff6377E5C7f75698dabA8EE4Ba97B8"},
 			},
-			exp: sdk.MustNewDecFromStr("0.010000000011641532"),
+			exp: sdkmath.LegacyMustNewDecFromStr("0.010000000011641532"),
 		},
 	}
 	for msg, spec := range specs {

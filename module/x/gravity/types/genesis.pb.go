@@ -74,11 +74,11 @@ type Params struct {
 	SignedLogicCallsWindow       uint64                                 `protobuf:"varint,3,opt,name=signed_logic_calls_window,json=signedLogicCallsWindow,proto3" json:"signed_logic_calls_window,omitempty"`
 	TargetBatchTimeout           uint64                                 `protobuf:"varint,4,opt,name=target_batch_timeout,json=targetBatchTimeout,proto3" json:"target_batch_timeout,omitempty"`
 	AverageBlockTime             uint64                                 `protobuf:"varint,5,opt,name=average_block_time,json=averageBlockTime,proto3" json:"average_block_time,omitempty"`
-	SlashFractionValset          sdkmath.LegacyDec `protobuf:"bytes,6,opt,name=slash_fraction_valset,json=slashFractionValset,proto3,customtype=github.com/cosmos/cosmos-sdk/types.Dec" json:"slash_fraction_valset"`
-	SlashFractionBatch           sdkmath.LegacyDec `protobuf:"bytes,7,opt,name=slash_fraction_batch,json=slashFractionBatch,proto3,customtype=github.com/cosmos/cosmos-sdk/types.Dec" json:"slash_fraction_batch"`
-	SlashFractionLogicCall       sdkmath.LegacyDec `protobuf:"bytes,8,opt,name=slash_fraction_logic_call,json=slashFractionLogicCall,proto3,customtype=github.com/cosmos/cosmos-sdk/types.Dec" json:"slash_fraction_logic_call"`
+	SlashFractionValset          sdkmath.LegacyDec `protobuf:"bytes,6,opt,name=slash_fraction_valset,json=slashFractionValset,proto3,customtype=github.com/cosmos/cosmos-sdk/sdkmath.LegacyDec" json:"slash_fraction_valset"`
+	SlashFractionBatch           sdkmath.LegacyDec `protobuf:"bytes,7,opt,name=slash_fraction_batch,json=slashFractionBatch,proto3,customtype=github.com/cosmos/cosmos-sdk/sdkmath.LegacyDec" json:"slash_fraction_batch"`
+	SlashFractionLogicCall       sdkmath.LegacyDec `protobuf:"bytes,8,opt,name=slash_fraction_logic_call,json=slashFractionLogicCall,proto3,customtype=github.com/cosmos/cosmos-sdk/sdkmath.LegacyDec" json:"slash_fraction_logic_call"`
 	UnbondSlashingValsetsWindow  uint64                                 `protobuf:"varint,9,opt,name=unbond_slashing_valsets_window,json=unbondSlashingValsetsWindow,proto3" json:"unbond_slashing_valsets_window,omitempty"`
-	SlashFractionBadEthSignature sdkmath.LegacyDec `protobuf:"bytes,10,opt,name=slash_fraction_bad_eth_signature,json=slashFractionBadEthSignature,proto3,customtype=github.com/cosmos/cosmos-sdk/types.Dec" json:"slash_fraction_bad_eth_signature"`
+	SlashFractionBadEthSignature sdkmath.LegacyDec `protobuf:"bytes,10,opt,name=slash_fraction_bad_eth_signature,json=slashFractionBadEthSignature,proto3,customtype=github.com/cosmos/cosmos-sdk/sdkmath.LegacyDec" json:"slash_fraction_bad_eth_signature"`
 	ValsetReward                 types.Coin                             `protobuf:"bytes,11,opt,name=valset_reward,json=valsetReward,proto3" json:"valset_reward"`
 	MinChainFeeBasisPoints       uint64                                 `protobuf:"varint,12,opt,name=min_chain_fee_basis_points,json=minChainFeeBasisPoints,proto3" json:"min_chain_fee_basis_points,omitempty"`
 	EvmChainParams               []*EvmChainParam                       `protobuf:"bytes,13,rep,name=evm_chain_params,json=evmChainParams,proto3" json:"evm_chain_params,omitempty"`
