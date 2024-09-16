@@ -11,10 +11,14 @@ import (
 	dbm "github.com/cosmos/cosmos-db"
 
 	"github.com/cosmos/cosmos-sdk/codec"
-	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/kv"
 	"github.com/cosmos/cosmos-sdk/types/module"
 	simtypes "github.com/cosmos/cosmos-sdk/types/simulation"
+)
+
+// SimAppChainID hardcoded chainID for simulation
+var (
+	SimAppChainID = "simulation-app"
 )
 
 // SetupSimulation creates the config, db (levelDB), temporary directory and logger for
@@ -46,7 +50,7 @@ func SetupSimulation(dirPrefix, dbName string) (simtypes.Config, dbm.DB, string,
 
 	var logger log.Logger
 	if FlagVerboseValue {
-		logger = log.TestingLogger()
+		logger = log.NewLogger(os.Stdout)
 	} else {
 		logger = log.NewNopLogger()
 	}
@@ -56,7 +60,7 @@ func SetupSimulation(dirPrefix, dbName string) (simtypes.Config, dbm.DB, string,
 		return simtypes.Config{}, nil, "", nil, false, err
 	}
 
-	db, err := sdk.NewLevelDB(dbName, dir)
+	db, err := dbm.NewDB(dbName, dbm.BackendType(config.DBBackend), dir)
 	if err != nil {
 		return simtypes.Config{}, nil, "", nil, false, err
 	}
@@ -73,12 +77,9 @@ func SimulationOperations(app Gravity, cdc codec.JSONCodec, config simtypes.Conf
 		Rand:         &rand.Rand{},
 		GenState:     map[string]json.RawMessage{},
 		Accounts:     []simtypes.Account{},
-		InitialStake: 0,
 		NumBonded:    0,
 		GenTimestamp: time.Time{},
 		UnbondTime:   0,
-		ParamChanges: []simtypes.ParamChange{},
-		Contents:     []simtypes.WeightedProposalContent{},
 	}
 
 	if config.ParamsFile != "" {
@@ -93,8 +94,6 @@ func SimulationOperations(app Gravity, cdc codec.JSONCodec, config simtypes.Conf
 		}
 	}
 
-	simState.ParamChanges = app.SimulationManager().GenerateParamChanges(config.Seed)
-	simState.Contents = app.SimulationManager().GetProposalContents(simState)
 	return app.SimulationManager().WeightedOperations(simState)
 }
 
@@ -105,7 +104,7 @@ func CheckExportSimulation(
 ) error {
 	if config.ExportStatePath != "" {
 		fmt.Println("exporting app state...")
-		exported, err := app.ExportAppStateAndValidators(false, nil)
+		exported, err := app.ExportAppStateAndValidators(false, nil, nil)
 		if err != nil {
 			return err
 		}
@@ -138,7 +137,7 @@ func PrintStats(db dbm.DB) {
 
 // GetSimulationLog unmarshals the KVPair's Value to the corresponding type based on the
 // each's module store key and the prefix bytes of the KVPair's key.
-func GetSimulationLog(storeName string, sdr sdk.StoreDecoderRegistry, kvAs, kvBs []kv.Pair) (log string) {
+func GetSimulationLog(storeName string, sdr simtypes.StoreDecoderRegistry, kvAs, kvBs []kv.Pair) (log string) {
 	for i := 0; i < len(kvAs); i++ {
 		if len(kvAs[i].Value) == 0 && len(kvBs[i].Value) == 0 {
 			// skip if the value doesn't have any bytes

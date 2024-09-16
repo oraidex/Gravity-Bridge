@@ -153,9 +153,12 @@ func (app *Gravity) prepForZeroHeightGenesis(ctx sdk.Context, jailWhiteList []st
 		if err != nil {
 			panic(err)
 		}
-		feePool := app.distrKeeper.GetFeePool(ctx)
+		feePool, err := app.distrKeeper.FeePool.Get(ctx)
+		if err != nil {
+			panic(err)
+		}
 		feePool.CommunityPool = feePool.CommunityPool.Add(scraps...)
-		app.distrKeeper.SetFeePool(ctx, feePool)
+		app.distrKeeper.FeePool.Set(ctx, feePool)
 
 		app.distrKeeper.Hooks().AfterValidatorCreated(ctx, valBz)
 		return false
