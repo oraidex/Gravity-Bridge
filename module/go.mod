@@ -22,7 +22,6 @@ require (
 	github.com/grpc-ecosystem/grpc-gateway v1.16.0
 	github.com/pkg/errors v0.9.1
 	github.com/rakyll/statik v0.1.7
-	github.com/regen-network/cosmos-proto v0.3.1
 	github.com/spf13/cast v1.6.0
 	github.com/spf13/cobra v1.8.1
 	github.com/spf13/viper v1.19.0
@@ -108,10 +107,10 @@ require (
 	cosmossdk.io/api v0.7.5 // indirect
 	cosmossdk.io/client/v2 v2.0.0-beta.1 // indirect
 	cosmossdk.io/collections v0.4.0 // indirect
-	cosmossdk.io/core v0.12.0 // indirect
-	cosmossdk.io/errors v1.0.1 // indirect
-	cosmossdk.io/log v1.4.1 // indirect
-	cosmossdk.io/math v1.3.0 // indirect
+	cosmossdk.io/core v0.12.0
+	cosmossdk.io/errors v1.0.1
+	cosmossdk.io/log v1.4.1
+	cosmossdk.io/math v1.3.0
 	cosmossdk.io/simapp v0.0.0-20231103111158-e83a20081ced
 	cosmossdk.io/store v1.1.0
 	cosmossdk.io/tools/confix v0.1.2 // indirect
@@ -232,7 +231,7 @@ require (
 	golang.org/x/sys v0.23.0 // indirect
 	golang.org/x/term v0.20.0 // indirect
 	golang.org/x/text v0.15.0 // indirect
-	google.golang.org/protobuf v1.34.1 // indirect
+	google.golang.org/protobuf v1.34.1
 	gopkg.in/ini.v1 v1.67.0 // indirect
 	gopkg.in/natefinch/npipe.v2 v2.0.0-20160621034901-c1b8fa8bdcce // indirect
 	gopkg.in/yaml.v2 v2.4.0 // indirect
@@ -247,7 +246,7 @@ replace (
 	github.com/cometbft/cometbft => github.com/oraichain/cometbft v0.38.6-0.20240729034548-028d4fcc0fa4
 
 	// Use cosmos-sdk of Oraichain fork
-	github.com/cosmos/cosmos-sdk => github.com/oraichain/cosmos-sdk v0.50.5-0.20240729032658-16fb0ec0a540
+	github.com/cosmos/cosmos-sdk => github.com/oraichain/cosmos-sdk v0.50.5-0.20240829195733-cae2f186c240
 
 	// Althea-net fork removes ibc-go v3 dep, tendermint->cometbft issue
 	github.com/evmos/ethermint => github.com/oraichain/ethermint-cosmos-0.50 v0.0.0-20240820030038-16633cbcf8a4

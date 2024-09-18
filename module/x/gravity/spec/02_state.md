@@ -67,24 +67,24 @@ message Params {
   // refer to not submitting a particular message, the fourth for submitting a different claim
   // for the same Ethereum event
   bytes  slash_fraction_valset       = 13 [
-    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/sdkmath.LegacyDec",
+    (gogoproto.customtype) = "cosmossdk.io/math.LegacyDec",
     (gogoproto.nullable)   = false
   ];
   bytes slash_fraction_batch = 14 [
-    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/sdkmath.LegacyDec",
+    (gogoproto.customtype) = "cosmossdk.io/math.LegacyDec",
     (gogoproto.nullable)   = false
   ];
   bytes slash_fraction_claim = 15 [
-    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/sdkmath.LegacyDec",
+    (gogoproto.customtype) = "cosmossdk.io/math.LegacyDec",
     (gogoproto.nullable)   = false
   ];
   bytes slash_fraction_conflicting_claim = 16 [
-    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/sdkmath.LegacyDec",
+    (gogoproto.customtype) = "cosmossdk.io/math.LegacyDec",
     (gogoproto.nullable)   = false
   ];
   uint64 unbond_slashing_valsets_window = 17;
   bytes slash_fraction_bad_eth_signature = 18 [
-    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/sdkmath.LegacyDec",
+    (gogoproto.customtype) = "cosmossdk.io/math.LegacyDec",
     (gogoproto.nullable)   = false
   ];
 }

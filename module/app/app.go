@@ -112,7 +112,7 @@ import (
 
 	// unnamed import of statik for swagger UI support
 	// _ "github.com/cosmos/cosmos-sdk/client/docs/statik"
-	_ "github.com/Gravity-Bridge/Gravity-Bridge/module/doc/statik"
+	_ "github.com/Gravity-Bridge/Gravity-Bridge/module/docs/statik"
 
 	// Tharsis Ethermint
 	ethante "github.com/evmos/ethermint/app/ante"

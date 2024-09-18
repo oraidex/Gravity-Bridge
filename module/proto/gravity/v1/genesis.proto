@@ -96,20 +96,20 @@ message Params {
   uint64 target_batch_timeout = 4;
   uint64 average_block_time = 5;
   bytes slash_fraction_valset = 6 [
-    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/sdkmath.LegacyDec",
+    (gogoproto.customtype) = "cosmossdk.io/math.LegacyDec",
     (gogoproto.nullable) = false
   ];
   bytes slash_fraction_batch = 7 [
-    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/sdkmath.LegacyDec",
+    (gogoproto.customtype) = "cosmossdk.io/math.LegacyDec",
     (gogoproto.nullable) = false
   ];
   bytes slash_fraction_logic_call = 8 [
-    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/sdkmath.LegacyDec",
+    (gogoproto.customtype) = "cosmossdk.io/math.LegacyDec",
     (gogoproto.nullable) = false
   ];
   uint64 unbond_slashing_valsets_window = 9;
   bytes slash_fraction_bad_eth_signature = 10 [
-    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/sdkmath.LegacyDec",
+    (gogoproto.customtype) = "cosmossdk.io/math.LegacyDec",
     (gogoproto.nullable) = false
   ];
   cosmos.base.v1beta1.Coin valset_reward = 11 [ (gogoproto.nullable) = false ];

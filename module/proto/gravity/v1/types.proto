@@ -22,7 +22,7 @@ message Valset {
   repeated BridgeValidator members = 2 [ (gogoproto.nullable) = false ];
   uint64 height = 3;
   string reward_amount = 4 [
-    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Int",
+    (gogoproto.customtype) = "cosmossdk.io/math.Int",
     (gogoproto.nullable) = false
   ];
   // the reward token in it's Ethereum hex address representation
@@ -156,7 +156,8 @@ message PendingIbcAutoForward {
                                // not preserve foreign prefixes
   cosmos.base.v1beta1.Coin token = 2; // the token sent from ethereum to the
                                       // ibc-enabled chain over `IbcChannel`
-  string ibc_channel = 3; // the IBC channel to send `Amount` over via ibc-transfer module
+  string ibc_channel =
+      3; // the IBC channel to send `Amount` over via ibc-transfer module
   uint64 event_nonce = 4; // the EventNonce from the MsgSendToCosmosClaim, used
                           // for ordering the queue
 }

@@ -201,7 +201,7 @@ message MsgSendToCosmosClaim {
   uint64 eth_block_height = 2;
   string token_contract = 3;
   string amount = 4 [
-    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Int",
+    (gogoproto.customtype) = "cosmossdk.io/math.Int",
     (gogoproto.nullable) = false
   ];
   string ethereum_sender = 5;
@@ -277,7 +277,7 @@ message MsgValsetUpdatedClaim {
   uint64 eth_block_height = 3;
   repeated BridgeValidator members = 4 [ (gogoproto.nullable) = false ];
   string reward_amount = 5 [
-    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Int",
+    (gogoproto.customtype) = "cosmossdk.io/math.Int",
     (gogoproto.nullable) = false
   ];
   string reward_token = 6;
