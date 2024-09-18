@@ -265,7 +265,6 @@ func TestInvalidHeight(t *testing.T) {
 	err = bad.ValidateBasic()
 	require.NoError(t, err)
 
-	context := sdk.WrapSDKContext(ctx)
 	log.Info("Submitting bad eth claim from orchestrator 0", "orch", orch0.String(), "val", val0.String())
 
 	// BatchSendToEthClaim is supposed to panic and fail the message execution, set up a defer recover to catch it
@@ -276,7 +275,7 @@ func TestInvalidHeight(t *testing.T) {
 			panic("Expected to find a panic coming from BatchSendToEthClaim()!")
 		}
 	}()
-	_, err = msgServer.BatchSendToEthClaim(context, &bad)
+	_, err = msgServer.BatchSendToEthClaim(ctx, &bad)
 	require.NoError(t, err)
 
 	// Assert that there is no attestation since the above panicked
