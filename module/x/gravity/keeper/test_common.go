@@ -219,7 +219,7 @@ var (
 	TokenContracts []types.EthAddress = make([]types.EthAddress, len(TokenContractAddrs))
 
 	// InitTokens holds the number of tokens to initialize an account with
-	InitTokens = sdk.TokensFromConsensusPower(110, sdk.DefaultPowerReduction)
+	InitTokens = sdk.TokensFromConsensusPower(110_000_000, sdk.DefaultPowerReduction)
 
 	// InitCoins holds the number of coins to initialize an account with
 	InitCoins = sdk.NewCoins(sdk.NewCoin(TestingStakeParams.BondDenom, InitTokens))
@@ -558,10 +558,15 @@ func CreateTestEnv(t *testing.T) TestInput {
 
 			require.NoError(t, err)
 		}
-		accountKeeper.SetModuleAccount(ctx, mod)
+
+		if accountKeeper.GetModuleAccount(ctx, mod.Name) == nil {
+			accountKeeper.SetModuleAccount(ctx, mod)
+		}
+
 	}
 
 	stakeAddr := authtypes.NewModuleAddress(stakingtypes.BondedPoolName)
+	println("addr", stakeAddr.String())
 	moduleAcct := accountKeeper.GetAccount(ctx, stakeAddr)
 	require.NotNil(t, moduleAcct)
 

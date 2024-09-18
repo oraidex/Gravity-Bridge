@@ -42,3 +42,6 @@ tmp
 yarn-error.log
 .scannerwork/
 .env
+
+debug_container.dot
+debug_container.log
