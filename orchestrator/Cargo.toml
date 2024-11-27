@@ -15,7 +15,7 @@ default-members = ["gbt"]
 resolver = "2"
 
 [workspace.dependencies]
-web30 = { git = "https://github.com/oraichain/web30.git", rev = "54d1fc3" }
+web30 = { git = "https://github.com/oraichain/web30.git", rev = "cd50ba3cac529b9e97e8aad63f2d7e637347b6d5" }
 deep_space = { git = "https://github.com/oraichain/deep_space.git", rev = "a2e1353" }
 cosmos-sdk-proto = { git = "https://github.com/oraichain/cosmos-rust", rev = "19f3de7", package = "cosmos-sdk-proto-althea" }
 
