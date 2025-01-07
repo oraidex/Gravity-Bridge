@@ -289,11 +289,6 @@ func (k Keeper) logEmitIbcForwardSuccessEvent(
 	ctx.EventManager().EmitEvents(sdk.Events{
 		sdk.NewEvent(
 			types.EventTypeSendToCosmosIbcAutoForward,
-			sdk.NewAttribute(types.AttributeKeyNonce, fmt.Sprint(forward.EventNonce)),
-			sdk.NewAttribute(types.AttributeKeyReceiverAddress, forward.ForeignReceiver),
-			sdk.NewAttribute(types.AttributeKeyTokenDenom, forward.Token.Denom),
-			sdk.NewAttribute(types.AttributeKeyAmount, forward.Token.Amount.String()),
-			sdk.NewAttribute(types.AttributeKeyIbcAutoForwardChannel, forward.IbcChannel),
 			sdk.NewAttribute(types.AttributeKeyIbcAutoForwardSequence, strconv.FormatUint(msgTransferResponse.Sequence, 10)),
 		),
 	})
