@@ -29,11 +29,11 @@ const (
 	AttributeKeyInvalidationNonce      = "logic_call_invalidation_nonce"
 	AttributeKeyBadEthSignature        = "bad_eth_signature"
 	AttributeKeyBadEthSignatureSubject = "bad_eth_signature_subject"
-	AttributeKeyReceiverAddress        = "receiver"
-	AttributeKeyTokenDenom             = "denom"
-	AttributeKeyAmount                 = "amount"
-	AttributeKeyIbcAutoForwardChannel  = "channel"
-	AttributeKeyIbcAutoForwardSequence = "packet_sequence"
+
+	AttributeKeyIbcAutoForwardChannel    = "channel"
+	AttributeKeyIbcAutoForwardSequence   = "packet_sequence"
+	AttributeKeyIbcAutoForwardSrcPort    = "packet_src_port"
+	AttributeKeyIbcAutoForwardSrcChannel = "packet_src_channel"
 
 	AttributeKeySendToCosmosAmount = "msg_send_to_cosmsos_amount"
 	AttributeKeySendToCosmosNonce  = "msg_send_to_cosmsos_nonce"

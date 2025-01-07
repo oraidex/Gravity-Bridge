@@ -211,7 +211,13 @@ func (k Keeper) ProcessNextPendingIbcAutoForward(ctx sdk.Context, evmChainPrefix
 
 	// Log + emit event
 	if recoverableErr == nil {
-		k.logEmitIbcForwardSuccessEvent(ctx, *forward, msgTransfer, msgResponse)
+		k.logEmitIbcForwardSuccessEvent(
+			ctx,
+			strconv.Itoa(int(k.GetBridgeChainID(ctx, evmChainPrefix))), // we want to check that tx bridge from
+			*forward,
+			msgTransfer,
+			msgResponse,
+		)
 	} else {
 		// Funds have already been sent to the fallback user, emit a failure log
 		/*
@@ -267,6 +273,7 @@ func thirtyDaysInFuture(ctx sdk.Context) time.Time {
 // EventSendToCosmosExecutedIbcAutoForward type event
 func (k Keeper) logEmitIbcForwardSuccessEvent(
 	ctx sdk.Context,
+	bridgeChainId string,
 	forward types.PendingIbcAutoForward,
 	msgTransfer ibctransfertypes.MsgTransfer,
 	msgTransferResponse *ibctransfertypes.MsgTransferResponse,
@@ -289,7 +296,11 @@ func (k Keeper) logEmitIbcForwardSuccessEvent(
 	ctx.EventManager().EmitEvents(sdk.Events{
 		sdk.NewEvent(
 			types.EventTypeSendToCosmosIbcAutoForward,
+			sdk.NewAttribute(types.AttributeKeyBridgeChainID, bridgeChainId),
+			sdk.NewAttribute(types.AttributeKeyBatchNonce, fmt.Sprint(forward.EventNonce)),
 			sdk.NewAttribute(types.AttributeKeyIbcAutoForwardSequence, strconv.FormatUint(msgTransferResponse.Sequence, 10)),
+			sdk.NewAttribute(types.AttributeKeyIbcAutoForwardSrcPort, msgTransfer.SourcePort),
+			sdk.NewAttribute(types.AttributeKeyIbcAutoForwardSrcChannel, msgTransfer.SourceChannel),
 		),
 	})
 }
