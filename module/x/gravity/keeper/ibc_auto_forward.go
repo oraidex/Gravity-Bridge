@@ -12,6 +12,7 @@ package keeper
 
 import (
 	"fmt"
+	"strconv"
 	"time"
 
 	"github.com/Gravity-Bridge/Gravity-Bridge/module/x/gravity/types"
@@ -205,12 +206,12 @@ func (k Keeper) ProcessNextPendingIbcAutoForward(ctx sdk.Context, evmChainPrefix
 
 	// Make the ibc-transfer attempt
 	wCtx := sdk.WrapSDKContext(ctx)
-	_, recoverableErr := k.ibcTransferKeeper.Transfer(wCtx, &msgTransfer)
+	msgResponse, recoverableErr := k.ibcTransferKeeper.Transfer(wCtx, &msgTransfer)
 	ctx = sdk.UnwrapSDKContext(wCtx)
 
 	// Log + emit event
 	if recoverableErr == nil {
-		k.logEmitIbcForwardSuccessEvent(ctx, *forward, msgTransfer)
+		k.logEmitIbcForwardSuccessEvent(ctx, *forward, msgTransfer, msgResponse)
 	} else {
 		// Funds have already been sent to the fallback user, emit a failure log
 		/*
@@ -268,6 +269,7 @@ func (k Keeper) logEmitIbcForwardSuccessEvent(
 	ctx sdk.Context,
 	forward types.PendingIbcAutoForward,
 	msgTransfer ibctransfertypes.MsgTransfer,
+	msgTransferResponse *ibctransfertypes.MsgTransferResponse,
 ) {
 	k.logger(ctx).Info("SendToCosmos IBC Auto-Forward", "ibcReceiver", forward.ForeignReceiver, "denom", forward.Token.Denom,
 		"amount", forward.Token.Amount.String(), "ibc-port", msgTransfer.SourcePort, "ibcChannel", forward.IbcChannel,
@@ -283,6 +285,17 @@ func (k Keeper) logEmitIbcForwardSuccessEvent(
 		Channel:       forward.IbcChannel,
 		TimeoutHeight: msgTransfer.TimeoutHeight.String(),
 		TimeoutTime:   fmt.Sprint(msgTransfer.TimeoutTimestamp),
+	})
+	ctx.EventManager().EmitEvents(sdk.Events{
+		sdk.NewEvent(
+			types.EventTypeSendToCosmosIbcAutoForward,
+			sdk.NewAttribute(types.AttributeKeyNonce, fmt.Sprint(forward.EventNonce)),
+			sdk.NewAttribute(types.AttributeKeyReceiverAddress, forward.ForeignReceiver),
+			sdk.NewAttribute(types.AttributeKeyTokenDenom, forward.Token.Denom),
+			sdk.NewAttribute(types.AttributeKeyAmount, forward.Token.Amount.String()),
+			sdk.NewAttribute(types.AttributeKeyIbcAutoForwardChannel, forward.IbcChannel),
+			sdk.NewAttribute(types.AttributeKeyIbcAutoForwardSequence, strconv.FormatUint(msgTransferResponse.Sequence, 10)),
+		),
 	})
 }
 

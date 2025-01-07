@@ -10,6 +10,7 @@ const (
 	EventTypeBridgeDepositReceived       = "deposit_received"
 	EventTypeBridgeWithdrawCanceled      = "withdraw_canceled"
 	EventTypeInvalidSendToCosmosReceiver = "invalid_send_to_cosmos_receiver"
+	EventTypeSendToCosmosIbcAutoForward  = "send_to_cosmos_ibc_auto_forward"
 
 	AttributeKeyAttestationID          = "attestation_id"
 	AttributeKeyBatchConfirmKey        = "batch_confirm_key"
@@ -28,6 +29,11 @@ const (
 	AttributeKeyInvalidationNonce      = "logic_call_invalidation_nonce"
 	AttributeKeyBadEthSignature        = "bad_eth_signature"
 	AttributeKeyBadEthSignatureSubject = "bad_eth_signature_subject"
+	AttributeKeyReceiverAddress        = "receiver"
+	AttributeKeyTokenDenom             = "denom"
+	AttributeKeyAmount                 = "amount"
+	AttributeKeyIbcAutoForwardChannel  = "channel"
+	AttributeKeyIbcAutoForwardSequence = "packet_sequence"
 
 	AttributeKeySendToCosmosAmount = "msg_send_to_cosmsos_amount"
 	AttributeKeySendToCosmosNonce  = "msg_send_to_cosmsos_nonce"
