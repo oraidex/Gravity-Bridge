@@ -1,16 +1,17 @@
 package types
 
 const (
-	EventTypeObservation                 = "observation"
-	EventTypeOutgoingBatch               = "outgoing_batch"
-	EventTypeMultisigUpdateRequest       = "multisig_update_request"
-	EventTypeOutgoingBatchCanceled       = "outgoing_batch_canceled"
-	EventTypeOutgoingLogicCallCanceled   = "outgoing_logic_call_canceled"
-	EventTypeBridgeWithdrawalReceived    = "withdrawal_received"
-	EventTypeBridgeDepositReceived       = "deposit_received"
-	EventTypeBridgeWithdrawCanceled      = "withdraw_canceled"
-	EventTypeInvalidSendToCosmosReceiver = "invalid_send_to_cosmos_receiver"
-	EventTypeSendToCosmosIbcAutoForward  = "send_to_cosmos_ibc_auto_forward"
+	EventTypeObservation                       = "observation"
+	EventTypeOutgoingBatch                     = "outgoing_batch"
+	EventTypeMultisigUpdateRequest             = "multisig_update_request"
+	EventTypeOutgoingBatchCanceled             = "outgoing_batch_canceled"
+	EventTypeOutgoingLogicCallCanceled         = "outgoing_logic_call_canceled"
+	EventTypeBridgeWithdrawalReceived          = "withdrawal_received"
+	EventTypeBridgeDepositReceived             = "deposit_received"
+	EventTypeBridgeWithdrawCanceled            = "withdraw_canceled"
+	EventTypeInvalidSendToCosmosReceiver       = "invalid_send_to_cosmos_receiver"
+	EventTypeSendToCosmosIbcAutoForward        = "send_to_cosmos_ibc_auto_forward"
+	EventTypeSendToCosmosIbcAutoForwardPending = "send_to_cosmos_ibc_auto_forward_pending"
 
 	AttributeKeyAttestationID          = "attestation_id"
 	AttributeKeyBatchConfirmKey        = "batch_confirm_key"
