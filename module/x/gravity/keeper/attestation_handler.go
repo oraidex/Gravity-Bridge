@@ -475,7 +475,12 @@ func (a AttestationHandler) sendCoinToCosmosAccount(
 	}
 
 	err = a.addToIbcAutoForwardQueue(ctx, claim.CosmosReceiver, coin, sourceChannel, claim)
-
+	// emit chain id for bridge monitor
+	bridgeChainId := strconv.Itoa(int(a.keeper.GetBridgeChainID(ctx, claim.EvmChainPrefix)))
+	ctx.EventManager().EmitEvent(sdk.NewEvent(
+		types.EventTypeSendToCosmosIbcAutoForwardPending,
+		sdk.NewAttribute(types.AttributeKeyBridgeChainID, bridgeChainId),
+	))
 	if err != nil {
 		a.keeper.logger(ctx).Error(
 			"SendToCosmos IBC auto forwarding failed, sending to local gravity account instead with error: ", err.Error(),

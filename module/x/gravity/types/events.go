@@ -1,15 +1,18 @@
 package types
 
 const (
-	EventTypeObservation                 = "observation"
-	EventTypeOutgoingBatch               = "outgoing_batch"
-	EventTypeMultisigUpdateRequest       = "multisig_update_request"
-	EventTypeOutgoingBatchCanceled       = "outgoing_batch_canceled"
-	EventTypeOutgoingLogicCallCanceled   = "outgoing_logic_call_canceled"
-	EventTypeBridgeWithdrawalReceived    = "withdrawal_received"
-	EventTypeBridgeDepositReceived       = "deposit_received"
-	EventTypeBridgeWithdrawCanceled      = "withdraw_canceled"
-	EventTypeInvalidSendToCosmosReceiver = "invalid_send_to_cosmos_receiver"
+	EventTypeObservation                       = "observation"
+	EventTypeOutgoingBatch                     = "outgoing_batch"
+	EventTypeMultisigUpdateRequest             = "multisig_update_request"
+	EventTypeOutgoingBatchCanceled             = "outgoing_batch_canceled"
+	EventTypeOutgoingLogicCallCanceled         = "outgoing_logic_call_canceled"
+	EventTypeBridgeWithdrawalReceived          = "withdrawal_received"
+	EventTypeBridgeDepositReceived             = "deposit_received"
+	EventTypeBridgeWithdrawCanceled            = "withdraw_canceled"
+	EventTypeInvalidSendToCosmosReceiver       = "invalid_send_to_cosmos_receiver"
+	EventTypeSendToCosmosIbcAutoForward        = "send_to_cosmos_ibc_auto_forward"
+	EventTypeSendToCosmosIbcAutoForwardPending = "send_to_cosmos_ibc_auto_forward_pending"
+	EventTypeIbcAutoForwardSendToEvmPending    = "ibc_auto_forward_send_to_evm_pending"
 
 	AttributeKeyAttestationID          = "attestation_id"
 	AttributeKeyBatchConfirmKey        = "batch_confirm_key"
@@ -28,6 +31,12 @@ const (
 	AttributeKeyInvalidationNonce      = "logic_call_invalidation_nonce"
 	AttributeKeyBadEthSignature        = "bad_eth_signature"
 	AttributeKeyBadEthSignatureSubject = "bad_eth_signature_subject"
+
+	AttributeKeyIbcAutoForwardSequence   = "packet_sequence"
+	AttributeKeyIbcAutoForwardSrcPort    = "packet_src_port"
+	AttributeKeyIbcAutoForwardSrcChannel = "packet_src_channel"
+	AttributeKeyIbcAutoForwardDstPort    = "packet_dst_port"
+	AttributeKeyIbcAutoForwardDstChannel = "packet_dst_channel"
 
 	AttributeKeySendToCosmosAmount = "msg_send_to_cosmsos_amount"
 	AttributeKeySendToCosmosNonce  = "msg_send_to_cosmsos_nonce"

@@ -12,6 +12,7 @@ package keeper
 
 import (
 	"fmt"
+	"strconv"
 	"time"
 
 	"github.com/Gravity-Bridge/Gravity-Bridge/module/x/gravity/types"
@@ -205,12 +206,18 @@ func (k Keeper) ProcessNextPendingIbcAutoForward(ctx sdk.Context, evmChainPrefix
 
 	// Make the ibc-transfer attempt
 	wCtx := sdk.WrapSDKContext(ctx)
-	_, recoverableErr := k.ibcTransferKeeper.Transfer(wCtx, &msgTransfer)
+	msgResponse, recoverableErr := k.ibcTransferKeeper.Transfer(wCtx, &msgTransfer)
 	ctx = sdk.UnwrapSDKContext(wCtx)
 
 	// Log + emit event
 	if recoverableErr == nil {
-		k.logEmitIbcForwardSuccessEvent(ctx, *forward, msgTransfer)
+		k.logEmitIbcForwardSuccessEvent(
+			ctx,
+			strconv.Itoa(int(k.GetBridgeChainID(ctx, evmChainPrefix))), // we want to check that tx bridge from
+			*forward,
+			msgTransfer,
+			msgResponse,
+		)
 	} else {
 		// Funds have already been sent to the fallback user, emit a failure log
 		/*
@@ -266,8 +273,10 @@ func thirtyDaysInFuture(ctx sdk.Context) time.Time {
 // EventSendToCosmosExecutedIbcAutoForward type event
 func (k Keeper) logEmitIbcForwardSuccessEvent(
 	ctx sdk.Context,
+	bridgeChainId string,
 	forward types.PendingIbcAutoForward,
 	msgTransfer ibctransfertypes.MsgTransfer,
+	msgTransferResponse *ibctransfertypes.MsgTransferResponse,
 ) {
 	k.logger(ctx).Info("SendToCosmos IBC Auto-Forward", "ibcReceiver", forward.ForeignReceiver, "denom", forward.Token.Denom,
 		"amount", forward.Token.Amount.String(), "ibc-port", msgTransfer.SourcePort, "ibcChannel", forward.IbcChannel,
@@ -283,6 +292,16 @@ func (k Keeper) logEmitIbcForwardSuccessEvent(
 		Channel:       forward.IbcChannel,
 		TimeoutHeight: msgTransfer.TimeoutHeight.String(),
 		TimeoutTime:   fmt.Sprint(msgTransfer.TimeoutTimestamp),
+	})
+	ctx.EventManager().EmitEvents(sdk.Events{
+		sdk.NewEvent(
+			types.EventTypeSendToCosmosIbcAutoForward,
+			sdk.NewAttribute(types.AttributeKeyBridgeChainID, bridgeChainId),
+			sdk.NewAttribute(types.AttributeKeyBatchNonce, fmt.Sprint(forward.EventNonce)),
+			sdk.NewAttribute(types.AttributeKeyIbcAutoForwardSequence, strconv.FormatUint(msgTransferResponse.Sequence, 10)),
+			sdk.NewAttribute(types.AttributeKeyIbcAutoForwardSrcPort, msgTransfer.SourcePort),
+			sdk.NewAttribute(types.AttributeKeyIbcAutoForwardSrcChannel, msgTransfer.SourceChannel),
+		),
 	})
 }
 

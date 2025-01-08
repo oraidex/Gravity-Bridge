@@ -2,6 +2,7 @@ package keeper
 
 import (
 	"fmt"
+	"strconv"
 	"strings"
 
 	"github.com/Gravity-Bridge/Gravity-Bridge/module/x/gravity/types"
@@ -174,6 +175,21 @@ func (k Keeper) OnRecvPacket(
 	if err != nil {
 		return channeltypes.NewErrorAcknowledgement(err.Error())
 	}
+
+	ctx.EventManager().EmitEvents(sdk.Events{
+		sdk.NewEvent(
+			types.EventTypeIbcAutoForwardSendToEvmPending,
+			sdk.NewAttribute(types.AttributeKeyIbcAutoForwardSequence, strconv.Itoa(int(packet.Sequence))),
+			sdk.NewAttribute(types.AttributeKeyIbcAutoForwardSrcChannel, packet.SourceChannel),
+			sdk.NewAttribute(types.AttributeKeyIbcAutoForwardSrcPort, packet.SourcePort),
+			sdk.NewAttribute(types.AttributeKeyIbcAutoForwardDstChannel, packet.DestinationChannel),
+			sdk.NewAttribute(types.AttributeKeyIbcAutoForwardDstPort, packet.DestinationPort),
+			sdk.NewAttribute(types.AttributeKeyBridgeChainID, strconv.Itoa(int(k.GetBridgeChainID(ctx, evmChainPrefix)))),
+			sdk.NewAttribute(types.AttributeKeyContract, k.GetBridgeContractAddress(ctx, evmChainPrefix).GetAddress().Hex()),
+			sdk.NewAttribute(types.AttributeKeyOutgoingTXID, strconv.Itoa(int(txID))),
+			sdk.NewAttribute(types.AttributeKeyNonce, fmt.Sprint(txID)),
+		),
+	})
 
 	ctx.EventManager().EmitTypedEvent(
 		&types.EventOutgoingTxId{
