@@ -12,6 +12,7 @@ const (
 	EventTypeInvalidSendToCosmosReceiver       = "invalid_send_to_cosmos_receiver"
 	EventTypeSendToCosmosIbcAutoForward        = "send_to_cosmos_ibc_auto_forward"
 	EventTypeSendToCosmosIbcAutoForwardPending = "send_to_cosmos_ibc_auto_forward_pending"
+	EventTypeIbcAutoForwardSendToEvmPending    = "ibc_auto_forward_send_to_evm_pending"
 
 	AttributeKeyAttestationID          = "attestation_id"
 	AttributeKeyBatchConfirmKey        = "batch_confirm_key"
@@ -31,10 +32,11 @@ const (
 	AttributeKeyBadEthSignature        = "bad_eth_signature"
 	AttributeKeyBadEthSignatureSubject = "bad_eth_signature_subject"
 
-	AttributeKeyIbcAutoForwardChannel    = "channel"
 	AttributeKeyIbcAutoForwardSequence   = "packet_sequence"
 	AttributeKeyIbcAutoForwardSrcPort    = "packet_src_port"
 	AttributeKeyIbcAutoForwardSrcChannel = "packet_src_channel"
+	AttributeKeyIbcAutoForwardDstPort    = "packet_dst_port"
+	AttributeKeyIbcAutoForwardDstChannel = "packet_dst_channel"
 
 	AttributeKeySendToCosmosAmount = "msg_send_to_cosmsos_amount"
 	AttributeKeySendToCosmosNonce  = "msg_send_to_cosmsos_nonce"
