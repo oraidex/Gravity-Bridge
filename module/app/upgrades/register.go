@@ -1,6 +1,7 @@
 package upgrades
 
 import (
+	"github.com/Gravity-Bridge/Gravity-Bridge/module/app/upgrades/monitorevent"
 	"github.com/Gravity-Bridge/Gravity-Bridge/module/app/upgrades/singlestep"
 	gravitykeeper "github.com/Gravity-Bridge/Gravity-Bridge/module/x/gravity/keeper"
 	"github.com/cosmos/cosmos-sdk/types/module"
@@ -70,5 +71,10 @@ func RegisterUpgradeHandlers(
 	upgradeKeeper.SetUpgradeHandler(
 		singlestep.PlanName,
 		singlestep.GetUpgradeHandler(mm, configurator, crisisKeeper),
+	)
+
+	upgradeKeeper.SetUpgradeHandler(
+		monitorevent.UpgradeName,
+		monitorevent.GetUpgradeHandler(mm, configurator),
 	)
 }
